@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Copy, LogOut, Users } from 'lucide-react'
+import { Copy, LogOut, LogIn, Users, Trash2 } from 'lucide-react'
 
 export interface ChannelContextMenuState {
   show: boolean
@@ -13,13 +13,20 @@ interface ChannelContextMenuProps {
   onClose: () => void
   onCopyName: (name: string) => void
   onLeave?: (channelId: number) => void
+  onJoin?: (channelId: number) => void
   onManageMembers?: (channelId: number) => void
+  onDelete?: (channelId: number) => void
 }
 
 export default function ChannelContextMenu({
-  state, onClose, onCopyName, onLeave, onManageMembers,
+  state, onClose, onCopyName, onLeave, onJoin, onManageMembers, onDelete,
 }: ChannelContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+
+  useEffect(() => {
+    if (!state.show) setConfirmingDelete(false)
+  }, [state.show])
 
   useEffect(() => {
     if (!state.show) return
@@ -42,8 +49,8 @@ export default function ChannelContextMenu({
   if (!state.show || !state.channel) return null
 
   const { channel, x, y } = state
-  const menuW = 200
-  const menuH = 160
+  const menuW = 220
+  const menuH = confirmingDelete ? 180 : 200
   const vpW = window.innerWidth
   const vpH = window.innerHeight
   const adjustedX = Math.min(x, vpW - menuW - 8)
@@ -70,7 +77,7 @@ export default function ChannelContextMenu({
         <Copy className="w-4 h-4 text-slate-400" />
         Copiar nombre
       </button>
-      {channel.joined && channel.id !== undefined && channel.myRole && ['admin', 'mod'].includes(channel.myRole) && (
+      {channel.id !== undefined && channel.joined && channel.myRole && ['admin', 'mod'].includes(channel.myRole) && (
         <button
           type="button"
           onClick={() => { onManageMembers?.(channel.id as number); onClose() }}
@@ -78,6 +85,16 @@ export default function ChannelContextMenu({
         >
           <Users className="w-4 h-4 text-indigo-400" />
           Administrar miembros
+        </button>
+      )}
+      {channel.id !== undefined && !channel.joined && (
+        <button
+          type="button"
+          onClick={() => { onJoin?.(channel.id as number); onClose() }}
+          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-emerald-400 hover:bg-slate-800 transition-colors"
+        >
+          <LogIn className="w-4 h-4 text-emerald-400" />
+          Unirse
         </button>
       )}
       {channel.joined && channel.id !== undefined && (
@@ -89,6 +106,40 @@ export default function ChannelContextMenu({
           <LogOut className="w-4 h-4 text-rose-400" />
           Salir del canal
         </button>
+      )}
+      {channel.id !== undefined && channel.myRole === 'admin' && onDelete && (
+        confirmingDelete ? (
+          <div className="px-3 py-2.5 border-t border-slate-800 bg-slate-950/60">
+            <div className="text-xs text-slate-300 mb-2">
+              ¿Eliminar <span className="font-semibold">#{channel.name.replace(/^#/, '')}</span>? Esta acción no se puede deshacer.
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => { onDelete(channel.id as number); onClose() }}
+                className="flex-1 px-2 py-1.5 rounded-lg bg-rose-500 hover:bg-rose-400 text-white text-xs font-semibold transition-colors"
+              >
+                Eliminar
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(false)}
+                className="flex-1 px-2 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-medium transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirmingDelete(true)}
+            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-rose-400 hover:bg-slate-800 transition-colors border-t border-slate-800"
+          >
+            <Trash2 className="w-4 h-4 text-rose-400" />
+            Eliminar canal
+          </button>
+        )
       )}
     </div>
   )

@@ -23,10 +23,12 @@ export function useHeaderOffset() {
       ro = new ResizeObserver(measure)
       ro.observe(header)
     }
-    if (typeof ResizeObserver !== 'undefined') {
-      const roAll = new ResizeObserver(measure)
-      roAll.observe(document.documentElement)
-    }
+    // ponytail: a ResizeObserver on the whole <html> fires on every
+    // subpixel layout shift across the page (any text reflow, any
+    // animated width, the vh updates useViewportHeight writes) and
+    // the instance was never disconnected on unmount. Each remount of
+    // a route accumulated another observer → linear memory growth.
+    // The header-local observer above already covers real resizes.
     window.addEventListener('resize', measure)
     const t1 = setTimeout(measure, 100)
     const t2 = setTimeout(measure, 500)

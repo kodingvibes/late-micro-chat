@@ -756,6 +756,43 @@ export function Irc() {
     }
   }, [channels, currentChannel])
 
+  const handleChannelDelete = useCallback(async (channelId: number) => {
+    const ch = channels.get(channelId)
+    if (!ch) return
+    try {
+      await clientRef.current?.api('DELETE', `/api/chat/channels/${channelId}`)
+      // Drop it from local state immediately; the WS broadcast will be a no-op.
+      const next = new Map(channels)
+      next.delete(channelId)
+      setChannels(next)
+      if (channelId === currentChannel) {
+        const first = Array.from(next.values()).find(c => c.joined)
+        if (first) handleChannelSelect(first.id)
+        else setCurrentChannel(null)
+      }
+      if (activeVoiceChannelId === channelId) setActiveVoiceChannelId(null)
+      pushToast(`Canal #${ch.name.replace(/^#/, '')} eliminado`, 'join')
+    } catch (err) {
+      pushToast(`Error al eliminar: ${(err as Error).message}`, 'error')
+    }
+  }, [channels, currentChannel, activeVoiceChannelId])
+
+  const handleChannelJoinById = useCallback(async (channelId: number) => {
+    const ch = channels.get(channelId)
+    if (!ch) return
+    try {
+      await clientRef.current?.api('POST', `/api/chat/channels/${channelId}/join`)
+      // Mark joined locally; reload to get fresh member counts + last_message.
+      const updated = { ...ch, joined: true }
+      const next = new Map(channels)
+      next.set(channelId, updated)
+      setChannels(next)
+      handleChannelSelect(channelId)
+    } catch (err) {
+      pushToast(`Error al unirse: ${(err as Error).message}`, 'error')
+    }
+  }, [channels])
+
   const handleJoinSubmit = useCallback((name: string) => {
     if (!name) return
     clientRef.current?.joinChannel(name).then((c) => {
@@ -948,6 +985,8 @@ export function Irc() {
             onLeave={handleChannelLeave}
             onCopyName={handleCopyText}
             onManageMembers={setManagingChannelId}
+            onDelete={handleChannelDelete}
+            onJoinById={handleChannelJoinById}
           />
         </aside>
 
@@ -1203,6 +1242,8 @@ export function Irc() {
             onLeave={handleChannelLeave}
             onCopyName={handleCopyText}
             onManageMembers={setManagingChannelId}
+            onDelete={handleChannelDelete}
+            onJoinById={handleChannelJoinById}
           />
       </Drawer>
       <Drawer
