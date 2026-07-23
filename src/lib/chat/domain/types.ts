@@ -94,6 +94,7 @@ export interface ChannelInfo {
   voice_participants?: number
   unread: number
   my_role: string | null
+  joined?: boolean
   last_message: {
     id: number
     content: string

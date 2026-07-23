@@ -15,7 +15,7 @@ export function toChannelState(c: ChannelInfo): ChannelState {
     unread: c.unread,
     myRole: c.my_role ?? null,
     messages: [],
-    joined: true,
+    joined: c.joined ?? true,
   }
 }
 
@@ -29,6 +29,7 @@ export function mergeChannelState(existing: ChannelState, fresh: ChannelInfo): C
     position: fresh.position ?? 0,
     voiceParticipants: fresh.voice_participants ?? 0,
     unread: fresh.id !== undefined ? fresh.unread : existing.unread,
+    joined: fresh.joined ?? existing.joined,
   }
 }
 

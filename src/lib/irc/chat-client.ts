@@ -380,7 +380,7 @@ export class ChatClient {
           unread: c.unread,
           myRole: c.my_role ?? null,
           messages: [],
-          joined: true,
+          joined: c.joined ?? true,
         })
       }
       this.emitState({ channels: new Map(this.channels) })
@@ -863,7 +863,7 @@ export class ChatClient {
             unread: c.unread,
             myRole: c.my_role ?? null,
             messages: [],
-            joined: true,
+            joined: c.joined ?? true,
           }
         this.channels.set(c.id, ch)
       }
