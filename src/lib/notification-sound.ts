@@ -45,18 +45,18 @@ export function playBuzz(volumeOverride?: number): void {
   const vol = volumeOverride !== undefined ? volumeOverride / 100 : currentVolume
   const start = ctx.currentTime
 
-  // Do La Do La Do La (C5 A4 C5 A4 C5 A4) over ~2 seconds.
-  // Each note = ~333ms; the next note starts before the previous
+  // Do La Do La Do La (C5 A4 C5 A4 C5 A4) under 1 second.
+  // Each note = ~150ms; the next note starts before the previous
   // fully decays, so they ring into each other like a bell pattern.
   const notes = [
     { freq: 523.25, t: 0.00 },
-    { freq: 440.00, t: 0.33 },
-    { freq: 523.25, t: 0.67 },
-    { freq: 440.00, t: 1.00 },
-    { freq: 523.25, t: 1.33 },
-    { freq: 440.00, t: 1.67 },
+    { freq: 440.00, t: 0.15 },
+    { freq: 523.25, t: 0.30 },
+    { freq: 440.00, t: 0.45 },
+    { freq: 523.25, t: 0.60 },
+    { freq: 440.00, t: 0.75 },
   ]
-  const noteLen = 0.45
+  const noteLen = 0.20
   for (const n of notes) {
     const at = start + n.t
     // Fundamental
