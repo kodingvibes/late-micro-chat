@@ -1,25 +1,25 @@
 import type { OgData } from '../../lib/chat/domain/types'
 
-interface LinkPreviewProps {
+interface LinkPreviewCardProps {
   og: OgData
   onOpen: (url: string) => void
 }
 
 /**
- * WhatsApp-style link-out preview card for a message. The OG image
- * (if any) always sits ON TOP as a full-width 16:9 banner, so every
- * card has the same shape regardless of the source image dimensions;
- * site name + title + description sit below. Clicking anywhere on the
- * card opens the original URL.
+ * WhatsApp-style OG preview card for the client-pull unfurl path
+ * (see LinkPreviewList). The preview image always sits ON TOP as a
+ * full-width banner with a fixed 16:9 aspect ratio, so every card has
+ * the same shape regardless of the source image's real dimensions.
+ * Text (site name, title, description) sits below. Only rendered for
+ * kind === 'link' - callers should not pass an 'error' result in here.
  *
  * Width comes from the message column, not from the card: `data-og-card`
  * lets MessageList lock the column to the message max-width whenever a
- * card is present, so the card and its bubble are always flush and every
- * card renders at the same size.
+ * card is present, so the card and its bubble are always flush.
  */
-export default function LinkPreview({ og, onOpen }: LinkPreviewProps) {
+export default function LinkPreviewCard({ og, onOpen }: LinkPreviewCardProps) {
   const hasImage = !!og.image
-  const title = og.title || og.url
+  const title = og.title || hostnameOf(og.url)
   const siteName = og.site_name || hostnameOf(og.url)
 
   return (
@@ -27,7 +27,7 @@ export default function LinkPreview({ og, onOpen }: LinkPreviewProps) {
       type="button"
       onClick={() => onOpen(og.url)}
       data-og-card
-      className="block w-full text-left rounded-lg border border-slate-700/60 bg-slate-900/60 hover:border-indigo-500 hover:bg-slate-900 transition-colors overflow-hidden"
+      className="block w-full text-left rounded-lg border-l-4 border-indigo-500 border border-slate-700/60 bg-slate-900/60 hover:bg-slate-900 transition-colors overflow-hidden"
       aria-label={`Abrir ${title}`}
     >
       {hasImage && (
@@ -50,7 +50,7 @@ export default function LinkPreview({ og, onOpen }: LinkPreviewProps) {
             {siteName}
           </div>
         )}
-        <div className="text-sm font-semibold text-slate-100 line-clamp-2 leading-snug mt-0.5">
+        <div className="text-sm font-semibold text-indigo-300 hover:underline line-clamp-2 leading-snug mt-0.5">
           {title}
         </div>
         {og.description && (
