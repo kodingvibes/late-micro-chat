@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import type { ChannelMember } from '../../lib/chat/domain/types'
+import { useViewportClamp } from '../../hooks/use-viewport-clamp'
 import { Bell, Copy } from 'lucide-react'
 
 export interface UserContextMenuState {
@@ -39,15 +40,12 @@ export default function UserContextMenu({
     }
   }, [state.show, onClose])
 
+  const { x, y } = state
+  const { x: adjustedX, y: adjustedY } = useViewportClamp(ref, x, y, state.show)
+
   if (!state.show || !state.user) return null
 
-  const { user, x, y } = state
-  const menuW = 180
-  const menuH = 100
-  const vpW = window.innerWidth
-  const vpH = window.innerHeight
-  const adjustedX = Math.min(x, vpW - menuW - 8)
-  const adjustedY = Math.min(y, vpH - menuH - 8)
+  const { user } = state
 
   return (
     <div

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import type { ChatMessage } from '../../lib/chat/domain/types'
 import { getEmoji } from '../../lib/emoji'
 import { hasImageMarker, getAttachmentMarker } from '../../lib/chat/domain/parsers'
+import { useViewportClamp } from '../../hooks/use-viewport-clamp'
 import { SmilePlus, Bell, Copy, MessageSquareReply, CornerUpRight, EyeOff, Trash2, Hash, Download, ImageDown, FileDown, Link as LinkIcon } from 'lucide-react'
 
 function EmojiIcon({ name, size = 20 }: { name: string; size?: number }) {
@@ -75,15 +76,12 @@ export default function MessageContextMenu({
     }
   }, [state.show, onClose])
 
+  const { x, y } = state
+  const { x: adjustedX, y: adjustedY } = useViewportClamp(ref, x, y, state.show)
+
   if (!state.show || !state.message) return null
 
-  const { message, isOwn, isTargetOnline, x, y } = state
-  const menuW = 200
-  const menuH = isOwn ? 160 : 210
-  const vpW = window.innerWidth
-  const vpH = window.innerHeight
-  const adjustedX = Math.min(x, vpW - menuW - 8)
-  const adjustedY = Math.min(y, vpH - menuH - 8)
+  const { message, isOwn, isTargetOnline } = state
 
   return (
     <div

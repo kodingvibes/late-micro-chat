@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useViewportClamp } from '../../hooks/use-viewport-clamp'
 import { Copy, LogOut, LogIn, Users, Trash2 } from 'lucide-react'
 
 export interface ChannelContextMenuState {
@@ -46,15 +47,12 @@ export default function ChannelContextMenu({
     }
   }, [state.show, onClose])
 
+  const { x, y } = state
+  const { x: adjustedX, y: adjustedY } = useViewportClamp(ref, x, y, state.show)
+
   if (!state.show || !state.channel) return null
 
-  const { channel, x, y } = state
-  const menuW = 220
-  const menuH = confirmingDelete ? 180 : 200
-  const vpW = window.innerWidth
-  const vpH = window.innerHeight
-  const adjustedX = Math.min(x, vpW - menuW - 8)
-  const adjustedY = Math.min(y, vpH - menuH - 8)
+  const { channel } = state
 
   return (
     <div
