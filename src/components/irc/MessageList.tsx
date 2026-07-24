@@ -52,6 +52,10 @@ interface MessageListProps {
   onDownloadAttachment?: (message: ChatMessage) => void
   /** Copy the link to an attachment to the clipboard. */
   onCopyLink?: (message: ChatMessage) => void
+  /** Start editing one of your own messages. */
+  onEdit?: (message: ChatMessage) => void
+  /** Server-provided edit window, in seconds, from the ws `hello` frame. */
+  editWindowSeconds?: number
   /** Called when a user clicks the float button on a video. */
   onVideoFloat?: (attachmentId: string) => void
   /** Called when a video starts playing. */
@@ -358,6 +362,7 @@ function ImageRow({ m, nick, isOwn, showHeader, handleTouchStart, clearTouchTime
         </div>
         <span className="text-[10px] text-slate-500 tabular-nums mt-0.5 px-1 opacity-100 sm:opacity-0 sm:group-hover/msg:opacity-100 inline-flex items-center gap-1">
           <span>{formatTime(m.created_at * 1000)}</span>
+          {m.edited_at ? <span title="Editado">(editado)</span> : null}
           {isOwn && (
             <ReceiptIndicator
               delivered={m.delivered_count ?? 0}
@@ -449,6 +454,7 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
         </div>
         <span className="text-[10px] text-slate-500 tabular-nums mt-0.5 px-1 opacity-100 sm:opacity-0 sm:group-hover/msg:opacity-100 inline-flex items-center gap-1">
           <span>{formatTime(m.created_at * 1000)}</span>
+          {m.edited_at ? <span title="Editado">(editado)</span> : null}
           {isOwn && (
             <ReceiptIndicator
               delivered={m.delivered_count ?? 0}
@@ -516,7 +522,7 @@ function MessageRow({
 
 export default function MessageList({
   messages, currentNick, channelName, channelMembers, nickByUserId, myUserId, myRole, onToggleReaction,
-  onLoadMore, loadingMore, hasMore, onReply, onBuzz, onCopyText, onForward, onHide, onDelete, onCopyImage, onDownloadImage, onDownloadAttachment, onCopyLink,
+  onLoadMore, loadingMore, hasMore, onReply, onBuzz, onCopyText, onForward, onHide, onDelete, onCopyImage, onDownloadImage, onDownloadAttachment, onCopyLink, onEdit, editWindowSeconds,
   onVideoFloat, onVideoPlay, onVideoRef, floatingVideo,
 }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -824,6 +830,8 @@ export default function MessageList({
         onDownloadImage={onDownloadImage}
         onDownloadAttachment={onDownloadAttachment}
         onCopyLink={onCopyLink}
+        onEdit={onEdit}
+        editWindowSeconds={editWindowSeconds}
       />
     </div>
   )

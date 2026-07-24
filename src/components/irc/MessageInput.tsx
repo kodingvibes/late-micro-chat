@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
-import { X, Paperclip, Smile, ArrowUp, Trash2, Image as ImageIcon, FileText, Music, Video, MessageSquareQuote, Upload, Plus, Mic } from 'lucide-react'
+import { X, Paperclip, Smile, ArrowUp, Trash2, Image as ImageIcon, FileText, Music, Video, MessageSquareQuote, Upload, Plus, Mic, Pencil, Check } from 'lucide-react'
 import type { ChannelMember, ChatMessage } from '../../lib/chat/domain/types'
 import { prepareImageForChat } from '../../lib/image-prep'
 import { hasImageMarker, extractImageUrl } from '../../lib/chat/domain/parsers'
@@ -28,6 +28,12 @@ interface MessageInputProps {
   replyContext?: ChatMessage | null
   /** Clear the reply context. */
   onClearReply?: () => void
+  /** The message being edited, if any. Mutually exclusive with replyContext. */
+  editContext?: ChatMessage | null
+  /** Leave edit mode without saving. */
+  onClearEdit?: () => void
+  /** Save the edited text. Only called while editContext is set. */
+  onSubmitEdit?: (text: string) => void
 }
 
 interface Command {
@@ -68,6 +74,19 @@ function ReplyBar({ reply, onClear }: { reply: ChatMessage; onClear: () => void 
       <span className="text-indigo-300 font-medium truncate shrink-0">{reply.display_name}</span>
       {content}
       <button onClick={onClear} className="ml-auto shrink-0 w-5 h-5 rounded-full hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-slate-100 transition-colors" aria-label="Cancelar respuesta">
+        <X className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  )
+}
+
+function EditBar({ onClear }: { onClear: () => void }) {
+  return (
+    <div className="px-3 py-1.5 bg-amber-950/40 border-t border-amber-900/60 flex items-center gap-2 text-sm">
+      <Pencil className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+      <span className="text-amber-300 font-medium shrink-0">Editando mensaje</span>
+      <span className="text-amber-500/70 text-xs truncate">Esc para cancelar</span>
+      <button onClick={onClear} className="ml-auto shrink-0 w-5 h-5 rounded-full hover:bg-amber-900/60 flex items-center justify-center text-amber-400 hover:text-amber-100 transition-colors" aria-label="Cancelar edición">
         <X className="w-3.5 h-3.5" />
       </button>
     </div>
@@ -115,6 +134,9 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
   onError,
   replyContext,
   onClearReply,
+  editContext,
+  onClearEdit,
+  onSubmitEdit,
 }, ref) {
   const [text, setText] = useState('')
   const [pendingImages, setPendingImages] = useState<string[]>([])
@@ -152,6 +174,12 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
   // closure (which would re-bind them on every render).
   const recordingRef = useRef(false)
   recordingRef.current = recording
+  // Ref mirror of `editContext` so the document-level paste/drop
+  // handlers can refuse to queue images while editing, without
+  // re-binding those listeners on every keystroke. An edit saves
+  // text only - an attachment cannot ride along with it.
+  const editingRef = useRef(false)
+  editingRef.current = !!editContext
   // Long-press timer for push-to-talk on the send button.
   // 200ms is short enough to feel intentional but long
   // enough to not fire on an accidental tap.
@@ -197,6 +225,10 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
   }, [onTyping])
 
   const handleImageFile = useCallback(async (file: File) => {
+    // No attachments while editing: the edit endpoint rejects a message that
+    // carries an attachment marker, so a queued image could never be saved
+    // with the edit and would silently leak into the next ordinary message.
+    if (editingRef.current) return
     if (!file.type.startsWith('image/')) return
     if (file.size > 20_000_000) return
     const prepared = await prepareImageForChat(file)
@@ -469,6 +501,13 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
     e?.preventDefault()
     if (disabled) return
     const trimmed = text.trim()
+    // In edit mode the composer saves instead of sending. Attachments are
+    // deliberately unreachable here: the server refuses to edit a message
+    // that carries an attachment marker, in either direction.
+    if (editContext) {
+      if (trimmed) onSubmitEdit?.(trimmed)
+      return
+    }
     if (pendingImages.length > 0) {
       if (pendingImages.length === 1) {
         const payload = trimmed
@@ -628,13 +667,39 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
       if (e.key === 'Tab' || e.key === 'Enter') { e.preventDefault(); insertSuggestion(suggestions[activeIdx]); return }
       if (e.key === 'Escape') { e.preventDefault(); setShowSuggestions(false); return }
     }
+    if (e.key === 'Escape' && editContext) { e.preventDefault(); onClearEdit?.(); return }
     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault()
       handleSubmit()
     }
   }
 
-  const canSend = !disabled && (text.trim().length > 0 || pendingImages.length > 0)
+  // Entering edit mode loads the original text into the composer and parks
+  // whatever was being typed, so cancelling gives the draft back instead of
+  // silently eating it.
+  const draftBeforeEditRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (editContext) {
+      if (draftBeforeEditRef.current === null) draftBeforeEditRef.current = text
+      // Drop any images queued before the edit began - they cannot be saved
+      // with an edit and must not survive it to leak into a later message.
+      setPendingImages([])
+      setText(editContext.content)
+      requestAnimationFrame(() => {
+        const ta = textareaRef.current
+        if (!ta) return
+        ta.focus()
+        ta.setSelectionRange(ta.value.length, ta.value.length)
+      })
+    } else if (draftBeforeEditRef.current !== null) {
+      setText(draftBeforeEditRef.current)
+      draftBeforeEditRef.current = null
+    }
+    // Keyed on the message id: re-running on every render would fight the user's typing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editContext?.id])
+
+  const canSend = !disabled && (text.trim().length > 0 || (!editContext && pendingImages.length > 0))
 
   return (
     <>
@@ -701,7 +766,9 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
           Subiendo archivo…
         </div>
       )}
-      {replyContext && <ReplyBar reply={replyContext} onClear={onClearReply!} />}
+      {editContext
+        ? <EditBar onClear={() => onClearEdit?.()} />
+        : replyContext && <ReplyBar reply={replyContext} onClear={onClearReply!} />}
       {isFileDragging && channelId !== null && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-indigo-950/60 backdrop-blur-sm pointer-events-none transition-opacity duration-150">
           <div className="bg-slate-900/90 border-2 border-dashed border-indigo-400 rounded-2xl p-8 sm:p-10 max-w-md mx-4 text-center shadow-2xl">
@@ -933,7 +1000,9 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
             }}
             onPointerDown={(e) => {
               if (disabled) return
-              // Push-to-talk: only when there's nothing to send.
+              // Push-to-talk: only when there's nothing to send, and never
+              // while editing - a voice note cannot replace a text message.
+              if (editContext) return
               if (text.trim().length > 0 || pendingImages.length > 0) return
               longPressFiredRef.current = false
               e.preventDefault()
@@ -962,7 +1031,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
               }
               if (recordingRef.current) cancelRecording()
             }}
-            aria-label={canSend ? 'Enviar mensaje' : 'Mantener para grabar audio'}
+            aria-label={editContext ? 'Guardar edición' : canSend ? 'Enviar mensaje' : 'Mantener para grabar audio'}
             className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all shadow-sm self-end flex-none ${
               recording
                 ? 'bg-rose-500 hover:bg-rose-400 text-white animate-pulse'
@@ -971,7 +1040,9 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
                   : 'bg-slate-700 text-slate-500'
             }`}
           >
-            {recording ? (
+            {editContext ? (
+              <Check className="w-5 h-5" />
+            ) : recording ? (
               <Mic className="w-5 h-5" />
             ) : canSend ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">

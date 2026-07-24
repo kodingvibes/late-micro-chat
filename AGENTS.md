@@ -9,7 +9,7 @@
 ## Build & deploy
 After ANY change to `src/`:
 
-1. Bump `version` in `package.json` (current: 0.1.4).
+1. Bump `version` in `package.json` (current: 0.1.5).
 2. Commit + push.
 3. Run the shell-side deploy script (it reads the version, builds, and
    rsyncs to `/var/www/html/micro/chat/v$VERSION/` + updates the `latest`

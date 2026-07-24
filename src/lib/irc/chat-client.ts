@@ -70,6 +70,9 @@ export class ChatClient {
   public voiceHandlers: Set<(type: string, data: any) => void> = new Set()
 
   private _wsHandlers: ReadonlyMap<string, (msg: any) => void>
+  // Overwritten by the `hello` frame. The default matches the server's own
+  // default so a backend that predates the field still behaves sanely.
+  private editWindowSeconds = 900
 
   constructor(sessionId: string) {
     this.sessionId = sessionId
@@ -205,6 +208,16 @@ export class ChatClient {
         const data = msg.data as { message_id: number; channel_id: number; reactions: ChatMessage['reactions']; user_id: number; display_name: string }
         this.trackName(data.user_id, data.display_name)
         this.updateMessageInChannel(data.channel_id, data.message_id, { reactions: data.reactions ?? [] })
+      }],
+      ['hello', (msg) => {
+        // The server owns the edit window; we only mirror it so the menu
+        // doesn't offer "Editar" on a message the server would reject.
+        const secs = (msg as { edit_window_seconds?: number }).edit_window_seconds
+        if (typeof secs === 'number' && secs > 0) this.editWindowSeconds = secs
+      }],
+      ['edit', (msg) => {
+        const data = msg.data as { message_id: number; channel_id: number; content: string; edited_at: number }
+        this.updateMessageInChannel(data.channel_id, data.message_id, { content: data.content, edited_at: data.edited_at })
       }],
       ['hide', (msg) => {
         const data = msg.data as { message_id: number; channel_id: number }
@@ -673,7 +686,35 @@ export class ChatClient {
         this.emitState({ channels: new Map(this.channels) })
       }
     }
-  }  /**
+  }
+
+  /** How long after sending the server still accepts an edit, in seconds. */
+  get editWindow(): number {
+    return this.editWindowSeconds
+  }
+
+  /**
+   * Rewrite one of your own messages. Optimistic: the bubble changes
+   * immediately and rolls back to the previous text if the server refuses
+   * (window expired, not the author, attachment). The server also echoes an
+   * `edit` frame to every member including us, which lands on the same
+   * content and is therefore a no-op locally.
+   */
+  async editMessage(channelId: number, messageId: number, content: string): Promise<void> {
+    const ch = this.channels.get(channelId)
+    const previous = ch?.messages.find(m => m.id === messageId)
+    if (!previous) throw new Error('Message not found')
+    this.updateMessageInChannel(channelId, messageId, { content, edited_at: Math.floor(Date.now() / 1000) })
+    try {
+      const data = await this.api<{ content: string; edited_at: number }>('PATCH', `/api/chat/messages/${messageId}`, { content })
+      this.updateMessageInChannel(channelId, messageId, { content: data.content, edited_at: data.edited_at })
+    } catch (err) {
+      this.updateMessageInChannel(channelId, messageId, { content: previous.content, edited_at: previous.edited_at ?? null })
+      throw err
+    }
+  }
+
+  /**
    * Toggle a reaction emoji on a message. The server adds it
    * if missing or removes it if present; the WS broadcast then
    * updates every client with the new full set, so this

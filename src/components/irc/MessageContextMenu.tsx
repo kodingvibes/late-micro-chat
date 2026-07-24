@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import type { ChatMessage } from '../../lib/chat/domain/types'
 import { getEmoji } from '../../lib/emoji'
 import { hasImageMarker, getAttachmentMarker } from '../../lib/chat/domain/parsers'
-import { SmilePlus, Bell, Copy, MessageSquareReply, CornerUpRight, EyeOff, Trash2, Hash, Download, ImageDown, FileDown, Link as LinkIcon } from 'lucide-react'
+import { SmilePlus, Bell, Copy, MessageSquareReply, CornerUpRight, EyeOff, Trash2, Hash, Download, ImageDown, FileDown, Link as LinkIcon, Pencil } from 'lucide-react'
 
 function EmojiIcon({ name, size = 20 }: { name: string; size?: number }) {
   const def = getEmoji(name)
@@ -39,12 +39,29 @@ interface MessageContextMenuProps {
   onDownloadImage?: (message: ChatMessage) => void
   onDownloadAttachment?: (message: ChatMessage) => void
   onCopyLink?: (message: ChatMessage) => void
+  onEdit?: (message: ChatMessage) => void
+  /** Server-provided edit window, in seconds. Comes from the ws `hello` frame. */
+  editWindowSeconds?: number
+}
+
+/**
+ * Mirrors the server's checks in PATCH /api/chat/messages/{id}. Showing the
+ * action when the server would reject it is the failure mode worth avoiding,
+ * so every condition here is the strict one.
+ */
+function canEditMessage(message: ChatMessage, isOwn: boolean, windowSeconds: number): boolean {
+  if (!isOwn) return false
+  // Optimistic bubbles have a negative placeholder id until the POST returns.
+  if (message.id <= 0) return false
+  if (message.hidden) return false
+  if (getAttachmentMarker(message.content)) return false
+  return Math.floor(Date.now() / 1000) - message.created_at <= windowSeconds
 }
 
 const quickEmojis = ['heart', 'thumbsup', 'thumbsdown', 'laugh', 'smile', 'point', 'cry', 'serious', 'angry', 'fire', 'star', 'sparkles', 'rocket', 'check']
 
 export default function MessageContextMenu({
-  state, onClose, onReact, onReply, onBuzz, onCopyText, onForward, myRole, onHide, onDelete, onCopyImage, onDownloadImage, onDownloadAttachment, onCopyLink,
+  state, onClose, onReact, onReply, onBuzz, onCopyText, onForward, myRole, onHide, onDelete, onCopyImage, onDownloadImage, onDownloadAttachment, onCopyLink, onEdit, editWindowSeconds = 900,
 }: MessageContextMenuProps) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const isAdmin = myRole === 'admin' || myRole === 'mod'
@@ -78,8 +95,9 @@ export default function MessageContextMenu({
   if (!state.show || !state.message) return null
 
   const { message, isOwn, isTargetOnline, x, y } = state
+  const canEdit = !!onEdit && canEditMessage(message, isOwn, editWindowSeconds)
   const menuW = 200
-  const menuH = isOwn ? 160 : 210
+  const menuH = (isOwn ? 160 : 210) + (canEdit ? 44 : 0)
   const vpW = window.innerWidth
   const vpH = window.innerHeight
   const adjustedX = Math.min(x, vpW - menuW - 8)
@@ -122,6 +140,20 @@ export default function MessageContextMenu({
             </button>
           ))}
         </div>
+      )}
+      {canEdit && (
+        <button
+          type="button"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={() => {
+            onEdit?.(message)
+            onClose()
+          }}
+          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
+        >
+          <Pencil className="w-4 h-4 text-amber-400" />
+          Editar
+        </button>
       )}
       <button
         type="button"
