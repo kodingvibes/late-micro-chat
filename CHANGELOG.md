@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.1.0...v1.1.1) (2026-07-24)
+
+
+### Bug Fixes
+
+* elimina jitter al cargar mensajes anteriores en el scroll ([1603763](https://github.com/kodingvibes/late-micro-chat/commit/1603763fc79b43223b56709fc8aa428db7b972a5))
+
 # [1.1.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.0.1...v1.1.0) (2026-07-24)
 
 
