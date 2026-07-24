@@ -543,6 +543,10 @@ export default function MessageList({
   const didInitialScrollRef = useRef(false)
   // Guard so we only fire one load-more per scroll-up gesture.
   const loadingRef = useRef(false)
+  // While a history load is in flight (and shortly after), disable
+  // the global bottom-following ResizeObserver so a growing scrollHeight
+  // doesn't get misinterpreted as "user is near bottom".
+  const historyLoadingRef = useRef(false)
   // Track which message IDs have already appeared so new
   // ones get the slide-up-fade-in animation on mount.
   const seenIdsRef = useRef<Set<number>>(new Set())
@@ -721,6 +725,7 @@ export default function MessageList({
     // scrollTop before our resize handler runs, which would
     // flip atBottom to false and stop us from following.
     const observer = new ResizeObserver(() => {
+      if (historyLoadingRef.current) return
       const distance = el.scrollHeight - el.scrollTop - el.clientHeight
       const nearBottom = distance < 200
       const follow = nearBottom || lastIsOwnRef.current
@@ -748,16 +753,43 @@ export default function MessageList({
       el.scrollTop < 120
     ) {
       loadingRef.current = true
+      historyLoadingRef.current = true
       const oldScrollTop = el.scrollTop
       const oldHeight = el.scrollHeight
+
+      // Keep re-anchoring the scroll position as lazy content inside
+      // the newly loaded rows finishes loading (images, OG cards, etc.).
+      // We watch scrollHeight for up to 2s after the load completes.
+      let anchorObserver: ResizeObserver | null = null
+      let anchorTimeout: ReturnType<typeof setTimeout> | null = null
+      let currentHeight = oldHeight
+
+      const stopAnchoring = () => {
+        if (anchorObserver) {
+          anchorObserver.disconnect()
+          anchorObserver = null
+        }
+        if (anchorTimeout) {
+          clearTimeout(anchorTimeout)
+          anchorTimeout = null
+        }
+        historyLoadingRef.current = false
+      }
+
+      const reanchor = () => {
+        const newHeight = el.scrollHeight
+        const delta = newHeight - currentHeight
+        if (delta > 0) {
+          el.scrollTop = el.scrollTop + delta
+          currentHeight = newHeight
+        }
+      }
+
       Promise.resolve(onLoadMore())
         .catch(() => {})
         .finally(() => {
           loadingRef.current = false
-          // After the new messages render, the scrollHeight grows.
-          // Re-anchor on the same first visible message by restoring
-          // the old offset plus the height delta. We use a double rAF
-          // so React has rendered the new rows and layout is stable.
+          // Initial anchoring after React has painted the new rows.
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
               const newHeight = el.scrollHeight
@@ -765,6 +797,11 @@ export default function MessageList({
               if (delta > 0) {
                 el.scrollTop = oldScrollTop + delta
               }
+              currentHeight = el.scrollHeight
+
+              anchorObserver = new ResizeObserver(() => reanchor())
+              anchorObserver.observe(el)
+              anchorTimeout = setTimeout(stopAnchoring, 2000)
             })
           })
         })
@@ -787,6 +824,7 @@ export default function MessageList({
         ref={containerRef}
         onScroll={handleScroll}
         className="absolute inset-0 overflow-y-auto py-2"
+        style={{ overflowAnchor: 'none' }}
       >
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-slate-500 text-sm gap-2">
@@ -830,7 +868,7 @@ export default function MessageList({
           return (
             <div
               key={`b-${id}`}
-              style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 80px' }}
+              style={{ overflowAnchor: 'none' }}
             >
             <MessageRow
               message={item.message}
