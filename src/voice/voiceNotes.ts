@@ -1,5 +1,4 @@
 import { createVoiceChain } from './voiceChain'
-import type { PresetName } from './presets'
 
 export interface VoiceNoteResult {
   id: string
@@ -12,13 +11,13 @@ export interface VoiceNoteResult {
 
 export async function recordVoiceNote(
   amount = 50,
-  presetName: PresetName = 'radio-am',
   maxDurationMs = 30_000,
 ): Promise<{ blob: Blob; durationMs: number }> {
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
 
-  const chain = createVoiceChain(stream, presetName, amount)
-  const processedStream = chain.processedStream
+  const useChain = amount !== 0
+  const chain = useChain ? createVoiceChain(stream, amount) : null
+  const processedStream = chain?.processedStream ?? stream
 
   const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
     ? 'audio/webm;codecs=opus'
@@ -36,7 +35,7 @@ export async function recordVoiceNote(
     }
 
     recorder.onstop = () => {
-      chain.destroy()
+      chain?.destroy()
       stream.getTracks().forEach(t => t.stop())
       const elapsed = performance.now() - startTime
       const blob = new Blob(chunks, { type: mimeType })
@@ -44,7 +43,7 @@ export async function recordVoiceNote(
     }
 
     recorder.onerror = () => {
-      chain.destroy()
+      chain?.destroy()
       stream.getTracks().forEach(t => t.stop())
       reject(new Error('Recording failed'))
     }

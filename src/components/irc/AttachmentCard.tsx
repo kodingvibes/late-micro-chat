@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FileText, Music, Download, Clock, Maximize2 } from 'lucide-react'
+import { FileText, Music, Download, Clock, Maximize2 } from '@/components/icons'
 import AudioWaveform from './AudioWaveform'
 
 interface AttachmentMeta {

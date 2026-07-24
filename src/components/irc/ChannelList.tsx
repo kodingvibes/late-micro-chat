@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import type { ChannelState, ChannelCategory } from '../../lib/chat/domain/types'
 import ChannelContextMenu, { useChannelContextMenuState } from './ChannelContextMenu'
 import Avatar from './Avatar'
-import { Hash, ChevronDown, ChevronRight, Plus } from 'lucide-react'
+import { Hash, ChevronDown, ChevronRight, Plus } from '@/components/icons'
 
 interface ChannelListProps {
   channels: Map<number, ChannelState>

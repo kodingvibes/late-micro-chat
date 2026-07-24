@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useViewportClamp } from '../../hooks/use-viewport-clamp'
-import { Copy, LogOut, LogIn, Users, Trash2 } from 'lucide-react'
+import { Copy, LogOut, LogIn, Users, Trash2 } from '@/components/icons'
 
 export interface ChannelContextMenuState {
   show: boolean

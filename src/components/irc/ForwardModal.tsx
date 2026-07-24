@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { X, Hash, CornerUpRight } from 'lucide-react'
+import { X, Hash, CornerUpRight } from '@/components/icons'
 import type { ChannelState, ChatMessage } from '../../lib/chat/domain/types'
 import { hasImageMarker } from '../../lib/chat/domain/parsers'
 

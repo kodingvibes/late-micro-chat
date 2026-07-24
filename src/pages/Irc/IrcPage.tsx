@@ -15,50 +15,27 @@ import ManageMembersModal from "@/components/irc/ManageMembersModal";
 import ForwardModal from "@/components/irc/ForwardModal";
 import Drawer from "@/components/irc/Drawer";
 import FloatingVideoContainer from "@/components/irc/FloatingVideo";
-import { useDocumentTitle } from "@/hooks/use-document-title";
+import { useFloatingVideo } from "@/hooks/useFloatingVideo";
+import { useToasts } from "@/hooks/useToasts";
 import { ensureNotificationAudio, playMentionBeep, playBuzz, setVolume } from "@/lib/notification-sound";
 import { formatToast, showSystemNotification, useRequestNotificationPermission } from "@/lib/chat-notifs";
 import { useHeaderOffset } from "@/hooks/use-header-offset";
-import { redirectToSso, ssoBudgetExhausted, clearSsoBudget, getSavedSession, saveSession, clearSession, fullSignOut } from "@/lib/chat/services/auth-service";
-import { debugLog, debugError, installDebugHandle, takeSnapshot } from "@/lib/session-debug";
+import { ssoBudgetExhausted, clearSsoBudget, getSavedSession, saveSession, clearSession, fullSignOut } from "@/lib/chat/services/auth-service";
+import { takeSnapshot } from "@/lib/session-debug";
 import { getOrCreateAudioContext, resumeAudioContext } from "@/voice/audioContext";
 import { Topbar } from "./Topbar";
 
 const CHANNEL_KEY = "chat.channel";
 
-// ponytail: the chat micro lives in /micro/chat/. The radio micro is the
-// owner of the <audio> element and the AnalyserNode. Voice rooms in this
-// micro borrow that analyser for their visualizers. If the radio micro
-// hasn't loaded yet, voice initializes its own AudioContext.
-function radioEngine() {
-  return typeof window !== "undefined" ? window.RadioEngine : undefined;
-}
-
 export function Irc() {
-  useDocumentTitle();
-  useRequestNotificationPermission();
-  const audio = {
-    get current()  { return radioEngine()?.getState().current ?? null; },
-    get playing()  { return radioEngine()?.getState().playing ?? false; },
-    get volume()   { return radioEngine()?.getState().volume ?? 0.7; },
-    get muted()    { return radioEngine()?.getState().muted ?? false; },
-    play:    (s: import("@/global").StreamInfo) => radioEngine()?.play(s),
-    toggle:  () => radioEngine()?.toggle(),
-    stop:    () => radioEngine()?.stop(),
-    setVolume: (v: number) => radioEngine()?.setVolume(v),
-    toggleMute: () => radioEngine()?.toggleMute(),
-    getAudioElement: () => radioEngine()?.getAudioElement() ?? null,
-    getAnalyser:     () => radioEngine()?.getAnalyser() ?? null,
-  };
-
-  // Install a copyable debug handle on first render so users
-  // who hit a login error can grab a snapshot from the
-  // DevTools console (window.__lateDebug.snapshot()).
   useEffect(() => {
-    ;(window as any).__APP_VERSION__ = "micro-chat-v0.0.0"
-    installDebugHandle()
-    debugLog('boot', 'IrcPage mounted', { version: "micro-chat-v0.0.0", href: window.location.href })
-  }, [])
+    document.title = "chat · late.kodingvibes.com";
+  }, []);
+  useRequestNotificationPermission();
+  const radioCurrent = typeof window !== "undefined"
+    ? window.RadioEngine?.getState().current ?? null
+    : null;
+
   const { headerHeight, vh } = useHeaderOffset();
   const [loading, setLoading] = useState(true);
   const [chatError, setChatError] = useState<string | null>(null);
@@ -88,32 +65,19 @@ export function Irc() {
   const [nick, setNick] = useState("");
   const [myUserId, setMyUserId] = useState<number | null>(null);
   const [googleName, setGoogleName] = useState<string | null>(null);
-  const [floatingVideo, setFloatingVideo] = useState<string | null>(null);
-  const floatingVideoRef = useRef<string | null>(null);
-  useEffect(() => { floatingVideoRef.current = floatingVideo }, [floatingVideo])
-  const floatingSourceChannelRef = useRef<number | null>(null);
-  const playingVideoRef = useRef<string | null>(null);
-  const videoElementsRef = useRef<Map<string, HTMLVideoElement>>(new Map());
-  const floatingContainerRef = useRef<HTMLDivElement>(null);
-  const restoreTimeRef = useRef<{ attachmentId: string; time: number } | null>(null);
+  const {
+    floatingVideo,
+    floatingContainerRef,
+    closeFloatingVideo,
+    handleVideoRef,
+    handleVideoPlay,
+    handleVideoFloat,
+    maybeFloatOnChannelSwitch,
+  } = useFloatingVideo();
   // Debounce online-count refreshes so a burst of messages in
   // a busy channel doesn't fire N REST calls.
   const onlineRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const closeFloatingVideo = useCallback(() => {
-    const container = floatingContainerRef.current
-    if (container) {
-      const video = container.querySelector('video')
-      if (video) {
-        restoreTimeRef.current = { attachmentId: floatingVideoRef.current || '', time: video.currentTime }
-        video.pause()
-        video.remove()
-      }
-    }
-    setFloatingVideo(null)
-    playingVideoRef.current = null
-    floatingSourceChannelRef.current = null
-  }, [])
   const [nickMap, setNickMap] = useState<Map<number, string>>(new Map());
   const [typing, setTyping] = useState<Map<number, number>>(new Map())
   const [replyContext, setReplyContext] = useState<ChatMessage | null>(null)
@@ -138,8 +102,7 @@ export function Irc() {
     return v ? Number(v) : null;
   });
   const currentChan = currentChannel !== null ? channels.get(currentChannel) : null;
-  const [toasts, setToasts] = useState<{ id: string; text: string; type: string; sticky: boolean }[]>([]);
-  const toastTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const { toasts, pushToast, clearToasts, dismissToast } = useToasts();
   const clientRef = useRef<ChatClient | null>(null);
   const messageInputRef = useRef<{ focus: () => void; insertText: (text: string) => void } | null>(null);
   const voiceHandlersRef = useRef<Set<(type: string, data: any) => void>>(new Set())
@@ -163,7 +126,6 @@ export function Irc() {
 
   useEffect(() => {
     if (!tokenInvalid) return
-    debugLog('auth', 'tokenInvalid -> fullSignOut()')
     fullSignOut()
   }, [tokenInvalid])
 
@@ -231,19 +193,11 @@ export function Irc() {
     const token = params.get("token");
     const logout = params.get("logout") === "1";
 
-    debugLog('boot', 'IrcPage effect start', {
-      hasUrlToken: !!token,
-      urlTokenLen: token ? token.length : 0,
-      logoutFlag: logout,
-      budgetExhausted: ssoBudgetExhausted(),
-    })
-
     if (token) {
       window.history.replaceState({}, "", "/irc");
     }
 
     if (logout) {
-      debugLog('boot', 'logout=1 in URL, clearing session and reloading')
       clearSession();
       localStorage.removeItem(CHANNEL_KEY);
       localStorage.removeItem("late_redirect");
@@ -330,7 +284,6 @@ export function Irc() {
       })
       client.onBuzz((data) => {
         if (clientRef.current !== client) return
-        debugLog('buzz', 'onBuzz received', { from: data.from_user_id, myUserId: myUserIdRef.current, isMine: data.from_user_id === myUserIdRef.current })
         const isMine = data.from_user_id === myUserIdRef.current
         playBuzz(notifPrefsRef.current.volume)
         setBuzzShake(true)
@@ -355,11 +308,6 @@ export function Irc() {
       })
       client.onAuthFatal(() => {
         if (cancelled) return
-        debugError('auth', 'onAuthFatal fired by client', {
-          connected: client.isConnected(),
-          currentChannel: client.getCurrentChannel(),
-          user: client.getUser(),
-        })
         // ponytail: do NOT call redirectToSso() here. Doing so replaces
         // window.location.href and destroys the entire shell + the radio
         // micro (which may be playing audio). Instead, show an error UI
@@ -387,7 +335,6 @@ export function Irc() {
         }
       } catch (err: any) {
         if (cancelled) return
-        debugError('start', 'ChatClient.start() threw', { message: err?.message, tokenInvalid: tokenInvalidRef.current })
         setLoading(false)
         if (tokenInvalidRef.current) return
         // ponytail: see note above. Don't redirect automatically — show
@@ -397,13 +344,11 @@ export function Irc() {
     }
 
     if (!token && parsed) {
-      debugLog('boot', 'have saved session, calling startChat(parsed)')
       startChat(parsed).catch(() => {})
       return
     }
 
     if (!token) {
-      debugLog('boot', 'no token and no saved session')
       setLoading(false)
       // ponytail: do NOT auto-redirect to SSO. Showing the error UI keeps
       // the shell + radio micro alive so the user can navigate back to
@@ -413,37 +358,26 @@ export function Irc() {
       return
     }
 
-    debugLog('exchange', 'POST /api/chat/exchange start', { tokenLen: token.length })
     fetch("/api/chat/exchange", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token }),
     })
       .then(async (res) => {
-        debugLog('exchange', '/api/chat/exchange response', { status: res.status, ok: res.ok })
         if (!res.ok) {
           const body = await res.json().catch(() => ({}))
-          debugError('exchange', '/api/chat/exchange not-ok', { status: res.status, detail: body?.detail })
           throw new Error(body.detail || "Error al conectar con el servidor")
         }
         return res.json() as Promise<SSOSession>
       })
       .then((s) => {
         if (cancelled) return
-        debugLog('exchange', '/api/chat/exchange success, saveSession + startChat', {
-          session_id_len: s?.session_id ? String(s.session_id).length : 0,
-          expires_at: (s as any)?.expires_at ?? null,
-          user_id: s?.user?.id ?? null,
-          email: s?.user?.email ?? null,
-        })
         saveSession(s)
         startChat(s).catch(() => {})
       })
       .catch((err) => {
         if (cancelled) return
-        debugError('exchange', '/api/chat/exchange fetch failed', { message: err?.message })
         if (parsed) {
-          debugLog('exchange', 'fallback: try startChat with previously-saved session')
           startChat(parsed).catch(() => {})
         } else {
           setLoading(false)
@@ -466,10 +400,7 @@ export function Irc() {
         voiceCleanupRef.current()
         voiceCleanupRef.current = null
       }
-      for (const timer of toastTimers.current.values()) {
-        clearTimeout(timer)
-      }
-      toastTimers.current.clear()
+      clearToasts()
       if (onlineRefreshTimerRef.current) {
         clearTimeout(onlineRefreshTimerRef.current)
         onlineRefreshTimerRef.current = null
@@ -479,19 +410,6 @@ export function Irc() {
         clientRef.current = null
       }
     }
-  }, [])
-
-  const pushToast = useCallback((text: string, type: string, opts?: { sticky?: boolean; autoCloseMs?: number }) => {
-    const id = crypto.randomUUID()
-    const sticky = opts?.sticky ?? false
-    setToasts(prev => [...prev.slice(-4), { id, text, type, sticky }])
-    if (sticky) return
-    const ms = opts?.autoCloseMs ?? 6500
-    const timer = setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id))
-      toastTimers.current.delete(id)
-    }, ms)
-    toastTimers.current.set(id, timer)
   }, [])
 
   const handleNickCancel = useCallback(() => {
@@ -594,39 +512,13 @@ export function Irc() {
     }
   }, [pushToast])
 
-  const handleVideoRef = useCallback((attachmentId: string, el: HTMLVideoElement | null) => {
-    if (el) {
-      videoElementsRef.current.set(attachmentId, el)
-      if (restoreTimeRef.current && restoreTimeRef.current.attachmentId === attachmentId) {
-        el.currentTime = restoreTimeRef.current.time
-        restoreTimeRef.current = null
-      }
-    }
-  }, [])
-
-  const handleVideoPlay = useCallback((attachmentId: string) => {
-    playingVideoRef.current = attachmentId
-  }, [])
-
-  const handleVideoFloat = useCallback((attachmentId: string) => {
-    const video = videoElementsRef.current.get(attachmentId)
-    if (video && floatingContainerRef.current) {
-      floatingContainerRef.current.appendChild(video)
-    }
-    floatingSourceChannelRef.current = currentChannel
-    setFloatingVideo(attachmentId)
-  }, [currentChannel])
-
   const handleBuzz = useCallback(async (targetUserId: number) => {
     if (currentChannel === null) return
-    debugLog('buzz', 'handleBuzz called', { currentChannel, targetUserId, hasClient: !!clientRef.current })
     try {
       await clientRef.current?.buzz(currentChannel, targetUserId)
-      debugLog('buzz', 'buzz POST resolved', { targetUserId })
       const targetName = channelsRef.current.get(currentChannel)?.members?.find(m => m.id === targetUserId)?.display_name ?? 'usuario'
       pushToast(`🔔 Zumbaste a ${targetName}`, 'mention')
     } catch (err) {
-      debugError('buzz', 'buzz POST failed', { message: (err as Error).message })
       const msg = (err as Error).message
       if (msg.includes('not online') || msg.includes('404')) {
         pushToast('Ese usuario no está en línea', 'error')
@@ -703,25 +595,15 @@ export function Irc() {
   }, [])
 
   const handleChannelSelect = useCallback((id: number) => {
-    if (floatingVideoRef.current && id === floatingSourceChannelRef.current) {
-      closeFloatingVideo()
-    }
-    const playing = playingVideoRef.current
-    if (playing && !floatingVideoRef.current) {
-      const video = videoElementsRef.current.get(playing)
-      if (video && floatingContainerRef.current) {
-        floatingContainerRef.current.appendChild(video)
-      }
-      floatingSourceChannelRef.current = currentChannel
-      setFloatingVideo(playing)
-    }
-    clientRef.current?.setCurrentChannel(id).then(() => {
-      clientRef.current?.loadMembers(id)
-    }).catch(() => {})
-    setCurrentChannel(id)
-    setShowChannelsDrawer(false)
-    setHasMore(prev => prev[id] !== false ? { ...prev, [id]: true } : prev)
-  }, [])
+    maybeFloatOnChannelSwitch(id, channels, (selectedId) => {
+      clientRef.current?.setCurrentChannel(selectedId).then(() => {
+        clientRef.current?.loadMembers(selectedId)
+      }).catch(() => {})
+      setCurrentChannel(selectedId)
+      setShowChannelsDrawer(false)
+      setHasMore(prev => prev[selectedId] !== false ? { ...prev, [selectedId]: true } : prev)
+    })
+  }, [maybeFloatOnChannelSwitch, channels])
 
   const handleChannelJoin = useCallback((name: string) => {
     const cleanName = name.replace(/^#/, "")
@@ -925,7 +807,7 @@ export function Irc() {
 
   return (
     <div
-      className={`bg-slate-950 flex flex-col overflow-hidden ${audio.current ? 'pb-14' : 'pb-0'} ${buzzShake ? 'shake-buzz' : ''}`}
+      className={`bg-slate-950 flex flex-col overflow-hidden ${radioCurrent ? 'pb-14' : 'pb-0'} ${buzzShake ? 'shake-buzz' : ''}`}
       style={{ height: `calc(${vh}px * 100 - ${headerHeight}px)` }}
     >
       {showJoinModal && (
@@ -1175,45 +1057,7 @@ export function Irc() {
             </>
           )}
           {toasts.length > 0 && (
-            <div className="absolute top-2 right-3 z-50 flex flex-col items-end gap-2 max-w-md pointer-events-auto">
-              {toasts.map(t => {
-                const dismiss = () => {
-                  setToasts(prev => prev.filter(x => x.id !== t.id))
-                  const timer = toastTimers.current.get(t.id)
-                  if (timer) { clearTimeout(timer); toastTimers.current.delete(t.id) }
-                }
-                return (
-                  <div
-                    key={t.id}
-                    onClick={t.sticky ? undefined : dismiss}
-                    role={t.sticky ? 'alert' : 'status'}
-                    className={`flex items-start gap-3 px-5 py-3 rounded-xl text-sm font-medium shadow-floating border backdrop-blur-sm transition-all animate-slide-in-from-top ${
-                      t.sticky
-                        ? 'cursor-default'
-                        : 'cursor-pointer hover:scale-[1.02] hover:-translate-x-0.5'
-                    } ${
-                      t.type === 'mention'
-                        ? 'bg-indigo-900/95 border-indigo-500/40 text-indigo-200 hover:border-indigo-400/70'
-                        : t.type === 'join'
-                        ? 'bg-emerald-900/95 border-emerald-500/30 text-emerald-200 hover:border-emerald-400/70'
-                        : 'bg-rose-900/95 border-rose-500/30 text-rose-200 hover:border-rose-400/70'
-                    }`}
-                  >
-                    <span className="flex-1 break-words leading-snug">{t.text}</span>
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); dismiss() }}
-                      className="text-slate-500 hover:text-slate-200 flex-shrink-0 -mr-1 cursor-pointer"
-                      aria-label="Cerrar"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M18 6L6 18M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
+            <ToastStack toasts={toasts} onDismiss={dismissToast} />
           )}
         </main>
 
@@ -1329,5 +1173,42 @@ function DebugCopyButton({ label }: { label: string }) {
     >
       {state === 'copied' ? '¡Copiado!' : state === 'failed' ? 'No se pudo copiar' : label}
     </button>
+  )
+}
+
+function ToastStack({ toasts, onDismiss }: { toasts: { id: string; text: string; type: string; sticky: boolean }[]; onDismiss: (id: string) => void }) {
+  return (
+    <div className="absolute top-2 right-3 z-50 flex flex-col items-end gap-2 max-w-md pointer-events-auto">
+      {toasts.map(t => (
+        <div
+          key={t.id}
+          onClick={t.sticky ? undefined : () => onDismiss(t.id)}
+          role={t.sticky ? 'alert' : 'status'}
+          className={`flex items-start gap-3 px-5 py-3 rounded-xl text-sm font-medium shadow-floating border backdrop-blur-sm transition-all animate-slide-in-from-top ${
+            t.sticky
+              ? 'cursor-default'
+              : 'cursor-pointer hover:scale-[1.02] hover:-translate-x-0.5'
+          } ${
+            t.type === 'mention'
+              ? 'bg-indigo-900/95 border-indigo-500/40 text-indigo-200 hover:border-indigo-400/70'
+              : t.type === 'join'
+              ? 'bg-emerald-900/95 border-emerald-500/30 text-emerald-200 hover:border-emerald-400/70'
+              : 'bg-rose-900/95 border-rose-500/30 text-rose-200 hover:border-rose-400/70'
+          }`}
+        >
+          <span className="flex-1 break-words leading-snug">{t.text}</span>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onDismiss(t.id) }}
+            className="text-slate-500 hover:text-slate-200 flex-shrink-0 -mr-1 cursor-pointer"
+            aria-label="Cerrar"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      ))}
+    </div>
   )
 }

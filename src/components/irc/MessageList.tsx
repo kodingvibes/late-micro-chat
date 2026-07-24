@@ -1,5 +1,5 @@
 import { useRef, useEffect, useLayoutEffect, useState, useCallback, useMemo } from 'react'
-import { CornerUpRight } from 'lucide-react'
+import { CornerUpRight } from '@/components/icons'
 import type { ChatMessage } from '../../lib/chat/domain/types'
 import { getNickColor } from '../../lib/irc/colors'
 import { getAttachmentMarker, hasImageMarker, extractImageUrl, extractImageCaption, extractImageUrls, extractImagesCaption } from '../../lib/chat/domain/parsers'
@@ -13,8 +13,10 @@ import AudioWaveform from './AudioWaveform'
 import MessageReactions from './MessageReactions'
 import VoiceNotePlayer from './VoiceNotePlayer'
 import LazyMount from './LazyMount'
-import { estimateImageHeight, estimateOgHeight, estimateAudioHeight } from './useEstimatedHeight'
 import { useScrollAnchor } from './useScrollAnchor'
+
+const estimateAudioHeight = (_width: number) => 120
+const estimateOgHeight = (width: number) => width > 0 ? Math.round(width * (9 / 16) + 70) : 168
 import './irc.css'
 
 interface MessageListProps {

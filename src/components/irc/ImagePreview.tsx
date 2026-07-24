@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronLeft, ChevronRight, X, Download, Copy } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X, Download, Copy } from '@/components/icons'
 
 export function ImageContextMenuPortal({
   url, x, y, onClose,

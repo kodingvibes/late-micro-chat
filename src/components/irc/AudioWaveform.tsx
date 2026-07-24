@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { Play, Pause, Music } from 'lucide-react'
+import { Play, Pause, Music } from '@/components/icons'
 
 interface AudioWaveformProps {
   src: string

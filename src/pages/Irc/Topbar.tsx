@@ -1,4 +1,4 @@
-import { Hash, Users, Settings as SettingsIcon, Menu } from 'lucide-react'
+import { Hash, Users, SettingsIcon, Menu } from '@/components/icons'
 import ConnectionStatus from '@/components/irc/ConnectionStatus'
 import type { ChannelState } from '@/lib/chat/domain/types'
 

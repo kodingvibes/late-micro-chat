@@ -49,7 +49,7 @@ const vd = (event: string, data?: unknown) => {
 const vdRecord = (event: string, data?: unknown) => {
   if (!(window as any).__voiceDebug?.enabled) return
   ;(window as any).__voiceDebug.events.push({ t: new Date().toISOString(), e: event, d: data })
-  if ((window as any).__voiceDebug.events.length > 200) (window as any).__voiceDebug.events.shift()
+  if ((window as any).__voiceDebug.events.length > 50) (window as any).__voiceDebug.events.shift()
   vd(event, data)
 }
 
@@ -80,20 +80,15 @@ export function useVoiceRoom(
     const addPeer = (id: number, displayName: string, initiator: boolean) => {
       const streamNow = localStreamRef.current
       vdRecord('addPeer', { id, displayName, initiator, hasLocalStream: !!streamNow })
-      // If we already have a peer and it's in a bad state, tear it
-      // down and recreate so a re-join (after the remote got dropped
-      // and reconnected) actually negotiates a fresh session.
       const existing = peersRef.current.get(id)
       if (existing) {
         const st = existing.connectionState
         if (st === 'disconnected' || st === 'failed' || st === 'closed') {
-          vdRecord('addPeer.replace.stale', { id, oldState: st })
           existing.close()
           peersRef.current.delete(id)
           peerStreams.current.delete(id)
           setPeers(prev => prev.filter(p => p.id !== id))
         } else {
-          vdRecord('addPeer.skip.duplicate', { id, state: st })
           return
         }
       }
@@ -103,7 +98,6 @@ export function useVoiceRoom(
         initiator,
         {
           onIceCandidate: (candidate) => {
-            vdRecord('ice.local', { to: id })
             signaling.sendIce(id, candidate)
           },
           onStream: (stream) => {
@@ -119,19 +113,9 @@ export function useVoiceRoom(
               peerStreams.current.delete(id)
               peersRef.current.delete(id)
               setPeers(prev => prev.filter(p => p.id !== id))
-              // ponytail: try an ICE restart before giving up. The
-              // connection is still alive (close() hasn't been called),
-              // we just lost the candidate path. A fresh offer with
-              // iceRestart:true re-gathers and re-pings. If we're the
-              // initiator, send the new offer; if we're the answerer,
-              // we have to wait for the remote to re-offer (restartIce
-              // returns null in that case, which we log).
               if (initiator) {
                 peer.restartIce()
-                  .then(sdp => {
-                    if (sdp) signaling.sendOffer(id, sdp)
-                    else vdRecord('ice.restart.no-offer', { id, role: 'answerer' })
-                  })
+                  .then(sdp => { if (sdp) signaling.sendOffer(id, sdp) })
                   .catch(err => vdRecord('ice.restart.err', { id, msg: String(err) }))
               }
             }
@@ -143,10 +127,6 @@ export function useVoiceRoom(
       peersRef.current.set(id, peer)
       setPeers(prev => [...prev, { id, displayName, stream: null, speaking: false }])
 
-      // If the local mic is already available, attach its tracks to
-      // the new peer. VoicePeer.addLocalStream is a no-op for tracks
-      // that are already on the connection, so this is safe to call
-      // whether or not the peer was constructed with a stream.
       if (streamNow) {
         peer.addLocalStream(streamNow)
           .then(result => {
@@ -154,18 +134,12 @@ export function useVoiceRoom(
             if (result.kind === 'offer') signaling.sendOffer(id, result.sdp)
             else signaling.sendAnswer(id, result.sdp)
           })
-          .catch(err => vdRecord('addPeer.renegotiate.err', { id, msg: String(err) }))
+          .catch(err => vdRecord('renegotiate.err', { id, msg: String(err) }))
       }
 
-      // If we're the initiator (we joined first, this peer joined later),
-      // create and send the offer
       if (initiator) {
-        vdRecord('offer.create.start', { to: id })
         peer.createOffer()
-          .then(sdp => {
-            vdRecord('offer.create.ok', { to: id, sdpLen: sdp?.length })
-            signaling.sendOffer(id, sdp)
-          })
+          .then(sdp => { signaling.sendOffer(id, sdp) })
           .catch(err => vdRecord('offer.create.err', { to: id, msg: String(err) }))
       }
     }
@@ -207,8 +181,7 @@ export function useVoiceRoom(
 
     unsubscribes.push(
       signaling.on('offer', async (data: { from: number; from_display_name: string; sdp: string }) => {
-        vdRecord('signaling.offer.in', { from: data.from, sdpLen: data.sdp?.length })
-        // If we don't have this peer yet, add it
+        vdRecord('signaling.offer.in', { from: data.from })
         if (!peersRef.current.has(data.from)) {
           addPeer(data.from, data.from_display_name, false)
         }
@@ -216,41 +189,31 @@ export function useVoiceRoom(
         if (peer) {
           await peer.handleOffer(data.sdp)
           const answer = await peer.createAnswer()
-          vdRecord('answer.create.ok', { to: data.from, sdpLen: answer?.length })
           signaling.sendAnswer(data.from, answer)
-        } else {
-          vdRecord('offer.in.no-peer', { from: data.from })
         }
       }),
     )
 
     unsubscribes.push(
       signaling.on('answer', async (data: { from: number; sdp: string }) => {
-        vdRecord('signaling.answer.in', { from: data.from, sdpLen: data.sdp?.length })
         const peer = peersRef.current.get(data.from)
         if (peer) {
           await peer.handleAnswer(data.sdp)
-        } else {
-          vdRecord('answer.in.no-peer', { from: data.from })
         }
       }),
     )
 
     unsubscribes.push(
       signaling.on('ice', async (data: { from: number; candidate: string }) => {
-        vdRecord('signaling.ice.in', { from: data.from, hasCandidate: !!data.candidate })
         const peer = peersRef.current.get(data.from)
         if (peer) {
           await peer.handleIce(data.candidate)
-        } else {
-          vdRecord('ice.in.no-peer', { from: data.from })
         }
       }),
     )
 
     unsubscribes.push(
       signaling.on('hangup', (data: { user_id: number }) => {
-        vdRecord('signaling.hangup.in', data)
         const peer = peersRef.current.get(data.user_id)
         if (peer) {
           peer.close()
@@ -264,8 +227,6 @@ export function useVoiceRoom(
     unsubscribes.push(
       signaling.on('kicked', (_data: { by: number; by_display_name: string; channel_id: number }) => {
         vdRecord('signaling.kicked.in', _data)
-        // The kick handler in Irc.tsx will set activeVoiceChannelId to null.
-        // We just need to clean up local state.
         setConnected(false)
         peersRef.current.forEach(p => p.close())
         peersRef.current.clear()
@@ -278,12 +239,8 @@ export function useVoiceRoom(
     // Listen for incoming WS messages that contain voice.* events
     if (onWsMessage) {
       const unsub = onWsMessage((type: string, data: any) => {
-        vdRecord('ws.in', { type, keys: data ? Object.keys(data) : null })
         const sig = signalingRef.current
-        if (!sig) {
-          vdRecord('ws.in.no-signaling', { type })
-          return
-        }
+        if (!sig) return
         if (type === 'peers') sig.emit('peers', data.peers)
         else if (type === 'peer_joined') sig.emit('peer_joined', data)
         else if (type === 'peer_left') sig.emit('peer_left', data)
@@ -292,7 +249,6 @@ export function useVoiceRoom(
         else if (type === 'ice') sig.emit('ice', data)
         else if (type === 'hangup') sig.emit('hangup', data)
         else if (type === 'kicked') sig.emit('kicked', data)
-        else vdRecord('ws.in.unhandled', { type })
       })
       unsubscribes.push(unsub)
     }

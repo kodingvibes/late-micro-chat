@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { MessageSquare, Mic, MicOff, Activity, Plus, Image as ImageIcon, Smile, Music, Video, FileText, ArrowUp, X, PhoneOff } from 'lucide-react'
+import { MessageSquare, Mic, MicOff, Activity, Plus, ImageIcon, Smile, Music, Video, FileText, ArrowUp, X, PhoneOff } from '@/components/icons'
 import ParticipantTile from './ParticipantTile'
 import MessageList from './MessageList'
 import TypingIndicator from './TypingIndicator'

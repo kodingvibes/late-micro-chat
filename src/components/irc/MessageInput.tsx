@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
-import { X, Paperclip, Smile, ArrowUp, Trash2, Image as ImageIcon, FileText, Music, Video, MessageSquareQuote, Upload, Plus, Mic, Pencil, Check } from 'lucide-react'
+import { X, Paperclip, Smile, ArrowUp, Trash2, ImageIcon, FileText, Music, Video, MessageSquareQuote, Upload, Plus, Mic, Pencil, Check } from '@/components/icons'
 import type { ChannelMember, ChatMessage } from '../../lib/chat/domain/types'
 import { prepareImageForChat } from '../../lib/image-prep'
 import { hasImageMarker, extractImageUrl } from '../../lib/chat/domain/parsers'

@@ -3,7 +3,7 @@ import type { ChannelMember } from '../../lib/chat/domain/types'
 import { getNickColor } from '../../lib/irc/colors'
 import Avatar from './Avatar'
 import UserContextMenu, { useUserContextMenuState } from './UserContextMenu'
-import { Shield, ShieldCheck } from 'lucide-react'
+import { Shield, ShieldCheck } from '@/components/icons'
 
 interface UserListProps {
   users: ChannelMember[]

@@ -3,7 +3,7 @@ import type { ChatMessage } from '../../lib/chat/domain/types'
 import { getEmoji } from '../../lib/emoji'
 import { hasImageMarker, getAttachmentMarker } from '../../lib/chat/domain/parsers'
 import { useViewportClamp } from '../../hooks/use-viewport-clamp'
-import { SmilePlus, Bell, Copy, MessageSquareReply, CornerUpRight, EyeOff, Trash2, Hash, Download, ImageDown, FileDown, Link as LinkIcon, Pencil } from 'lucide-react'
+import { SmilePlus, Bell, Copy, MessageSquareReply, CornerUpRight, EyeOff, Trash2, Hash, Download, ImageDown, FileDown, LinkIcon, Pencil } from '@/components/icons'
 
 function EmojiIcon({ name, size = 20 }: { name: string; size?: number }) {
   const def = getEmoji(name)

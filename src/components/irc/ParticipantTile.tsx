@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
-import { Mic, MicOff, Volume2, VolumeX, ShieldX } from 'lucide-react'
+import { Mic, MicOff, Volume2, VolumeX, ShieldX } from '@/components/icons'
 import { useAudioLevel } from '../../hooks/useAudioLevel'
 import SpectrumAnalyzer from './SpectrumAnalyzer'
 

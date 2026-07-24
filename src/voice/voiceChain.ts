@@ -1,4 +1,4 @@
-import { PRESETS, mapAmountToRatio, type PresetName } from './presets'
+import { RADIO_AM_PRESET } from './presets'
 
 export interface VoiceChain {
   ctx: AudioContext
@@ -8,17 +8,15 @@ export interface VoiceChain {
 
 export function createVoiceChain(
   inputStream: MediaStream,
-  presetName: PresetName = 'radio-am',
   amount = 50,
 ): VoiceChain {
   const ctx = new AudioContext()
   const source = ctx.createMediaStreamSource(inputStream)
-  const preset = PRESETS[presetName]
-  const ratio = mapAmountToRatio(amount)
+  const ratio = 1 + (amount / 100) * 19
 
   const highpass = ctx.createBiquadFilter()
   highpass.type = 'highpass'
-  highpass.frequency.value = preset.highpassFreq || 0
+  highpass.frequency.value = RADIO_AM_PRESET.highpassFreq || 0
   highpass.Q.value = 0.7
 
   const gateAnalyser = ctx.createAnalyser()
@@ -28,27 +26,27 @@ export function createVoiceChain(
   gateGain.gain.value = 1
 
   const compressor = ctx.createDynamicsCompressor()
-  compressor.threshold.value = preset.threshold
+  compressor.threshold.value = RADIO_AM_PRESET.threshold
   compressor.ratio.value = ratio
-  compressor.attack.value = preset.attack
-  compressor.release.value = preset.release
-  compressor.knee.value = preset.knee
+  compressor.attack.value = RADIO_AM_PRESET.attack
+  compressor.release.value = RADIO_AM_PRESET.release
+  compressor.knee.value = RADIO_AM_PRESET.knee
 
   const peaking = ctx.createBiquadFilter()
   peaking.type = 'peaking'
-  peaking.frequency.value = preset.peakingFreq || 0
-  peaking.gain.value = preset.peakingGain || 0
-  peaking.Q.value = preset.peakingQ || 1
+  peaking.frequency.value = RADIO_AM_PRESET.peakingFreq || 0
+  peaking.gain.value = RADIO_AM_PRESET.peakingGain || 0
+  peaking.Q.value = RADIO_AM_PRESET.peakingQ || 1
 
   let waveShaper: WaveShaperNode | null = null
-  if (preset.waveShaperCurve) {
+  if (RADIO_AM_PRESET.waveShaperCurve) {
     waveShaper = ctx.createWaveShaper()
     // @ts-ignore
-    waveShaper.curve = preset.waveShaperCurve
+    waveShaper.curve = RADIO_AM_PRESET.waveShaperCurve
   }
 
   const makeup = ctx.createGain()
-  makeup.gain.value = preset.makeupGain || 0
+  makeup.gain.value = RADIO_AM_PRESET.makeupGain || 0
 
   const destination = ctx.createMediaStreamDestination()
 
@@ -65,31 +63,25 @@ export function createVoiceChain(
   }
   makeup.connect(destination)
 
-  let gateTimer: ReturnType<typeof setInterval> | null = null
-  if (presetName !== 'off' && preset.gateThreshold > -Infinity) {
-    gateTimer = setInterval(() => {
-      const data = new Uint8Array(gateAnalyser.frequencyBinCount)
-      gateAnalyser.getByteTimeDomainData(data)
-      let sum = 0
-      for (let i = 0; i < data.length; i++) {
-        const v = (data[i] - 128) / 128
-        sum += v * v
-      }
-      const rmsDb = 20 * Math.log10(Math.sqrt(sum / data.length) || 1e-10)
-      const target = rmsDb > preset.gateThreshold ? 1 : 0
-      gateGain.gain.setTargetAtTime(target, ctx.currentTime, 0.05)
-    }, 50)
-  }
+  const gateTimer = setInterval(() => {
+    const data = new Uint8Array(gateAnalyser.frequencyBinCount)
+    gateAnalyser.getByteTimeDomainData(data)
+    let sum = 0
+    for (let i = 0; i < data.length; i++) {
+      const v = (data[i] - 128) / 128
+      sum += v * v
+    }
+    const rmsDb = 20 * Math.log10(Math.sqrt(sum / data.length) || 1e-10)
+    const target = rmsDb > RADIO_AM_PRESET.gateThreshold ? 1 : 0
+    gateGain.gain.setTargetAtTime(target, ctx.currentTime, 0.05)
+  }, 50)
 
-  const chain: VoiceChain = {
+  return {
     ctx,
     get processedStream() { return destination.stream },
     destroy() {
-      if (gateTimer) clearInterval(gateTimer)
+      clearInterval(gateTimer)
       ctx.close()
     },
-
   }
-
-  return chain
 }

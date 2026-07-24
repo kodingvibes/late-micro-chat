@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import type { ChannelMember } from '../../lib/chat/domain/types'
 import { useViewportClamp } from '../../hooks/use-viewport-clamp'
-import { Bell, Copy } from 'lucide-react'
+import { Bell, Copy } from '@/components/icons'
 
 export interface UserContextMenuState {
   show: boolean

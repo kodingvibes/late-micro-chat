@@ -1,18 +1,5 @@
 export {};
 
-export type ChatConnectionStatus = "disconnected" | "connecting" | "connected" | "error";
-
-export type ChatState = {
-  status: ChatConnectionStatus;
-  unread: number;
-};
-
-export interface ChatEngine {
-  version: string;
-  getState(): ChatState;
-  subscribe(fn: (s: ChatState) => void): () => void;
-}
-
 // ponytail: the chat micro uses the full RadioEngine API. The radio micro
 // (late-micro-radio) is the owner of the engine; the chat only consumes
 // it. Sharing the same vendor bundle means there's exactly one React
@@ -60,7 +47,6 @@ export interface RadioEngine {
 
 declare global {
   interface Window {
-    ChatEngine: ChatEngine;
     RadioEngine?: RadioEngine;
   }
 }

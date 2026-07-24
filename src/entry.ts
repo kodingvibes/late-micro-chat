@@ -1,6 +1,5 @@
 import "./index.css";
 import { createRoot } from "react-dom/client";
-import { createChatEngine } from "./engine/ChatEngine";
 import { mountChatPage } from "./pages/Chat/mount";
 
 import pkg from "../package.json" with { type: "json" };
@@ -9,17 +8,12 @@ import pkg from "../package.json" with { type: "json" };
 
 declare global {
   interface Window {
-    ChatEngine: ReturnType<typeof createChatEngine>;
     __lateMicroChatMount?: () => void;
   }
 }
 
-window.ChatEngine = createChatEngine(pkg.version);
-
 console.info("[micro-chat] v" + pkg.version + " loaded");
 
-// Auto-deploy verified 2026-07-24.
-// See late-micro-radio/src/entry.ts for the "no auto-mount" rationale.
 function tryMount() {
   const root = document.getElementById("micro-chat-root");
   if (root && !root.dataset.microMounted) {
