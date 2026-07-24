@@ -394,8 +394,14 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
   // its own bubble and every card in the list renders at the same size.
   // Without a card the column stays content-driven, so short messages
   // keep their small bubble.
+  //
+  // The 26rem cap stops the card (and its 16:9 banner) from ballooning on
+  // wide desktop panes, where 65% of the message area is ~1000px+ and the
+  // image scales up to match. `:has()` adds selector specificity, so this
+  // cap wins over the 65%. On mobile 65% is already well under 26rem, so
+  // the cap is inert there and small screens are unaffected.
   const widthClass =
-    'max-w-[75%] sm:max-w-[65%] min-w-0 has-[[data-og-card]]:w-[75%] sm:has-[[data-og-card]]:w-[65%]'
+    'max-w-[75%] sm:max-w-[65%] min-w-0 has-[[data-og-card]]:w-[75%] sm:has-[[data-og-card]]:w-[65%] has-[[data-og-card]]:max-w-[26rem]'
   const containerClass = isOwn
     ? `flex flex-col items-end ${widthClass}`
     : `flex flex-col items-start ${widthClass}`
