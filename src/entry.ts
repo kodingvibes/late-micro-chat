@@ -18,6 +18,7 @@ window.ChatEngine = createChatEngine(pkg.version);
 
 console.info("[micro-chat] v" + pkg.version + " loaded");
 
+// Auto-deploy verified 2026-07-24.
 // See late-micro-radio/src/entry.ts for the "no auto-mount" rationale.
 function tryMount() {
   const root = document.getElementById("micro-chat-root");
