@@ -1,3 +1,10 @@
+## [1.1.4](https://github.com/kodingvibes/late-micro-chat/compare/v1.1.3...v1.1.4) (2026-07-24)
+
+
+### Bug Fixes
+
+* estimaciones responsive de altura para lazy content ([0f8bf08](https://github.com/kodingvibes/late-micro-chat/commit/0f8bf0832fb3f995dc542dfc93dfbaba605b476e))
+
 ## [1.1.3](https://github.com/kodingvibes/late-micro-chat/compare/v1.1.2...v1.1.3) (2026-07-24)
 
 
