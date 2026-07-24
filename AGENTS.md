@@ -17,7 +17,7 @@ An external deployment script watches the repo and handles building and
 publishing the bundle automatically. **Do not run shell-side deploy
 scripts manually from this repo.**
 
-**Never bump the version manually** — the release workflow owns `package.json#version` and `CHANGELOG.md`.
+**Never bump the version manually** — the release workflow owns `package.json#version` and `CHANGELOG.md`. Pushing manual `chore(release)` commits while the workflow is running creates conflicting release commits and must be avoided.
 
 **Never deploy by hand-copying `dist/`** — the versioned path + symlink +
 `latest.json` are what the shell reads. Skipping any of them breaks upgrades.
