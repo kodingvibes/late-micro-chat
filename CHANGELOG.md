@@ -1,3 +1,10 @@
+## [1.1.8](https://github.com/kodingvibes/late-micro-chat/compare/v1.1.7...v1.1.8) (2026-07-24)
+
+
+### Bug Fixes
+
+* stabilize scroll against lazy content resize with mutation anchor ([5d1481a](https://github.com/kodingvibes/late-micro-chat/commit/5d1481abc940f57aac0861a1f2226d9695a65c13))
+
 ## [1.1.7](https://github.com/kodingvibes/late-micro-chat/compare/v1.1.6...v1.1.7) (2026-07-24)
 
 
