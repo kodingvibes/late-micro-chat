@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.0.1...v1.1.0) (2026-07-24)
+
+
+### Features
+
+* time-boxed author-only message editing UI ([e6d45ff](https://github.com/kodingvibes/late-micro-chat/commit/e6d45ff3371cde792eee055a5145ac278e9da37d)), closes [kodingvibes/late.kodingvibes.com#3](https://github.com/kodingvibes/late.kodingvibes.com/issues/3)
+
 ## [1.0.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.0.0...v1.0.1) (2026-07-24)
 
 
