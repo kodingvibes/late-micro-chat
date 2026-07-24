@@ -728,15 +728,17 @@ export default function MessageList({
             <span>No hay mensajes aún. Sé el primero.</span>
           </div>
         )}
-        {loadingMore && (
-          <div className="flex justify-center py-2 text-xs text-slate-500">
-            <span className="inline-flex items-center gap-2">
-              <span className="w-3 h-3 border-2 border-slate-500 border-t-transparent rounded-full animate-spin" />
-              cargando mensajes anteriores…
-            </span>
+        {hasMore !== false && (
+          <div className="flex justify-center py-2 text-xs text-slate-500 min-h-[2.25rem]">
+            {loadingMore && (
+              <span className="inline-flex items-center gap-2">
+                <span className="w-3 h-3 border-2 border-slate-500 border-t-transparent rounded-full animate-spin" />
+                cargando mensajes anteriores…
+              </span>
+            )}
           </div>
         )}
-        {!hasMore && messages.length > 0 && (
+        {hasMore === false && messages.length > 0 && (
           <div className="flex justify-center py-3 text-[11px] text-slate-600">
             — inicio del canal —
           </div>
