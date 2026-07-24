@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.0.0...v1.0.1) (2026-07-24)
+
+
+### Bug Fixes
+
+* **chat:** cap OG preview card width on wide desktop panes ([9ede7e4](https://github.com/kodingvibes/late-micro-chat/commit/9ede7e4437d0006d41b3f8ac16d139557304bdbd))
+
 # 1.0.0 (2026-07-24)
 
 
