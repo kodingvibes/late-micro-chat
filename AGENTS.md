@@ -6,26 +6,15 @@
   the `/irc` route.
 - Build output: `dist/entry.js` + `dist/style.css`.
 
-## Build & deploy
+## Build & release
 After ANY change to `src/`:
 
-1. Bump `version` in `package.json` (current: 0.1.4).
+1. Bump `version` in `package.json`.
 2. Commit + push.
-3. Run the shell-side deploy script (it reads the version, builds, and
-   rsyncs to `/var/www/html/micro/chat/v$VERSION/` + updates the `latest`
-   symlink and `latest.json`):
 
-   ```bash
-   bash /root/late.kodingvibes.com/scripts/build-micro-chat.sh
-   ```
-
-The script:
-- Runs `npm run build` (= `tsc --noEmit && vite build`).
-- `rsync -a --delete dist/ /var/www/html/micro/chat/v$VERSION/`.
-- `ln -sfn v$VERSION /var/www/html/micro/chat/latest`.
-- Writes `{"version":"$VERSION","name":"chat"}` to
-  `/var/www/html/micro/chat/latest.json` so the shell's UpdateNotice can
-  detect the new version while the user is on the page.
+An external deployment script watches the repo and handles building and
+publishing the bundle automatically. **Do not run shell-side deploy
+scripts manually from this repo.**
 
 **Never deploy by hand-copying `dist/`** — the versioned path + symlink +
 `latest.json` are what the shell reads. Skipping any of them breaks upgrades.
@@ -53,21 +42,10 @@ The script:
   `routers/channels.py` and `routers/members.py`. Admin can act on a
   channel they're not a member of, as long as `my_role === 'admin'`
   for that channel.
-- Deploy: the `build-micro-chat.sh` script only builds the
-  micro-frontend. Backend changes need a separate deploy of
-  `late.kodingvibes.com` (out of scope for this script). The flow
-  for changes that touch both is:
-
-  1. Edit + commit + push in `late.kodingvibes.com` (backend).
-  2. `cd /root/late.kodingvibes.com && bash scripts/deploy.sh`
-     (or whatever the shell-side deploy command is — check
-     `late.kodingvibes.com/AGENTS.md`).
-  3. Bump `package.json` in this repo, commit, push.
-  4. `bash /root/late.kodingvibes.com/scripts/build-micro-chat.sh`.
-
-  Step 1+2 has to land BEFORE step 4, otherwise the new
-  micro-frontend will hit a server that still has the old contract
-  (e.g. the `joined` flag missing) and render broken.
+- For changes that touch both backend and micro-frontend: deploy the
+  backend first (see `late.kodingvibes.com/AGENTS.md`), then bump and
+  commit `package.json` in this repo. The automatic deployment script
+  builds the new micro-frontend bundle.
 
 ## Lessons learned
 - The micro-frontend's `ChatClient` sets `joined: true` for every row
