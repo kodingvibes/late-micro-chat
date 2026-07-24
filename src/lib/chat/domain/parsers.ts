@@ -88,3 +88,15 @@ export function extractImagesCaption(content: string): string | null {
   if (idx <= 0) return null
   return content.slice(0, idx).replace(/\n+$/, '')
 }
+
+// Everything from the first attachment/image marker onward is machine payload
+// (ids, data URIs, JSON), never a human caption. Returns only the leading
+// caption text so link unfurling never picks up an attachment's own URL.
+export function stripAttachmentMarkers(content: string): string {
+  let cut = content.length
+  for (const marker of [...ATTACHMENT_MARKERS, ...ALL_IMAGE_MARKERS]) {
+    const idx = content.indexOf(marker)
+    if (idx !== -1 && idx < cut) cut = idx
+  }
+  return content.slice(0, cut)
+}

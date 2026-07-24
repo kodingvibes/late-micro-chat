@@ -5,7 +5,7 @@ import { getNickColor } from '../../lib/irc/colors'
 import { getAttachmentMarker, hasImageMarker, extractImageUrl, extractImageCaption, extractImageUrls, extractImagesCaption } from '../../lib/chat/domain/parsers'
 import { inlineMarkdown } from '../../lib/chat/domain/markdown'
 import ImagePreview, { ImageGallery, ImageLightbox } from './ImagePreview'
-import LinkPreview from './LinkPreview'
+import LinkPreviewList from './LinkPreviewList'
 import RichText from './RichText'
 import MessageContextMenu, { useContextMenuState } from './MessageContextMenu'
 import AttachmentCard from './AttachmentCard'
@@ -291,11 +291,12 @@ function ActionRow({ m, nick, isOwn, handleTouchStart, clearTouchTimer, onContex
   )
 }
 
-function ImageRow({ m, nick, isOwn, showHeader, handleTouchStart, clearTouchTimer, onContextMenu, onImageOpen, nickByUserId, myUserId, onToggleReaction }: {
+function ImageRow({ m, nick, isOwn, showHeader, handleTouchStart, clearTouchTimer, onContextMenu, onImageOpen, onLinkOpen, nickByUserId, myUserId, onToggleReaction }: {
   m: ChatMessage; nick: string; isOwn: boolean; showHeader: boolean
   handleTouchStart: (e: React.TouchEvent) => void; clearTouchTimer: () => void
   onContextMenu?: (msg: ChatMessage, x: number, y: number) => void
   onImageOpen?: (images: string[], index: number) => void
+  onLinkOpen?: (url: string) => void
   nickByUserId?: Map<number, string>
   myUserId?: number | null
   onToggleReaction?: (messageId: number, emoji: string) => void
@@ -351,6 +352,9 @@ function ImageRow({ m, nick, isOwn, showHeader, handleTouchStart, clearTouchTime
               onToggle={(emoji) => onToggleReaction?.(m.id, emoji)}
             />
           )}
+          {onLinkOpen && (
+            <LazyMount minHeight={80}><LinkPreviewList content={m.content} ogData={m.og_data} onOpen={onLinkOpen} /></LazyMount>
+          )}
         </div>
         <span className="text-[10px] text-slate-500 tabular-nums mt-0.5 px-1 opacity-100 sm:opacity-0 sm:group-hover/msg:opacity-100 inline-flex items-center gap-1">
           <span>{formatTime(m.created_at * 1000)}</span>
@@ -385,15 +389,26 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
     ? 'px-3 pt-1 pb-0.5 text-[11px] font-semibold opacity-80 border-b border-white/10'
     : 'px-3 pt-1 pb-0.5 text-[11px] font-semibold border-b border-slate-700/50'
   const headerStyle = isOwn ? undefined : { color: getNickColor(nick) }
+  // When a preview card is present the column locks to the message
+  // max-width (has-[[data-og-card]]), so the card is exactly as wide as
+  // its own bubble and every card in the list renders at the same size.
+  // Without a card the column stays content-driven, so short messages
+  // keep their small bubble.
+  const widthClass =
+    'max-w-[75%] sm:max-w-[65%] min-w-0 has-[[data-og-card]]:w-[75%] sm:has-[[data-og-card]]:w-[65%]'
   const containerClass = isOwn
-    ? 'flex flex-col items-end max-w-[75%] sm:max-w-[65%] min-w-0'
-    : 'flex flex-col items-start max-w-[75%] sm:max-w-[65%] min-w-0'
+    ? `flex flex-col items-end ${widthClass}`
+    : `flex flex-col items-start ${widthClass}`
   const outerClass = isOwn
     ? `group/msg flex items-start gap-1.5 px-4 py-0.5 justify-end select-none${isNew ? ' animate-slide-up-fade-in' : ''}`
     : `group/msg flex items-start gap-1.5 px-4 py-0.5 select-none${isNew ? ' animate-slide-up-fade-in' : ''}`
-  const linkContainerClass = isOwn
-    ? 'max-w-[75%] sm:max-w-[65%] flex flex-col items-end gap-1.5'
-    : 'mt-1.5 flex flex-col items-start gap-1.5'
+  // Card sits ABOVE the message bubble (WhatsApp-style), so the spacing
+  // is a bottom gap to the bubble. Full width of the column: the column
+  // is what fixes the card size (see widthClass).
+  // items-stretch (not items-end/start): the LazyMount wrapper is a bare
+  // flex item, so end/start alignment would shrink it to the card's
+  // intrinsic text width and previews would come out uneven again.
+  const linkContainerClass = 'mb-1.5 flex w-full min-w-0 flex-col items-stretch gap-1.5'
 
   return (
     <div
@@ -405,6 +420,11 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
       onTouchEnd={clearTouchTimer}
     >
       <div className={containerClass}>
+        {onLinkOpen && (
+          <div className={linkContainerClass}>
+            <LazyMount minHeight={80}><LinkPreviewList content={m.content} ogData={m.og_data} onOpen={onLinkOpen} /></LazyMount>
+          </div>
+        )}
         <div className={bubbleClass}>
           {showHeader && (
             <div className={headerClass} style={headerStyle}>
@@ -427,11 +447,6 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
             </div>
           </div>
         </div>
-        {onLinkOpen && m.og_data && (
-          <div className={linkContainerClass}>
-            <LazyMount minHeight={80}><LinkPreview key={`og-${m.id}`} og={m.og_data} onOpen={onLinkOpen} /></LazyMount>
-          </div>
-        )}
         <span className="text-[10px] text-slate-500 tabular-nums mt-0.5 px-1 opacity-100 sm:opacity-0 sm:group-hover/msg:opacity-100 inline-flex items-center gap-1">
           <span>{formatTime(m.created_at * 1000)}</span>
           {isOwn && (
@@ -493,7 +508,7 @@ function MessageRow({
   }
 
   if (isImage && onImageOpen) {
-    return <ImageRow m={m} nick={nick} isOwn={isOwn} showHeader={showHeader} handleTouchStart={handleTouchStart} clearTouchTimer={clearTouchTimer} onContextMenu={onContextMenu} onImageOpen={onImageOpen} nickByUserId={nickByUserId} myUserId={myUserId} onToggleReaction={onToggleReaction} />
+    return <ImageRow m={m} nick={nick} isOwn={isOwn} showHeader={showHeader} handleTouchStart={handleTouchStart} clearTouchTimer={clearTouchTimer} onContextMenu={onContextMenu} onImageOpen={onImageOpen} onLinkOpen={onLinkOpen} nickByUserId={nickByUserId} myUserId={myUserId} onToggleReaction={onToggleReaction} />
   }
 
   return <BubbleMessage m={m} nick={nick} isOwn={isOwn} showHeader={showHeader} isNew={isNew} members={members} nickByUserId={nickByUserId} myUserId={myUserId} onLinkOpen={onLinkOpen} onToggleReaction={onToggleReaction} onVideoFloat={onVideoFloat} onVideoPlay={onVideoPlay} onVideoRef={onVideoRef} floatingVideo={floatingVideo} handleTouchStart={handleTouchStart} clearTouchTimer={clearTouchTimer} onContextMenu={onContextMenu} />

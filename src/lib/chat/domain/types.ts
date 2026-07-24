@@ -70,6 +70,7 @@ export interface OgData {
   description?: string
   image?: string
   site_name?: string
+  kind?: 'link' | 'error'
 }
 
 export interface ChannelCategory {

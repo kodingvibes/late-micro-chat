@@ -1,5 +1,6 @@
 import type { ChannelState, ChatMessage, UserInfo, ChannelInfo, ChannelMember, AttachmentMeta, ChannelCategory } from '../chat/domain/types'
 import { debugLog, debugError } from '../session-debug'
+import { seed as seedUnfurl } from '../chat/unfurlStore'
 
 type StateHandler = (state: Partial<{
   connected: boolean
@@ -192,6 +193,9 @@ export class ChatClient {
           const m = ch.messages.find(x => x.id === data.id)
           if (m) {
             m.og_data = (data.og_data as ChatMessage['og_data']) ?? null
+            // Seed the client-pull unfurl cache too, so LinkPreviewList
+            // doesn't re-fetch a URL the server already resolved.
+            if (m.og_data) seedUnfurl(m.og_data)
             this.emitState({ channels: new Map(this.channels) })
             break
           }
