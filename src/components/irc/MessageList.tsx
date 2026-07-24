@@ -12,7 +12,7 @@ import AttachmentCard from './AttachmentCard'
 import AudioWaveform from './AudioWaveform'
 import MessageReactions from './MessageReactions'
 import VoiceNotePlayer from './VoiceNotePlayer'
-import MeasuredLazyMount from './MeasuredLazyMount'
+import LazyMount from './LazyMount'
 import { useScrollAnchor } from './useScrollAnchor'
 
 const estimateAudioHeight = (_width: number) => 120
@@ -215,9 +215,9 @@ function ReplyBlock({ message, containerWidth }: { message: ChatMessage; contain
           const single = urls.length === 1 ? toUrl(urls[0]) : (() => { const e = extractImageUrl(raw); return e ? toUrl(e) : null })()
           return single ? <img src={single} alt="" className="h-10 w-10 rounded object-cover mt-0.5" loading="lazy" /> : null
         })() : att?.kind === 'voicenote' ? (
-          <div className="mt-0.5"><MeasuredLazyMount estimatedHeight={estimateAudioHeight(containerWidth)}><VoiceNotePlayer noteId={att.id} /></MeasuredLazyMount></div>
+          <div className="mt-0.5"><LazyMount minHeight={estimateAudioHeight(containerWidth)}><VoiceNotePlayer noteId={att.id} /></LazyMount></div>
         ) : att?.kind === 'audio' ? (
-          <div className="mt-0.5"><MeasuredLazyMount estimatedHeight={estimateAudioHeight(containerWidth)}><AudioWaveform src={`/api/chat/attachments/${att.id}`} /></MeasuredLazyMount></div>
+          <div className="mt-0.5"><LazyMount minHeight={estimateAudioHeight(containerWidth)}><AudioWaveform src={`/api/chat/attachments/${att.id}`} /></LazyMount></div>
         ) : att ? (
           <p className="text-[12px] text-slate-400 truncate">📎 {att.kind}</p>
         ) : raw && <p className="text-[13px] text-slate-400 truncate">{raw}</p>}
@@ -251,8 +251,8 @@ function ContentBlock({ message, members, isOwn, containerWidth, onVideoFloat, o
   const att = getAttachmentMarker(m.content)
   if (att) {
     const caption = extractImageCaption(m.content)
-    if (att.kind === 'voicenote') return <MeasuredLazyMount estimatedHeight={estimateAudioHeight(containerWidth)}><VoiceNotePlayer noteId={att.id} /></MeasuredLazyMount>
-    if (att.kind === 'audio') return <MeasuredLazyMount estimatedHeight={estimateAudioHeight(containerWidth)}><AudioWaveform src={`/api/chat/attachments/${att.id}`} /></MeasuredLazyMount>
+    if (att.kind === 'voicenote') return <LazyMount minHeight={estimateAudioHeight(containerWidth)}><VoiceNotePlayer noteId={att.id} /></LazyMount>
+    if (att.kind === 'audio') return <LazyMount minHeight={estimateAudioHeight(containerWidth)}><AudioWaveform src={`/api/chat/attachments/${att.id}`} /></LazyMount>
     return <>{caption && <RichText text={caption} members={members} isOwn={isOwn} />}<AttachmentCard attachmentId={att.id} onFloat={onVideoFloat} onVideoPlay={onVideoPlay} onVideoRef={onVideoRef} floatingVideo={floatingVideo} /></>
   }
   if (hasImageMarker(m.content)) return null
@@ -378,7 +378,7 @@ function ImageRow({ m, nick, isOwn, showHeader, columnWidth, handleTouchStart, c
             />
           )}
         {onLinkOpen && (
-          <MeasuredLazyMount estimatedHeight={estimateOgHeight(actualWidth)}><LinkPreviewList content={m.content} ogData={m.og_data} onOpen={onLinkOpen} /></MeasuredLazyMount>
+          <LazyMount minHeight={estimateOgHeight(actualWidth)}><LinkPreviewList content={m.content} ogData={m.og_data} onOpen={onLinkOpen} /></LazyMount>
         )}
       </div>
       <span className="text-[10px] text-slate-500 tabular-nums mt-0.5 px-1 opacity-100 sm:opacity-0 sm:group-hover/msg:opacity-100 inline-flex items-center gap-1">
@@ -448,7 +448,7 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
   // Card sits ABOVE the message bubble (WhatsApp-style), so the spacing
   // is a bottom gap to the bubble. Full width of the column: the column
   // is what fixes the card size (see widthClass).
-  // items-stretch (not items-end/start): the MeasuredLazyMount wrapper is a bare
+  // items-stretch (not items-end/start): the LazyMount wrapper is a bare
   // flex item, so end/start alignment would shrink it to the card's
   // intrinsic text width and previews would come out uneven again.
   const linkContainerClass = 'mb-1.5 flex w-full min-w-0 flex-col items-stretch gap-1.5'
@@ -466,7 +466,7 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
       <div className={containerClass}>
         {onLinkOpen && (
           <div className={linkContainerClass}>
-            <MeasuredLazyMount estimatedHeight={estimateOgHeight(bubbleWidth)}><LinkPreviewList content={m.content} ogData={m.og_data} onOpen={onLinkOpen} /></MeasuredLazyMount>
+            <LazyMount minHeight={estimateOgHeight(bubbleWidth)}><LinkPreviewList content={m.content} ogData={m.og_data} onOpen={onLinkOpen} /></LazyMount>
           </div>
         )}
         <div className={bubbleClass}>
