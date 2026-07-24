@@ -22,6 +22,9 @@ export interface ChatMessage {
   og_data?: OgData | null
   reactions?: Reaction[]
   created_at: number
+  // Set the first time the author edits the message. Only drives the
+  // "(editado)" marker; the edit window is measured from created_at.
+  edited_at?: number | null
   mentioned_user_ids?: number[]
   mentioned_emails?: string[]
   reply_to?: number | null
