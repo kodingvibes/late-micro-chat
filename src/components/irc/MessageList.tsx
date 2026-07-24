@@ -546,8 +546,56 @@ export default function MessageList({
   // Track which message IDs have already appeared so new
   // ones get the slide-up-fade-in animation on mount.
   const seenIdsRef = useRef<Set<number>>(new Set())
+  // IDs that arrived via pagination (prepended to the list) should
+  // not animate; animating a whole batch of history while the scroll
+  // re-anchors causes the visible jitter / flicker when scrolling up.
+  const historyIdsRef = useRef<Set<number>>(new Set())
+  // Snapshot of the previous message array so we can tell which IDs
+  // were added to the top by a history load versus live WS messages.
+  const prevMessagesRef = useRef<ChatMessage[]>(messages)
   const { menu: contextMenu, setMenu: setContextMenu, close: closeContextMenu } = useContextMenuState()
   const items = buildDisplayList(messages, currentNick, nickByUserId ?? new Map())
+
+  // Detect messages that were prepended by a history load and mark
+  // their IDs so they skip the entry animation. Live messages keep
+  // the slide-up-fade-in effect.
+  useEffect(() => {
+    const prev = prevMessagesRef.current
+    prevMessagesRef.current = messages
+    if (messages.length === 0 || prev.length === 0) {
+      if (messages.length === 0) {
+        historyIdsRef.current.clear()
+        seenIdsRef.current.clear()
+      }
+      return
+    }
+    const prevIds = new Set(prev.map(m => m.id))
+    const newHistoryIds: number[] = []
+    let foundPrepend = false
+    for (let i = 0; i < messages.length; i++) {
+      const m = messages[i]
+      if (!prevIds.has(m.id)) {
+        // If all new IDs are at the beginning of the array, this
+        // is a pagination prepend. Once we hit an existing ID we stop.
+        if (i < prev.length) {
+          foundPrepend = true
+          newHistoryIds.push(m.id)
+        } else if (!foundPrepend) {
+          // New IDs only after the old ones -> live message append.
+          break
+        }
+      } else {
+        // Reached the boundary between prepended history and prior
+        // messages; stop scanning the top region.
+        if (foundPrepend) break
+      }
+    }
+    if (newHistoryIds.length > 0) {
+      for (const id of newHistoryIds) {
+        historyIdsRef.current.add(id)
+      }
+    }
+  }, [messages])
 
   // Combine the explicit channel members list with whatever
   // sender nicks we've seen in messages. The members endpoint
@@ -700,18 +748,24 @@ export default function MessageList({
       el.scrollTop < 120
     ) {
       loadingRef.current = true
+      const oldScrollTop = el.scrollTop
       const oldHeight = el.scrollHeight
       Promise.resolve(onLoadMore())
         .catch(() => {})
         .finally(() => {
           loadingRef.current = false
           // After the new messages render, the scrollHeight grows.
-          // Bump scrollTop by the delta so the user's view stays
-          // anchored on the same first visible message.
+          // Re-anchor on the same first visible message by restoring
+          // the old offset plus the height delta. We use a double rAF
+          // so React has rendered the new rows and layout is stable.
           requestAnimationFrame(() => {
-            const newHeight = el.scrollHeight
-            const delta = newHeight - oldHeight
-            if (delta > 0) el.scrollTop = el.scrollTop + delta
+            requestAnimationFrame(() => {
+              const newHeight = el.scrollHeight
+              const delta = newHeight - oldHeight
+              if (delta > 0) {
+                el.scrollTop = oldScrollTop + delta
+              }
+            })
           })
         })
     }
@@ -760,7 +814,9 @@ export default function MessageList({
             return <DayDivider key={`d-${idx}`} ts={item.message.created_at * 1000} />
           }
           const id = item.message.id
-          const isNew = didInitialScrollRef.current && !seenIdsRef.current.has(id)
+          const isNew = didInitialScrollRef.current
+            && !seenIdsRef.current.has(id)
+            && !historyIdsRef.current.has(id)
           if (isNew) seenIdsRef.current.add(id)
           // Show header on the first visible bubble, whenever the author
           // changes, when the message type changes, or after 5 min of

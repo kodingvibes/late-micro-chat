@@ -525,8 +525,9 @@ export function Irc() {
     setLoadingMore(true)
     try {
       const oldestId = ch.messages[0].id
-      const loaded = await clientRef.current!.loadHistory(currentChannel, oldestId)
-      if (loaded.length < 50) {
+      const limit = 20
+      const loaded = await clientRef.current!.loadHistory(currentChannel, oldestId, limit)
+      if (loaded.length < limit) {
         setHasMore(prev => ({ ...prev, [currentChannel]: false }))
       }
     } catch {
