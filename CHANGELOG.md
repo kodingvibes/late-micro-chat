@@ -1,3 +1,10 @@
+## [1.1.7](https://github.com/kodingvibes/late-micro-chat/compare/v1.1.6...v1.1.7) (2026-07-24)
+
+
+### Bug Fixes
+
+* revert MeasuredLazyMount to prevent oversized placeholders ([9e0edb3](https://github.com/kodingvibes/late-micro-chat/commit/9e0edb3348acb413c6fc03bb2a76f1e642d9a4b6))
+
 ## [1.1.6](https://github.com/kodingvibes/late-micro-chat/compare/v1.1.5...v1.1.6) (2026-07-24)
 
 
