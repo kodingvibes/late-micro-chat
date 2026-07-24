@@ -12,7 +12,8 @@ import AttachmentCard from './AttachmentCard'
 import AudioWaveform from './AudioWaveform'
 import MessageReactions from './MessageReactions'
 import VoiceNotePlayer from './VoiceNotePlayer'
-import LazyMount, { estimateLazyHeight } from './LazyMount'
+import LazyMount from './LazyMount'
+import { estimateImageHeight, estimateOgHeight, estimateAudioHeight } from './useEstimatedHeight'
 import './irc.css'
 
 interface MessageListProps {
@@ -183,7 +184,7 @@ function DayDivider({ ts }: { ts: number }) {
   )
 }
 
-function ReplyBlock({ message }: { message: ChatMessage }) {
+function ReplyBlock({ message, containerWidth }: { message: ChatMessage; containerWidth: number }) {
   const m = message
   if (!m.reply_to || !m.reply_to_author) return null
   const raw = m.reply_to_content || ''
@@ -210,9 +211,9 @@ function ReplyBlock({ message }: { message: ChatMessage }) {
           const single = urls.length === 1 ? toUrl(urls[0]) : (() => { const e = extractImageUrl(raw); return e ? toUrl(e) : null })()
           return single ? <img src={single} alt="" className="h-10 w-10 rounded object-cover mt-0.5" loading="lazy" /> : null
         })() : att?.kind === 'voicenote' ? (
-          <div className="mt-0.5"><LazyMount minHeight={120}><VoiceNotePlayer noteId={att.id} /></LazyMount></div>
+          <div className="mt-0.5"><LazyMount minHeight={estimateAudioHeight(containerWidth)}><VoiceNotePlayer noteId={att.id} /></LazyMount></div>
         ) : att?.kind === 'audio' ? (
-          <div className="mt-0.5"><LazyMount minHeight={120}><AudioWaveform src={`/api/chat/attachments/${att.id}`} /></LazyMount></div>
+          <div className="mt-0.5"><LazyMount minHeight={estimateAudioHeight(containerWidth)}><AudioWaveform src={`/api/chat/attachments/${att.id}`} /></LazyMount></div>
         ) : att ? (
           <p className="text-[12px] text-slate-400 truncate">📎 {att.kind}</p>
         ) : raw && <p className="text-[13px] text-slate-400 truncate">{raw}</p>}
@@ -234,8 +235,9 @@ function ForwardedBlock({ message }: { message: ChatMessage }) {
   )
 }
 
-function ContentBlock({ message, members, isOwn, onVideoFloat, onVideoPlay, onVideoRef, floatingVideo }: {
+function ContentBlock({ message, members, isOwn, containerWidth, onVideoFloat, onVideoPlay, onVideoRef, floatingVideo }: {
   message: ChatMessage; members?: { id: number; display_name: string }[]; isOwn: boolean
+  containerWidth: number
   onVideoFloat?: (id: string) => void; onVideoPlay?: (id: string) => void; onVideoRef?: (id: string, el: HTMLVideoElement | null) => void; floatingVideo?: string | null
 }) {
   const m = message
@@ -243,12 +245,12 @@ function ContentBlock({ message, members, isOwn, onVideoFloat, onVideoPlay, onVi
     return <span className="text-slate-500 italic line-through text-sm">{m.content === '[eliminado]' ? '[eliminado]' : '[mensaje oculto]'}</span>
   }
   const att = getAttachmentMarker(m.content)
-    if (att) {
-      const caption = extractImageCaption(m.content)
-      if (att.kind === 'voicenote') return <LazyMount minHeight={120}><VoiceNotePlayer noteId={att.id} /></LazyMount>
-      if (att.kind === 'audio') return <LazyMount minHeight={120}><AudioWaveform src={`/api/chat/attachments/${att.id}`} /></LazyMount>
-      return <>{caption && <RichText text={caption} members={members} isOwn={isOwn} />}<AttachmentCard attachmentId={att.id} onFloat={onVideoFloat} onVideoPlay={onVideoPlay} onVideoRef={onVideoRef} floatingVideo={floatingVideo} /></>
-    }
+  if (att) {
+    const caption = extractImageCaption(m.content)
+    if (att.kind === 'voicenote') return <LazyMount minHeight={estimateAudioHeight(containerWidth)}><VoiceNotePlayer noteId={att.id} /></LazyMount>
+    if (att.kind === 'audio') return <LazyMount minHeight={estimateAudioHeight(containerWidth)}><AudioWaveform src={`/api/chat/attachments/${att.id}`} /></LazyMount>
+    return <>{caption && <RichText text={caption} members={members} isOwn={isOwn} />}<AttachmentCard attachmentId={att.id} onFloat={onVideoFloat} onVideoPlay={onVideoPlay} onVideoRef={onVideoRef} floatingVideo={floatingVideo} /></>
+  }
   if (hasImageMarker(m.content)) return null
   return <RichText text={m.content} members={members} isOwn={isOwn} />
 }
@@ -296,8 +298,8 @@ function ActionRow({ m, nick, isOwn, handleTouchStart, clearTouchTimer, onContex
   )
 }
 
-function ImageRow({ m, nick, isOwn, showHeader, handleTouchStart, clearTouchTimer, onContextMenu, onImageOpen, onLinkOpen, nickByUserId, myUserId, onToggleReaction }: {
-  m: ChatMessage; nick: string; isOwn: boolean; showHeader: boolean
+function ImageRow({ m, nick, isOwn, showHeader, columnWidth, handleTouchStart, clearTouchTimer, onContextMenu, onImageOpen, onLinkOpen, nickByUserId, myUserId, onToggleReaction }: {
+  m: ChatMessage; nick: string; isOwn: boolean; showHeader: boolean; columnWidth: number
   handleTouchStart: (e: React.TouchEvent) => void; clearTouchTimer: () => void
   onContextMenu?: (msg: ChatMessage, x: number, y: number) => void
   onImageOpen?: (images: string[], index: number) => void
@@ -306,6 +308,20 @@ function ImageRow({ m, nick, isOwn, showHeader, handleTouchStart, clearTouchTime
   myUserId?: number | null
   onToggleReaction?: (messageId: number, emoji: string) => void
 }) {
+  const columnRef = useRef<HTMLDivElement>(null)
+  const [actualWidth, setActualWidth] = useState(columnWidth)
+  useEffect(() => {
+    const el = columnRef.current
+    if (!el) return
+    const update = () => setActualWidth(el.clientWidth)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  useEffect(() => {
+    if (columnWidth > 0) setActualWidth(columnWidth)
+  }, [columnWidth])
   const multi = extractImageUrls(m.content)
   let allImages: string[] = []
   let galleryCaption: string | null = null
@@ -330,7 +346,7 @@ function ImageRow({ m, nick, isOwn, showHeader, handleTouchStart, clearTouchTime
       onTouchMove={clearTouchTimer}
       onTouchEnd={clearTouchTimer}
     >
-      <div className={`flex flex-col max-w-[75%] sm:max-w-[65%] ${isOwn ? 'items-end' : 'items-start'}`}>
+      <div ref={columnRef} className={`flex flex-col max-w-[75%] sm:max-w-[65%] ${isOwn ? 'items-end' : 'items-start'}`}>
         {showHeader && (
           <div className="text-[11px] font-semibold mb-0.5" style={{ color: getNickColor(nick) }}>
             {nick}
@@ -338,7 +354,7 @@ function ImageRow({ m, nick, isOwn, showHeader, handleTouchStart, clearTouchTime
         )}
         <div className="space-y-1.5">
           <ForwardedBlock message={m} />
-          <ReplyBlock message={m} />
+          <ReplyBlock message={m} containerWidth={actualWidth} />
           {galleryCaption && (
             <div className="text-sm leading-snug text-slate-100 break-words">
               {galleryCaption}
@@ -357,11 +373,11 @@ function ImageRow({ m, nick, isOwn, showHeader, handleTouchStart, clearTouchTime
               onToggle={(emoji) => onToggleReaction?.(m.id, emoji)}
             />
           )}
-          {onLinkOpen && (
-            <LazyMount minHeight={80}><LinkPreviewList content={m.content} ogData={m.og_data} onOpen={onLinkOpen} /></LazyMount>
-          )}
-        </div>
-        <span className="text-[10px] text-slate-500 tabular-nums mt-0.5 px-1 opacity-100 sm:opacity-0 sm:group-hover/msg:opacity-100 inline-flex items-center gap-1">
+        {onLinkOpen && (
+          <LazyMount minHeight={estimateOgHeight(actualWidth)}><LinkPreviewList content={m.content} ogData={m.og_data} onOpen={onLinkOpen} /></LazyMount>
+        )}
+      </div>
+      <span className="text-[10px] text-slate-500 tabular-nums mt-0.5 px-1 opacity-100 sm:opacity-0 sm:group-hover/msg:opacity-100 inline-flex items-center gap-1">
           <span>{formatTime(m.created_at * 1000)}</span>
           {m.edited_at ? <span title="Editado">(editado)</span> : null}
           {isOwn && (
@@ -388,6 +404,17 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
   handleTouchStart: (e: React.TouchEvent) => void; clearTouchTimer: () => void
   onContextMenu?: (msg: ChatMessage, x: number, y: number) => void
 }) {
+  const bubbleRef = useRef<HTMLDivElement>(null)
+  const [bubbleWidth, setBubbleWidth] = useState(0)
+  useEffect(() => {
+    const el = bubbleRef.current
+    if (!el) return
+    const update = () => setBubbleWidth(el.clientWidth)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
   const bubbleClass = isOwn
     ? 'rounded-2xl bg-indigo-800 text-slate-50 shadow-bubble-own w-full transition-shadow hover:shadow-lg'
     : 'rounded-2xl bg-slate-800/70 text-slate-100 shadow-bubble w-full transition-shadow hover:shadow-lg'
@@ -424,6 +451,7 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
 
   return (
     <div
+      ref={bubbleRef}
       id={`msg-${m.id}`}
       className={outerClass}
       onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(m, e.clientX, e.clientY) }}
@@ -434,7 +462,7 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
       <div className={containerClass}>
         {onLinkOpen && (
           <div className={linkContainerClass}>
-            <LazyMount minHeight={estimateLazyHeight(m.content)}><LinkPreviewList content={m.content} ogData={m.og_data} onOpen={onLinkOpen} /></LazyMount>
+            <LazyMount minHeight={estimateOgHeight(bubbleWidth)}><LinkPreviewList content={m.content} ogData={m.og_data} onOpen={onLinkOpen} /></LazyMount>
           </div>
         )}
         <div className={bubbleClass}>
@@ -446,8 +474,8 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
           <div className="px-3 py-1 text-[15px] sm:text-sm leading-relaxed">
             <div key={m.id}>
               <ForwardedBlock message={m} />
-              <ReplyBlock message={m} />
-              <ContentBlock message={m} members={members} isOwn={isOwn} onVideoFloat={onVideoFloat} onVideoPlay={onVideoPlay} onVideoRef={onVideoRef} floatingVideo={floatingVideo} />
+              <ReplyBlock message={m} containerWidth={bubbleWidth} />
+              <ContentBlock message={m} members={members} isOwn={isOwn} containerWidth={bubbleWidth} onVideoFloat={onVideoFloat} onVideoPlay={onVideoPlay} onVideoRef={onVideoRef} floatingVideo={floatingVideo} />
               {m.reactions && m.reactions.length > 0 && nickByUserId && (
                 <MessageReactions
                   reactions={m.reactions}
@@ -475,6 +503,21 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
   )
 }
 
+function useImageColumnWidth(): number {
+  const ref = useRef<HTMLDivElement>(null)
+  const [width, setWidth] = useState(0)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const update = () => setWidth(el.clientWidth)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  return width
+}
+
 function MessageRow({
   message, isOwn, showHeader, isNew, members, nickByUserId, myUserId, onImageOpen, onLinkOpen,
   onContextMenu, onToggleReaction, onVideoFloat, onVideoPlay, onVideoRef, floatingVideo,
@@ -495,6 +538,17 @@ function MessageRow({
   onVideoRef?: (attachmentId: string, el: HTMLVideoElement | null) => void
   floatingVideo?: string | null
 }) {
+  const imageColumnRef = useRef<HTMLDivElement>(null)
+  const [imageColumnWidth, setImageColumnWidth] = useState(0)
+  useEffect(() => {
+    const el = imageColumnRef.current
+    if (!el) return
+    const update = () => setImageColumnWidth(el.clientWidth)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
   const m = message
   const nick = nickByUserId?.get(m.user_id) ?? m.display_name
 
@@ -521,10 +575,32 @@ function MessageRow({
   }
 
   if (isImage && onImageOpen) {
-    return <ImageRow m={m} nick={nick} isOwn={isOwn} showHeader={showHeader} handleTouchStart={handleTouchStart} clearTouchTimer={clearTouchTimer} onContextMenu={onContextMenu} onImageOpen={onImageOpen} onLinkOpen={onLinkOpen} nickByUserId={nickByUserId} myUserId={myUserId} onToggleReaction={onToggleReaction} />
+    return <ImageRow m={m} nick={nick} isOwn={isOwn} showHeader={showHeader} columnWidth={imageColumnWidth} handleTouchStart={handleTouchStart} clearTouchTimer={clearTouchTimer} onContextMenu={onContextMenu} onImageOpen={onImageOpen} onLinkOpen={onLinkOpen} nickByUserId={nickByUserId} myUserId={myUserId} onToggleReaction={onToggleReaction} />
   }
 
-  return <BubbleMessage m={m} nick={nick} isOwn={isOwn} showHeader={showHeader} isNew={isNew} members={members} nickByUserId={nickByUserId} myUserId={myUserId} onLinkOpen={onLinkOpen} onToggleReaction={onToggleReaction} onVideoFloat={onVideoFloat} onVideoPlay={onVideoPlay} onVideoRef={onVideoRef} floatingVideo={floatingVideo} handleTouchStart={handleTouchStart} clearTouchTimer={clearTouchTimer} onContextMenu={onContextMenu} />
+  return (
+    <div ref={imageColumnRef}>
+      <BubbleMessage
+        m={m}
+        nick={nick}
+        isOwn={isOwn}
+        showHeader={showHeader}
+        isNew={isNew}
+        members={members}
+        nickByUserId={nickByUserId}
+        myUserId={myUserId}
+        onLinkOpen={onLinkOpen}
+        onToggleReaction={onToggleReaction}
+        onVideoFloat={onVideoFloat}
+        onVideoPlay={onVideoPlay}
+        onVideoRef={onVideoRef}
+        floatingVideo={floatingVideo}
+        handleTouchStart={handleTouchStart}
+        clearTouchTimer={clearTouchTimer}
+        onContextMenu={onContextMenu}
+      />
+    </div>
+  )
 }
 
 export default function MessageList({
