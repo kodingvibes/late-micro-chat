@@ -1,3 +1,10 @@
+## [1.1.5](https://github.com/kodingvibes/late-micro-chat/compare/v1.1.4...v1.1.5) (2026-07-24)
+
+
+### Bug Fixes
+
+* restore window.ChatEngine compatibility handle and guard MutationObserver ([bfed6b3](https://github.com/kodingvibes/late-micro-chat/commit/bfed6b39b7b177c7715c1d006c7cafcb3c0c86b7))
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
