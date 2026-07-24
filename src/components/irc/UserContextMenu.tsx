@@ -40,10 +40,12 @@ export default function UserContextMenu({
     }
   }, [state.show, onClose])
 
+  const { x, y } = state
+  const { x: adjustedX, y: adjustedY } = useViewportClamp(ref, x, y, state.show)
+
   if (!state.show || !state.user) return null
 
-  const { user, x, y } = state
-  const { x: adjustedX, y: adjustedY } = useViewportClamp(ref, x, y, state.show)
+  const { user } = state
 
   return (
     <div

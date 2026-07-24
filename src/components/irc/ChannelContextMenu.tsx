@@ -47,10 +47,12 @@ export default function ChannelContextMenu({
     }
   }, [state.show, onClose])
 
+  const { x, y } = state
+  const { x: adjustedX, y: adjustedY } = useViewportClamp(ref, x, y, state.show)
+
   if (!state.show || !state.channel) return null
 
-  const { channel, x, y } = state
-  const { x: adjustedX, y: adjustedY } = useViewportClamp(ref, x, y, state.show)
+  const { channel } = state
 
   return (
     <div

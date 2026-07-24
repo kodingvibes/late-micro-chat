@@ -76,10 +76,12 @@ export default function MessageContextMenu({
     }
   }, [state.show, onClose])
 
+  const { x, y } = state
+  const { x: adjustedX, y: adjustedY } = useViewportClamp(ref, x, y, state.show)
+
   if (!state.show || !state.message) return null
 
-  const { message, isOwn, isTargetOnline, x, y } = state
-  const { x: adjustedX, y: adjustedY } = useViewportClamp(ref, x, y, state.show)
+  const { message, isOwn, isTargetOnline } = state
 
   return (
     <div
