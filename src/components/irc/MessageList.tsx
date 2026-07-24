@@ -14,6 +14,7 @@ import MessageReactions from './MessageReactions'
 import VoiceNotePlayer from './VoiceNotePlayer'
 import LazyMount from './LazyMount'
 import { estimateImageHeight, estimateOgHeight, estimateAudioHeight } from './useEstimatedHeight'
+import { useScrollAnchor } from './useScrollAnchor'
 import './irc.css'
 
 interface MessageListProps {
@@ -155,13 +156,14 @@ function buildDisplayList(
   nickByUserId: Map<number, string>,
 ): DisplayItem[] {
   const items: DisplayItem[] = []
-  let lastDay = -1
+  let lastDay = ''
 
   const nickFor = (m: ChatMessage) => nickByUserId.get(m.user_id) ?? m.display_name
   const isOwn = (m: ChatMessage) => nickFor(m) === currentNick
 
   for (const msg of messages) {
-    const day = new Date(msg.created_at * 1000).getDate()
+    const d = new Date(msg.created_at * 1000)
+    const day = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
     if (day !== lastDay) {
       items.push({ type: 'day', message: msg, isOwn: false })
       lastDay = day
@@ -503,21 +505,6 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
   )
 }
 
-function useImageColumnWidth(): number {
-  const ref = useRef<HTMLDivElement>(null)
-  const [width, setWidth] = useState(0)
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const update = () => setWidth(el.clientWidth)
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
-  return width
-}
-
 function MessageRow({
   message, isOwn, showHeader, isNew, members, nickByUserId, myUserId, onImageOpen, onLinkOpen,
   onContextMenu, onToggleReaction, onVideoFloat, onVideoPlay, onVideoRef, floatingVideo,
@@ -538,12 +525,16 @@ function MessageRow({
   onVideoRef?: (attachmentId: string, el: HTMLVideoElement | null) => void
   floatingVideo?: string | null
 }) {
-  const imageColumnRef = useRef<HTMLDivElement>(null)
-  const [imageColumnWidth, setImageColumnWidth] = useState(0)
+  const rowRef = useRef<HTMLDivElement>(null)
+  const [columnWidth, setColumnWidth] = useState(0)
   useEffect(() => {
-    const el = imageColumnRef.current
+    const el = rowRef.current
     if (!el) return
-    const update = () => setImageColumnWidth(el.clientWidth)
+    const update = () => {
+      // The column is the flex child that grows to max-w-[75%]/[65%].
+      const column = el.querySelector<HTMLElement>('[class*="max-w-[75%]"]')
+      setColumnWidth(column?.clientWidth ?? el.clientWidth)
+    }
     update()
     const ro = new ResizeObserver(update)
     ro.observe(el)
@@ -575,11 +566,11 @@ function MessageRow({
   }
 
   if (isImage && onImageOpen) {
-    return <ImageRow m={m} nick={nick} isOwn={isOwn} showHeader={showHeader} columnWidth={imageColumnWidth} handleTouchStart={handleTouchStart} clearTouchTimer={clearTouchTimer} onContextMenu={onContextMenu} onImageOpen={onImageOpen} onLinkOpen={onLinkOpen} nickByUserId={nickByUserId} myUserId={myUserId} onToggleReaction={onToggleReaction} />
+    return <ImageRow m={m} nick={nick} isOwn={isOwn} showHeader={showHeader} columnWidth={columnWidth} handleTouchStart={handleTouchStart} clearTouchTimer={clearTouchTimer} onContextMenu={onContextMenu} onImageOpen={onImageOpen} onLinkOpen={onLinkOpen} nickByUserId={nickByUserId} myUserId={myUserId} onToggleReaction={onToggleReaction} />
   }
 
   return (
-    <div ref={imageColumnRef}>
+    <div ref={rowRef}>
       <BubbleMessage
         m={m}
         nick={nick}
@@ -620,10 +611,6 @@ export default function MessageList({
   const didInitialScrollRef = useRef(false)
   // Guard so we only fire one load-more per scroll-up gesture.
   const loadingRef = useRef(false)
-  // While a history load is in flight (and shortly after), disable
-  // the global bottom-following ResizeObserver so a growing scrollHeight
-  // doesn't get misinterpreted as "user is near bottom".
-  const historyLoadingRef = useRef(false)
   // Track which message IDs have already appeared so new
   // ones get the slide-up-fade-in animation on mount.
   const seenIdsRef = useRef<Set<number>>(new Set())
@@ -634,6 +621,7 @@ export default function MessageList({
   // Snapshot of the previous message array so we can tell which IDs
   // were added to the top by a history load versus live WS messages.
   const prevMessagesRef = useRef<ChatMessage[]>(messages)
+  const { save: saveAnchor, restore: restoreAnchor } = useScrollAnchor()
   const { menu: contextMenu, setMenu: setContextMenu, close: closeContextMenu } = useContextMenuState()
   const items = buildDisplayList(messages, currentNick, nickByUserId ?? new Map())
 
@@ -690,6 +678,12 @@ export default function MessageList({
     return Array.from(seen, ([id, display_name]) => ({ id, display_name }))
   }, [channelMembers, nickByUserId])
 
+  const stickToBottom = useCallback(() => {
+    const el = containerRef.current
+    if (!el) return
+    el.scrollTop = el.scrollHeight
+  }, [])
+
   // Initial scroll: when the channel changes (or on first
   // mount once messages have loaded), jump to the bottom.
   // useLayoutEffect so the jump happens before paint — without
@@ -698,55 +692,34 @@ export default function MessageList({
   // (images, etc.) that would otherwise leave a gap.
   useLayoutEffect(() => {
     let raf1: number | null = null
-    const scroll = () => {
-      const el = containerRef.current
-      if (el) el.scrollTop = el.scrollHeight
-      bottomRef.current?.scrollIntoView({ block: 'end' })
-    }
     if (prevChannelRef.current !== channelName) {
       // Channel switched: jump to the bottom of the new list.
       prevChannelRef.current = channelName
       didInitialScrollRef.current = false
       seenIdsRef.current = new Set()
+      historyIdsRef.current.clear()
       setAtBottom(true)
-      scroll()
-      raf1 = requestAnimationFrame(() => requestAnimationFrame(scroll))
+      stickToBottom()
+      raf1 = requestAnimationFrame(() => requestAnimationFrame(stickToBottom))
     } else if (!didInitialScrollRef.current && items.length > 0) {
       // Same channel as last time (or first mount after
       // reload). Once we have messages, jump to the bottom so
       // the most recent message is visible.
       didInitialScrollRef.current = true
-      scroll()
-      raf1 = requestAnimationFrame(() => requestAnimationFrame(scroll))
+      stickToBottom()
+      raf1 = requestAnimationFrame(() => requestAnimationFrame(stickToBottom))
     }
     return () => {
       if (raf1 !== null) cancelAnimationFrame(raf1)
     }
-  }, [channelName, items.length])
+  }, [channelName, items.length, stickToBottom])
 
   // Auto-scroll on new messages — but only if the user was
   // already near the bottom when the message landed. Reading
   // history (scrolling up) must not yank the view down.
   // The exception: messages from the local user are always
   // intentional, so we always scroll to the bottom for them,
-  // even if the user has scrolled up to read history. Without
-  // this, a tall image sent just before a follow-up text would
-  // leave the text invisible (the image inflates the container
-  // height and the next send never auto-scrolls because
-  // atBottom is now false).
-  //
-  // We fire two scrolls: one synchronously in useLayoutEffect
-  // (before paint, so the user never sees a wrong scroll
-  // position), and a second one via a double rAF to catch
-  // any layout that resolves after the first scroll — image
-  // intrinsic sizes, font swap, etc. The two-stage approach
-  // is what makes the snap feel correct even for messages
-  // that include tall attachments.
-  //
-  // Detection key: the last message's ID. With one bubble per
-  // message, every new message creates a new row, so items.length
-  // grows on every send — but using the ID directly is still the
-  // most precise signal.
+  // even if the user has scrolled up to read history.
   const lastId = messages.length > 0 ? messages[messages.length - 1].id : null
   const lastIsOwn = lastId !== null
     && messages.length > 0
@@ -757,63 +730,32 @@ export default function MessageList({
     prevLastIdRef.current = lastId
     if (!isNew) return
     if (!atBottom && !lastIsOwn) return
-    // Synchronous first scroll: put the new message at the
-    // bottom of the visible area before the browser paints,
-    // so there's no flash of off-screen content.
-    const el = containerRef.current
-    if (el) {
-      // Belt-and-suspenders: scrollIntoView for the sentinel
-      // AND a direct scrollTop write to the container. Some
-      // browsers/layouts don't trigger scrollIntoView if the
-      // sentinel is already "visible" per its own geometry
-      // but the container itself is at scrollTop=0.
-      bottomRef.current?.scrollIntoView({ block: 'end' })
-      el.scrollTop = el.scrollHeight
-    }
-    // Deferred second scroll: catches any layout that
-    // resolves after the first scroll (images loading,
-    // markdown rendering, etc.).
-    const raf1 = requestAnimationFrame(() => {
-      const el2 = containerRef.current
-      if (el2) el2.scrollTop = el2.scrollHeight
-      bottomRef.current?.scrollIntoView({ block: 'end' })
-    })
+    stickToBottom()
+    const raf1 = requestAnimationFrame(() => stickToBottom())
     return () => {
       cancelAnimationFrame(raf1)
     }
-  }, [lastId, atBottom, lastIsOwn, myUserId])
+  }, [lastId, atBottom, lastIsOwn, stickToBottom])
 
-  // Reactively follow scrollHeight changes while the user is
-  // "at bottom" (or for their own messages). This catches
-  // late-loading images, cached-media re-renders, and any
-  // other dynamic content that inflates the container after
-  // the initial scroll-to-bottom already ran.
-  const atBottomRef = useRef(true)
-  atBottomRef.current = atBottom
-  const lastIsOwnRef = useRef(false)
-  lastIsOwnRef.current = lastIsOwn
-  useEffect(() => {
+  // When messages change (history loaded, edits, reactions) keep the
+  // viewport anchored on the same visible message instead of letting
+  // the browser or ResizeObservers guess. This is the core fix for
+  // the scroll jitter when lazy content inflates the list.
+  useLayoutEffect(() => {
     const el = containerRef.current
     if (!el) return
-    // Follow the bottom when the user is near it or sent the
-    // last message. Read proximity directly from the DOM (not
-    // from React state) because the state lags: when content
-    // grows, the browser fires a scroll event with the old
-    // scrollTop before our resize handler runs, which would
-    // flip atBottom to false and stop us from following.
-    const observer = new ResizeObserver(() => {
-        if (historyLoadingRef.current) return
-      const distance = el.scrollHeight - el.scrollTop - el.clientHeight
-      const nearBottom = distance < 200
-      const follow = nearBottom || lastIsOwnRef.current
-      if (follow) {
-        el.scrollTop = el.scrollHeight
-        bottomRef.current?.scrollIntoView({ block: 'end' })
-      }
-    })
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
+    saveAnchor(el)
+  })
+
+  useLayoutEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    restoreAnchor(el)
+  })
+
+  useEffect(() => {
+    loadingRef.current = loadingMore ?? false
+  }, [loadingMore])
 
   function handleScroll(e: React.UIEvent<HTMLDivElement>) {
     const el = e.currentTarget
@@ -830,57 +772,13 @@ export default function MessageList({
       el.scrollTop < 120
     ) {
       loadingRef.current = true
-      historyLoadingRef.current = true
-      const oldScrollTop = el.scrollTop
-      const oldHeight = el.scrollHeight
-
-      // Keep re-anchoring the scroll position as lazy content inside
-      // the newly loaded rows finishes loading (images, OG cards, etc.).
-      // We watch scrollHeight for up to 2s after the load completes.
-      let anchorObserver: ResizeObserver | null = null
-      let anchorTimeout: ReturnType<typeof setTimeout> | null = null
-      let currentHeight = oldHeight
-
-      const stopAnchoring = () => {
-        if (anchorObserver) {
-          anchorObserver.disconnect()
-          anchorObserver = null
-        }
-        if (anchorTimeout) {
-          clearTimeout(anchorTimeout)
-          anchorTimeout = null
-        }
-        historyLoadingRef.current = false
-      }
-
-      const reanchor = () => {
-        const newHeight = el.scrollHeight
-        const delta = newHeight - currentHeight
-        if (delta > 0) {
-          el.scrollTop = el.scrollTop + delta
-          currentHeight = newHeight
-        }
-      }
-
+      saveAnchor(el)
       Promise.resolve(onLoadMore())
         .catch(() => {})
         .finally(() => {
-          loadingRef.current = false
-          // Initial anchoring after React has painted the new rows.
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              const newHeight = el.scrollHeight
-              const delta = newHeight - oldHeight
-              if (delta > 0) {
-                el.scrollTop = oldScrollTop + delta
-              }
-              currentHeight = el.scrollHeight
-
-              anchorObserver = new ResizeObserver(() => reanchor())
-              anchorObserver.observe(el)
-              anchorTimeout = setTimeout(stopAnchoring, 2000)
-            })
-          })
+          loadingRef.current = loadingMore ?? false
+          // Restore is handled by the useLayoutEffect above after
+          // React commits the new messages.
         })
     }
   }
@@ -901,6 +799,7 @@ export default function MessageList({
         ref={containerRef}
         onScroll={handleScroll}
         className="absolute inset-0 overflow-y-auto py-2"
+        style={{ overflowAnchor: 'none' }}
       >
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-slate-500 text-sm gap-2">
@@ -980,6 +879,7 @@ export default function MessageList({
             <path d="M6 9l6 6 6-6" />
           </svg>
         </button>
+        
       )}
       {lightbox && (
         <ImageLightbox

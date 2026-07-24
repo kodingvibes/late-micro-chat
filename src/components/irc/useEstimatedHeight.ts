@@ -15,7 +15,8 @@ export function estimateOgHeight(width: number): number {
   return Math.round(width * (9 / 16) + 70)
 }
 
-// Audio/voice note player is ~88px tall plus small gaps.
+// Audio/voice note player is ~88px for the waveform/buttons plus
+// extra labels/metadata, so 120px is a safer placeholder.
 export function estimateAudioHeight(_width: number): number {
-  return 100
+  return 120
 }

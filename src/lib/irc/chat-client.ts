@@ -672,19 +672,33 @@ export class ChatClient {
       this.channels.set(channelId, { ...ch, messages: newMessages })
       this.emitState({ channels: new Map(this.channels) })
     }
-    const data = await this.api<ChatMessage>('POST', `/api/chat/channels/${channelId}/messages`, {
-      content,
-      is_action: options?.is_action,
-      reply_to: options?.reply_to,
-    })
-    // Replace the optimistic message with the real one
-    if (ch) {
-      const cur = this.channels.get(channelId)
-      if (cur) {
-        const replaced = cur.messages.map(m => m.id === tempId ? data : m)
-        this.channels.set(channelId, { ...cur, messages: replaced })
-        this.emitState({ channels: new Map(this.channels) })
+    try {
+      const data = await this.api<ChatMessage>('POST', `/api/chat/channels/${channelId}/messages`, {
+        content,
+        is_action: options?.is_action,
+        reply_to: options?.reply_to,
+      })
+      // Replace the optimistic message with the real one
+      if (ch) {
+        const cur = this.channels.get(channelId)
+        if (cur) {
+          const replaced = cur.messages.map(m => m.id === tempId ? data : m)
+          this.channels.set(channelId, { ...cur, messages: replaced })
+          this.emitState({ channels: new Map(this.channels) })
+        }
       }
+    } catch (err) {
+      // Rollback the optimistic message so it doesn't stay as a ghost
+      // if the server rejects or the network fails.
+      if (ch) {
+        const cur = this.channels.get(channelId)
+        if (cur) {
+          const rolledBack = cur.messages.filter(m => m.id !== tempId)
+          this.channels.set(channelId, { ...cur, messages: rolledBack })
+          this.emitState({ channels: new Map(this.channels) })
+        }
+      }
+      throw err
     }
   }
 
