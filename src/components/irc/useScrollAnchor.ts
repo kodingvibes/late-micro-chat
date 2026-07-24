@@ -47,17 +47,27 @@ export function useScrollAnchor() {
     pendingAnchorRef.current = container ? capture(container, bottomThreshold) : null
   }, [capture])
 
-  const restore = useCallback((container: HTMLElement | null) => {
+  const restore = useCallback((container: HTMLElement | null, immediate = false) => {
     const anchor = pendingAnchorRef.current
     pendingAnchorRef.current = null
     if (!container || !anchor) return
 
-    const target = container.querySelector<HTMLElement>(`#msg-${anchor.id}`)
-    if (!target) return
+    const apply = () => {
+      const target = container.querySelector<HTMLElement>(`#msg-${anchor.id}`)
+      if (!target) return
+      const newTop = target.offsetTop - container.offsetTop
+      const nextScrollTop = newTop + anchor.offset
+      container.scrollTop = nextScrollTop
+    }
 
-    const newTop = target.offsetTop - container.offsetTop
-    const nextScrollTop = newTop + anchor.offset
-    container.scrollTop = nextScrollTop
+    if (immediate) {
+      apply()
+      // Double-layout content (lazy mounts that resize over two frames)
+      // can shift again right after restore. Re-apply once more after paint.
+      requestAnimationFrame(() => requestAnimationFrame(apply))
+    } else {
+      apply()
+    }
   }, [])
 
   return { save, restore }
