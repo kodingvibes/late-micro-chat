@@ -56,11 +56,16 @@ export default function LinkPreviewList({ content, ogData, onOpen }: LinkPreview
 
   if (urls.length === 0) return null
 
+  // Reserve the expected height so the message bubble doesn't collapse
+  // while the unfurl request is in flight and then jump when the card
+  // appears. Each card is ~168px (16:9 banner + text lines).
+  const totalMinHeight = urls.length * 168
+
   return (
-    <>
+    <div style={{ minHeight: totalMinHeight }}>
       {urls.map((url) => (
         <LinkPreviewItem key={`og-${url}`} url={url} onOpen={onOpen} />
       ))}
-    </>
+    </div>
   )
 }

@@ -12,7 +12,7 @@ import AttachmentCard from './AttachmentCard'
 import AudioWaveform from './AudioWaveform'
 import MessageReactions from './MessageReactions'
 import VoiceNotePlayer from './VoiceNotePlayer'
-import LazyMount from './LazyMount'
+import LazyMount, { estimateLazyHeight } from './LazyMount'
 import './irc.css'
 
 interface MessageListProps {
@@ -210,9 +210,9 @@ function ReplyBlock({ message }: { message: ChatMessage }) {
           const single = urls.length === 1 ? toUrl(urls[0]) : (() => { const e = extractImageUrl(raw); return e ? toUrl(e) : null })()
           return single ? <img src={single} alt="" className="h-10 w-10 rounded object-cover mt-0.5" loading="lazy" /> : null
         })() : att?.kind === 'voicenote' ? (
-          <div className="mt-0.5"><LazyMount minHeight={56}><VoiceNotePlayer noteId={att.id} /></LazyMount></div>
+          <div className="mt-0.5"><LazyMount minHeight={120}><VoiceNotePlayer noteId={att.id} /></LazyMount></div>
         ) : att?.kind === 'audio' ? (
-          <div className="mt-0.5"><LazyMount minHeight={56}><AudioWaveform src={`/api/chat/attachments/${att.id}`} /></LazyMount></div>
+          <div className="mt-0.5"><LazyMount minHeight={120}><AudioWaveform src={`/api/chat/attachments/${att.id}`} /></LazyMount></div>
         ) : att ? (
           <p className="text-[12px] text-slate-400 truncate">📎 {att.kind}</p>
         ) : raw && <p className="text-[13px] text-slate-400 truncate">{raw}</p>}
@@ -243,11 +243,12 @@ function ContentBlock({ message, members, isOwn, onVideoFloat, onVideoPlay, onVi
     return <span className="text-slate-500 italic line-through text-sm">{m.content === '[eliminado]' ? '[eliminado]' : '[mensaje oculto]'}</span>
   }
   const att = getAttachmentMarker(m.content)
-  if (att) {
-    const caption = extractImageCaption(m.content)
-    if (att.kind === 'voicenote') return <LazyMount minHeight={56}><VoiceNotePlayer noteId={att.id} /></LazyMount>
-    return <>{caption && <RichText text={caption} members={members} isOwn={isOwn} />}<AttachmentCard attachmentId={att.id} onFloat={onVideoFloat} onVideoPlay={onVideoPlay} onVideoRef={onVideoRef} floatingVideo={floatingVideo} /></>
-  }
+    if (att) {
+      const caption = extractImageCaption(m.content)
+      if (att.kind === 'voicenote') return <LazyMount minHeight={120}><VoiceNotePlayer noteId={att.id} /></LazyMount>
+      if (att.kind === 'audio') return <LazyMount minHeight={120}><AudioWaveform src={`/api/chat/attachments/${att.id}`} /></LazyMount>
+      return <>{caption && <RichText text={caption} members={members} isOwn={isOwn} />}<AttachmentCard attachmentId={att.id} onFloat={onVideoFloat} onVideoPlay={onVideoPlay} onVideoRef={onVideoRef} floatingVideo={floatingVideo} /></>
+    }
   if (hasImageMarker(m.content)) return null
   return <RichText text={m.content} members={members} isOwn={isOwn} />
 }
@@ -433,7 +434,7 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
       <div className={containerClass}>
         {onLinkOpen && (
           <div className={linkContainerClass}>
-            <LazyMount minHeight={80}><LinkPreviewList content={m.content} ogData={m.og_data} onOpen={onLinkOpen} /></LazyMount>
+            <LazyMount minHeight={estimateLazyHeight(m.content)}><LinkPreviewList content={m.content} ogData={m.og_data} onOpen={onLinkOpen} /></LazyMount>
           </div>
         )}
         <div className={bubbleClass}>
@@ -725,7 +726,7 @@ export default function MessageList({
     // scrollTop before our resize handler runs, which would
     // flip atBottom to false and stop us from following.
     const observer = new ResizeObserver(() => {
-      if (historyLoadingRef.current) return
+        if (historyLoadingRef.current) return
       const distance = el.scrollHeight - el.scrollTop - el.clientHeight
       const nearBottom = distance < 200
       const follow = nearBottom || lastIsOwnRef.current
@@ -824,7 +825,6 @@ export default function MessageList({
         ref={containerRef}
         onScroll={handleScroll}
         className="absolute inset-0 overflow-y-auto py-2"
-        style={{ overflowAnchor: 'none' }}
       >
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-slate-500 text-sm gap-2">
@@ -868,7 +868,6 @@ export default function MessageList({
           return (
             <div
               key={`b-${id}`}
-              style={{ overflowAnchor: 'none' }}
             >
             <MessageRow
               message={item.message}
