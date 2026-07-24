@@ -60,13 +60,11 @@ export function useScrollAnchor() {
       container.scrollTop = nextScrollTop
     }
 
+    apply()
     if (immediate) {
-      apply()
       // Double-layout content (lazy mounts that resize over two frames)
       // can shift again right after restore. Re-apply once more after paint.
       requestAnimationFrame(() => requestAnimationFrame(apply))
-    } else {
-      apply()
     }
   }, [])
 

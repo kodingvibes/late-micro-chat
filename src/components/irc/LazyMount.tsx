@@ -44,7 +44,7 @@ export default function LazyMount({ rootMargin = '200px', minHeight = 40, childr
   }, [rootMargin])
 
   return (
-    <div ref={ref} style={visible ? undefined : { minHeight }}>
+    <div ref={ref} style={visible ? undefined : { minHeight, contain: 'layout paint' }}>
       {visible ? children : null}
     </div>
   )

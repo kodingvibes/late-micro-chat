@@ -739,10 +739,11 @@ export default function MessageList({
     }
   }, [lastId, atBottom, lastIsOwn, stickToBottom])
 
-  // When messages change (history loaded, edits, reactions) keep the
-  // viewport anchored on the same visible message instead of letting
-  // the browser or ResizeObservers guess. This is the core fix for
-  // the scroll jitter when lazy content inflates the list.
+  // Keep the viewport visually stable when messages change (history
+  // loaded, edits, reactions, lazy content mounting). Anchor on the
+  // first visible message before render, restore after commit. The
+  // mutation watcher catches lazy children that still resize after React
+  // has committed.
   useLayoutEffect(() => {
     const el = containerRef.current
     if (!el) return
@@ -752,8 +753,29 @@ export default function MessageList({
   useLayoutEffect(() => {
     const el = containerRef.current
     if (!el) return
-    restoreAnchor(el)
+    restoreAnchor(el, true)
   })
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    if (typeof MutationObserver === 'undefined') return
+
+    let raf: number | null = null
+    const handleMutations = () => {
+      if (raf) cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        raf = requestAnimationFrame(() => restoreAnchor(el, false))
+      })
+    }
+
+    const observer = new MutationObserver(handleMutations)
+    observer.observe(el, { childList: true, subtree: true, attributes: true })
+    return () => {
+      observer.disconnect()
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [restoreAnchor])
 
   useEffect(() => {
     loadingRef.current = loadingMore ?? false
