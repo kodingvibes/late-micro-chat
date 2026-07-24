@@ -8,9 +8,13 @@ import pkg from "../package.json" with { type: "json" };
 
 declare global {
   interface Window {
+    ChatEngine?: { version: string };
     __lateMicroChatMount?: () => void;
   }
 }
+
+// Backwards-compatible handle: the shell may probe ChatEngine before mounting.
+window.ChatEngine = { version: pkg.version };
 
 console.info("[micro-chat] v" + pkg.version + " loaded");
 
@@ -24,7 +28,7 @@ function tryMount() {
 
 window.__lateMicroChatMount = tryMount;
 tryMount();
-if (typeof MutationObserver !== "undefined") {
+if (typeof MutationObserver !== "undefined" && document.body) {
   const obs = new MutationObserver(() => tryMount());
   obs.observe(document.body, { childList: true, subtree: true });
 }
