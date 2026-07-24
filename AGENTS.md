@@ -9,12 +9,15 @@
 ## Build & release
 After ANY change to `src/`:
 
-1. Bump `version` in `package.json`.
-2. Commit + push.
+1. Write commits in [Conventional Commits](https://www.conventionalcommits.org/) format (`feat:`, `fix:`, `chore:`, `docs:`, `BREAKING CHANGE:`, etc.).
+2. Push to `main`.
+3. Semantic Release (`.github/workflows/release.yml`) will bump `version` in `package.json`, generate `CHANGELOG.md`, create a GitHub release, and push a release commit.
 
 An external deployment script watches the repo and handles building and
 publishing the bundle automatically. **Do not run shell-side deploy
 scripts manually from this repo.**
+
+**Never bump the version manually** — the release workflow owns `package.json#version` and `CHANGELOG.md`.
 
 **Never deploy by hand-copying `dist/`** — the versioned path + symlink +
 `latest.json` are what the shell reads. Skipping any of them breaks upgrades.
