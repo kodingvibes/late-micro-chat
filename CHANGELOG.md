@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/kodingvibes/late-micro-chat/compare/v1.1.2...v1.1.3) (2026-07-24)
+
+
+### Bug Fixes
+
+* alturas de placeholder para lazy content y restaura autoscroll ([ed44bbd](https://github.com/kodingvibes/late-micro-chat/commit/ed44bbddf9196b1bd067264840f6ece161ed4ff8))
+
 ## [1.1.2](https://github.com/kodingvibes/late-micro-chat/compare/v1.1.1...v1.1.2) (2026-07-24)
 
 
