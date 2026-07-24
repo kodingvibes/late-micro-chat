@@ -1,3 +1,10 @@
+## [1.1.6](https://github.com/kodingvibes/late-micro-chat/compare/v1.1.5...v1.1.6) (2026-07-24)
+
+
+### Bug Fixes
+
+* measure lazy content offscreen to prevent scroll jitter ([ac66ec3](https://github.com/kodingvibes/late-micro-chat/commit/ac66ec3e56dc0012fc63030274987b59339e7584))
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
