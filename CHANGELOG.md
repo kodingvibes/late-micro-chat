@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/kodingvibes/late-micro-chat/compare/v1.1.1...v1.1.2) (2026-07-24)
+
+
+### Bug Fixes
+
+* elimina jitter residual de lazy content al cargar historial ([35fc54b](https://github.com/kodingvibes/late-micro-chat/commit/35fc54bd9d902d210ad9850fe3f5f6206872a3d0))
+
 ## [1.1.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.1.0...v1.1.1) (2026-07-24)
 
 
