@@ -117,6 +117,7 @@ export function Irc() {
   const [nickMap, setNickMap] = useState<Map<number, string>>(new Map());
   const [typing, setTyping] = useState<Map<number, number>>(new Map())
   const [replyContext, setReplyContext] = useState<ChatMessage | null>(null)
+  const [editContext, setEditContext] = useState<ChatMessage | null>(null)
   const [forwardContext, setForwardContext] = useState<ChatMessage | null>(null)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [managingChannelId, setManagingChannelId] = useState<number | null>(null)
@@ -548,9 +549,35 @@ export function Irc() {
   }, [currentChannel, replyContext])
 
   const handleReply = useCallback((msg: ChatMessage) => {
+    // Replying and editing both own the composer, so entering one leaves the other.
+    setEditContext(null)
     setReplyContext(msg)
     messageInputRef.current?.focus()
   }, [])
+
+  const handleEdit = useCallback((msg: ChatMessage) => {
+    setReplyContext(null)
+    setEditContext(msg)
+    messageInputRef.current?.focus()
+  }, [])
+
+  const handleEditSubmit = useCallback((text: string) => {
+    const target = editContext
+    if (!target) return
+    // Unchanged text is a no-op: just leave edit mode.
+    if (text === target.content) { setEditContext(null); return }
+    // Stay in edit mode until the server confirms. Clearing editContext now
+    // would fire MessageInput's draft-parking effect, which overwrites the
+    // composer with the pre-edit draft - so if the PATCH then fails (expired
+    // window, network) the user's typed edit would be gone with no way back.
+    const client = clientRef.current
+    if (!client) return
+    client.editMessage(target.channel_id, target.id, text)
+      .then(() => setEditContext(null))
+      .catch((err) => {
+        pushToast(`No se pudo editar: ${(err as Error).message}`, 'error')
+      })
+  }, [editContext, pushToast])
 
   const handleForward = useCallback((msg: ChatMessage) => {
     setForwardContext(msg)
@@ -1046,6 +1073,8 @@ export function Irc() {
                 onDownloadImage={handleDownloadImage}
                 onDownloadAttachment={handleDownloadAttachment}
                 onCopyLink={handleCopyLink}
+                onEdit={handleEdit}
+                editWindowSeconds={clientRef.current?.editWindow}
                 onHide={async (messageId) => {
                   try {
                     // Optimistic: mark hidden locally before the
@@ -1108,6 +1137,9 @@ export function Irc() {
                 channelId={currentChannel}
                 replyContext={replyContext}
                 onClearReply={() => setReplyContext(null)}
+                editContext={editContext}
+                onClearEdit={() => setEditContext(null)}
+                onSubmitEdit={handleEditSubmit}
                 onError={(msg) => pushToast(msg, 'error')}
                 onUploadFile={async (chId, file) => {
                   return clientRef.current!.uploadAttachment(chId, file)
