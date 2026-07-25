@@ -1,4 +1,5 @@
 import { createVoiceChain } from './voiceChain'
+import { getSessionId } from '@/lib/chat/session-api'
 
 export interface VoiceNoteResult {
   id: string
@@ -74,7 +75,7 @@ export async function uploadVoiceNote(
   const res = await fetch('/api/chat/voice-notes', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${localStorage.getItem('chat.session') ? JSON.parse(localStorage.getItem('chat.session')!).session_id : ''}`,
+      Authorization: `Bearer ${getSessionId() ?? ''}`,
     },
     body: form,
   })

@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import type { OgData } from './domain/types'
-import { getSavedSession } from './services/auth-service'
+import { api } from './session-api'
 
 type UnfurlStatus = 'loading' | 'done' | 'error'
 
@@ -90,17 +90,14 @@ export function seed(data: OgData) {
 }
 
 /**
- * Default fetcher: thin wrapper over the unfurl endpoint. There is no
- * shared ChatClient singleton reachable from here, so this reads the
- * saved session directly (same source ChatClient itself is seeded
- * from) to attach the Bearer token.
+ * Default fetcher: thin wrapper over the unfurl endpoint. The shell
+ * injects the Bearer token via LateSession.api(), so this only needs
+ * to delegate.
  */
 export async function fetchUnfurl(url: string): Promise<OgData> {
-  const session = getSavedSession<{ session_id: string }>()
-  const headers: Record<string, string> = {}
-  if (session?.session_id) headers.Authorization = `Bearer ${session.session_id}`
-
-  const res = await fetch(`/api/chat/unfurl?url=${encodeURIComponent(url)}`, { headers })
-  if (!res.ok) return { url, kind: 'error' }
-  return res.json()
+  try {
+    return await api<OgData>(`/api/chat/unfurl?url=${encodeURIComponent(url)}`)
+  } catch {
+    return { url, kind: 'error' }
+  }
 }

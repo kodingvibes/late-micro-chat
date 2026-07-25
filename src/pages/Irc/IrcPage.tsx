@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import VoiceRoomView from "@/components/irc/VoiceRoomView";
 import { ChatClient } from "@/lib/irc/chat-client";
-import type { SSOSession, ChannelState, ChatMessage, ChannelCategory } from "@/lib/chat/domain/types";
+import type { ChannelState, ChatMessage, ChannelCategory } from "@/lib/chat/domain/types";
 import { extractImageUrl, extractImageUrls, getAttachmentMarker } from "@/lib/chat/domain/parsers";
 import ChannelList from "@/components/irc/ChannelList";
 import UserList from "@/components/irc/UserList";
@@ -20,7 +20,7 @@ import { useToasts } from "@/hooks/useToasts";
 import { ensureNotificationAudio, playMentionBeep, playBuzz, setVolume } from "@/lib/notification-sound";
 import { formatToast, showSystemNotification, useRequestNotificationPermission } from "@/lib/chat-notifs";
 import { useHeaderOffset } from "@/hooks/use-header-offset";
-import { ssoBudgetExhausted, clearSsoBudget, getSavedSession, saveSession, clearSession, fullSignOut } from "@/lib/chat/services/auth-service";
+import { clearSsoBudget, getSessionId, logout, onAuthFatal } from "@/lib/chat/session-api";
 import { takeSnapshot } from "@/lib/session-debug";
 import { getOrCreateAudioContext, resumeAudioContext } from "@/voice/audioContext";
 import { Topbar } from "./Topbar";
@@ -38,7 +38,6 @@ export function Irc() {
 
   const { headerHeight, vh } = useHeaderOffset();
   const [loading, setLoading] = useState(true);
-  const [chatError, setChatError] = useState<string | null>(null);
   useEffect(() => {
     const unlock = () => {
       ensureNotificationAudio()
@@ -125,8 +124,12 @@ export function Irc() {
   useEffect(() => { tokenInvalidRef.current = tokenInvalid }, [tokenInvalid])
 
   useEffect(() => {
+    return onAuthFatal(() => setTokenInvalid(true))
+  }, [])
+
+  useEffect(() => {
     if (!tokenInvalid) return
-    fullSignOut()
+    logout()
   }, [tokenInvalid])
 
   useEffect(() => {
@@ -189,28 +192,15 @@ export function Irc() {
 
   useEffect(() => {
     let cancelled = false;
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-    const logout = params.get("logout") === "1";
+    // The shell installs window.LateSession during its first render of
+    // /irc. The MF bundle may mount before that happens (scripts load in
+    // parallel). Poll briefly so we don't race the shell.
+    let unsubKicked: (() => void) | undefined;
 
-    if (token) {
-      window.history.replaceState({}, "", "/irc");
-    }
-
-    if (logout) {
-      clearSession();
-      localStorage.removeItem(CHANNEL_KEY);
-      localStorage.removeItem("late_redirect");
-      window.history.replaceState({}, "", "/irc");
-      window.location.reload();
-      return;
-    }
-
-    const parsed = getSavedSession<SSOSession>();
-
-    const startChat = async (s: SSOSession) => {
-      if (cancelled) return
-      const client = new ChatClient(s.session_id)
+    const begin = (sid: string) => {
+      const startChat = async (sid: string) => {
+        if (cancelled) return
+        const client = new ChatClient(sid)
       clientRef.current = client
       client.onState((state) => {
         if (clientRef.current !== client) return
@@ -308,13 +298,10 @@ export function Irc() {
       })
       client.onAuthFatal(() => {
         if (cancelled) return
-        // ponytail: do NOT call redirectToSso() here. Doing so replaces
-        // window.location.href and destroys the entire shell + the radio
-        // micro (which may be playing audio). Instead, show an error UI
-        // with an explicit "Iniciar sesión" button the user clicks to
-        // actually leave late.kodingvibes.com. This keeps the shell alive
-        // and lets the user navigate back to /icecast without losing state.
-        setChatError("Tu sesión expiró. Hacé clic en Iniciar sesión para volver a entrar.")
+        // The shell owns auth: setTokenInvalid flips tokenInvalid and the
+        // outer effect calls logout(), which clears the session and
+        // reloads. The shell then shows its own login UI.
+        setTokenInvalid(true)
         setLoading(false)
       })
       try {
@@ -337,65 +324,40 @@ export function Irc() {
         if (cancelled) return
         setLoading(false)
         if (tokenInvalidRef.current) return
-        // ponytail: see note above. Don't redirect automatically — show
-        // an error UI with a button the user clicks to go to SSO.
-        setChatError("No se pudo conectar al chat. Hacé clic en Reintentar para volver a iniciar sesión.")
+        // Non-auth connect failure: keep the loader in place; the
+        // ChatClient handles its own reconnect/backoff.
       }
     }
+    startChat(sid).catch(() => {})
 
-    if (!token && parsed) {
-      startChat(parsed).catch(() => {})
-      return
-    }
-
-    if (!token) {
-      setLoading(false)
-      // ponytail: do NOT auto-redirect to SSO. Showing the error UI keeps
-      // the shell + radio micro alive so the user can navigate back to
-      // /icecast without losing audio state. The "Iniciar sesión" button
-      // in the error UI is the only path to kodingvibes.com.
-      setChatError("Necesitás iniciar sesión para usar el chat.")
-      return
-    }
-
-    fetch("/api/chat/exchange", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token }),
-    })
-      .then(async (res) => {
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}))
-          throw new Error(body.detail || "Error al conectar con el servidor")
-        }
-        return res.json() as Promise<SSOSession>
-      })
-      .then((s) => {
-        if (cancelled) return
-        saveSession(s)
-        startChat(s).catch(() => {})
-      })
-      .catch((err) => {
-        if (cancelled) return
-        if (parsed) {
-          startChat(parsed).catch(() => {})
-        } else {
-          setLoading(false)
-          // ponytail: see note above on redirectToSso(). Show an error UI
-          // with an explicit "Iniciar sesión" button instead.
-          setChatError("Necesitás iniciar sesión para usar el chat.")
-        }
-      })
-
-    const unsubKicked = onVoiceMessage((type, _data) => {
+    unsubKicked = onVoiceMessage((type, _data) => {
       if (type === 'kicked') {
         setActiveVoiceChannelId(null)
       }
     })
+    }
 
+    const sid = getSessionId();
+    if (sid) {
+      begin(sid);
+    } else {
+      let tries = 0;
+      const id = setInterval(() => {
+        if (cancelled) return;
+        const s = getSessionId();
+        if (s) {
+          clearInterval(id);
+          begin(s);
+        } else if (++tries > 50) {
+          clearInterval(id);
+          setLoading(false);
+        }
+      }, 100);
+      return () => { cancelled = true; clearInterval(id); };
+    }
     return () => {
       cancelled = true
-      unsubKicked()
+      unsubKicked?.()
       if (voiceCleanupRef.current) {
         voiceCleanupRef.current()
         voiceCleanupRef.current = null
@@ -697,70 +659,12 @@ export function Irc() {
     return s
   }, [channels])
 
-  if (chatError) {
-    // ponytail: render the error UI without taking the user to kodingvibes.com.
-    // The shell + radio micro stay mounted in the background, so the user
-    // can navigate to /icecast or / via the SiteHeader links and keep their
-    // audio / chat state. "Iniciar sesión" is the only path to SSO, and
-    // it requires an explicit click.
-    // We don't import react-router-dom here because the shell owns the
-    // Router and creating a nested one would conflict. Instead, "Volver al
-    // inicio" uses the history API to push a new state and dispatch a
-    // popstate event, which react-router-dom in the shell picks up.
-    const goHome = () => {
-      if (window.location.pathname === "/") return;
-      window.history.pushState({}, "", "/");
-      window.dispatchEvent(new PopStateEvent("popstate"));
-    };
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4 max-w-md text-center px-4">
-          <div className="text-slate-200 text-sm font-medium">{chatError}</div>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <button
-              onClick={() => {
-                // Explicit SSO: clears session + SSO budget, then
-                // navigates to kodingvibes.com. The user has to click
-                // this; we never do it on their behalf.
-                fullSignOut();
-                window.location.href = 'https://www.kodingvibes.com/api/sso/irc-token';
-              }}
-              className="px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-medium transition-colors"
-            >
-              Iniciar sesión
-            </button>
-            <button
-              onClick={goHome}
-              className="px-4 py-2 rounded-lg border border-slate-700 hover:border-slate-500 bg-slate-900 hover:bg-slate-800 text-slate-200 text-sm font-medium transition-colors"
-            >
-              Volver al inicio
-            </button>
-          </div>
-          <DebugCopyButton label="Copiar info de debug" />
-          <p className="text-slate-500 text-xs leading-relaxed">
-            Si seguís sin poder entrar, copiá la info de debug y mandánosla.
-            No incluye tu contraseña ni el token completo.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading || tokenInvalid) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          {tokenInvalid ? (
-            <>
-              <div className="text-slate-200 text-sm font-medium">Tu sesión expiró</div>
-              <div className="text-slate-500 text-xs">Redirigiendo para重新登录…</div>
-            </>
-          ) : (
-            <>
-              <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-              <div className="text-slate-400 text-sm">Conectando al chat...</div>
-            </>
-          )}
+          <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <div className="text-slate-400 text-sm">Conectando al chat...</div>
         </div>
       </div>
     )

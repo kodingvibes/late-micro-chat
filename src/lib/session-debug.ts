@@ -13,16 +13,11 @@ function maskToken(s: string | null | undefined): string {
 }
 
 export function takeSnapshot() {
-  let savedRaw: string | null = null
-  let saved: any = null
-  try {
-    savedRaw = localStorage.getItem('chat.session')
-    if (savedRaw) saved = JSON.parse(savedRaw)
-  } catch {
-    /* ignore */
-  }
+  const late = (typeof window !== 'undefined' && window.LateSession) || null
+  const session = late?.user ?? null
+  const sessionId = late?.sessionId ?? null
 
-  const redirectCount = Number(sessionStorage.getItem('chat.sso_redirects') || '0')
+  const redirectCount = Number(sessionStorage.getItem('late.sso_redirects') || '0')
   const params = new URLSearchParams(window.location.search)
 
   return {
@@ -30,22 +25,20 @@ export function takeSnapshot() {
     page: window.location.pathname,
     url: window.location.href,
     userAgent: navigator.userAgent,
-    session: saved
+    session: session
       ? {
-          hasSavedSession: true,
-          savedSessionIdMasked: maskToken(saved.session_id),
-          savedSessionExpiresAt: saved.expires_at ?? null,
-          savedSessionUserId: saved.user?.id ?? null,
-          savedSessionEmail: saved.user?.email ?? null,
-          savedSessionDisplayName: saved.user?.display_name ?? null,
-          savedSessionRaw: savedRaw,
+          hasSavedSession: Boolean(sessionId),
+          savedSessionIdMasked: maskToken(sessionId),
+          savedSessionUserId: session.id ?? null,
+          savedSessionEmail: session.email ?? null,
+          savedSessionDisplayName: session.display_name ?? null,
         }
       : null,
     sso: {
       redirectCount,
       budget: 2,
       budgetExhausted: redirectCount >= 2,
-      ssoUrl: 'https://www.kodingvibes.com/api/sso/irc-token',
+      ssoUrl: late?.ssoUrl ?? 'https://www.kodingvibes.com/api/sso/irc-token',
     },
     urlToken: {
       present: params.has('token'),
@@ -67,6 +60,6 @@ if (typeof window !== 'undefined') {
         return false
       }
     },
-    raw: () => localStorage.getItem('chat.session'),
+    raw: () => window.LateSession?.sessionId ?? null,
   }
 }

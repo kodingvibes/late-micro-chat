@@ -45,8 +45,27 @@ export interface RadioEngine {
   getAnalyser(): AnalyserNode | null;
 }
 
+export interface LateUser {
+  id: number;
+  email: string;
+  name: string | null;
+  display_name: string | null;
+}
+
+export interface LateSessionAPI {
+  readonly sessionId: string | null;
+  readonly user: LateUser | null;
+  readonly ssoUrl: string;
+  api<T>(path: string, init?: RequestInit): Promise<T>;
+  logout(): void;
+  redirectToSso(): void;
+  onAuthFatal(handler: () => void): () => void;
+  clearSsoBudget?(): void;
+}
+
 declare global {
   interface Window {
     RadioEngine?: RadioEngine;
+    LateSession?: LateSessionAPI;
   }
 }
