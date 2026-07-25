@@ -398,6 +398,7 @@ export class ChatClient {
           email: sessionUser.email,
           name: sessionUser.name ?? null,
           display_name: sessionUser.display_name,
+          global_role: sessionUser.global_role ?? null,
         }
         this.emitState({ user: this.user })
       } else {
@@ -607,11 +608,28 @@ export class ChatClient {
   }
 
   async updateMe(patch: { display_name?: string; name?: string }): Promise<UserInfo> {
-    const me = await this.api<UserInfo>('PATCH', '/api/chat/me', patch)
-    this.user = me
-    this.trackName(me.id, me.display_name)
+    // ponytail: identity lives in late-auth now; this MF used to
+    // call PATCH /api/chat/me, which the post-extraction chat-
+    // bridge no longer exposes. The shell installs a
+    // `LateSession.updateProfile` helper that hits /api/auth/me
+    // and refreshes the local session cache, so the rest of the
+    // UI (avatar, header badge, etc.) sees the new nick without a
+    // reload.
+    const session = (window as { LateSession?: { updateProfile?: (p: { display_name?: string; name?: string }) => Promise<UserInfo> } }).LateSession
+    if (!session?.updateProfile) {
+      throw new Error("LateSession.updateProfile not available")
+    }
+    const me = await session.updateProfile(patch)
+    this.user = {
+      id: me.id,
+      email: me.email,
+      name: me.name ?? null,
+      display_name: me.display_name ?? "",
+      global_role: (me as { global_role?: string | null }).global_role ?? null,
+    }
+    this.trackName(this.user.id, this.user.display_name)
     this.emitState({ user: this.user })
-    return me
+    return this.user
   }
 
   async loadMembers(channelId: number): Promise<ChannelMember[]> {

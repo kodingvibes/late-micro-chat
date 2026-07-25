@@ -1,21 +1,25 @@
-import { Hash, Users, SettingsIcon, Menu } from '@/components/icons'
-import ConnectionStatus from '@/components/irc/ConnectionStatus'
+import { Hash, Users, Menu, Pencil } from '@/components/icons'
 import type { ChannelState } from '@/lib/chat/domain/types'
 
 interface TopbarProps {
   currentChan: ChannelState | undefined
   userCount: number
-  globalOnlineCount: number
-  nick: string
-  connected: boolean
   showUsersDrawer: boolean
   onToggleUsers: () => void
-  onOpenSettings: () => void
   onOpenChannels: () => void
-  onChangeNick: () => void
+  onEditTopic: () => void
+  canEditTopic: boolean
 }
 
-export function Topbar({ currentChan, userCount, globalOnlineCount, nick, connected, showUsersDrawer, onToggleUsers, onOpenSettings, onOpenChannels, onChangeNick }: TopbarProps) {
+export function Topbar({
+  currentChan,
+  userCount,
+  showUsersDrawer,
+  onToggleUsers,
+  onOpenChannels,
+  onEditTopic,
+  canEditTopic,
+}: TopbarProps) {
   return (
     <>
       <div className="hidden sm:flex flex-shrink-0 bg-slate-900/60 border-b border-slate-800 px-3 sm:px-4 h-10 items-center justify-between z-20">
@@ -25,32 +29,23 @@ export function Topbar({ currentChan, userCount, globalOnlineCount, nick, connec
             {currentChan?.name?.slice(1) || 'chat'}
           </h1>
           {currentChan?.description && (
-            <span className="text-xs text-slate-500 truncate max-w-[240px] hidden lg:inline">
+            <span className="text-xs text-slate-500 truncate max-w-[280px] hidden lg:inline">
               · {currentChan.description}
             </span>
           )}
-          {userCount > 0 && (
-            <span className="text-xs text-slate-500 flex-shrink-0 hidden lg:inline" title="Usuarios en línea en este canal">
-              · {userCount} en este canal
-            </span>
+          {canEditTopic && (
+            <button
+              type="button"
+              onClick={onEditTopic}
+              className="p-1 rounded text-slate-500 hover:text-slate-200 hover:bg-slate-800 transition-colors flex-shrink-0"
+              aria-label="Editar descripción del canal"
+              title="Editar descripción del canal"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
           )}
         </div>
         <div className="flex items-center gap-1 sm:gap-2">
-          <button
-            onClick={onOpenSettings}
-            className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
-            aria-label="Notificaciones"
-            title="Notificaciones"
-          >
-            <SettingsIcon className="w-4 h-4" />
-          </button>
-          <span
-            className="text-xs text-slate-500 flex-shrink-0 hidden md:inline"
-            title="Usuarios en línea en todos tus canales"
-          >
-            {globalOnlineCount} en línea
-          </span>
-          <ConnectionStatus connected={connected} nick={nick} onChangeNick={onChangeNick} />
           <button
             onClick={onToggleUsers}
             className={`flex items-center gap-1 px-2 py-1.5 rounded-lg transition-colors ${
@@ -75,42 +70,35 @@ export function Topbar({ currentChan, userCount, globalOnlineCount, nick, connec
         >
           <Menu className="w-5 h-5" />
         </button>
-        <button
-          onClick={onChangeNick}
-          className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
-          aria-label="Cambiar nick"
-          title="Cambiar nick"
-        >
-          <span className="text-xs font-mono text-slate-300 truncate max-w-[80px]">{nick}</span>
-        </button>
-        <div className="flex items-center gap-1.5 min-w-0">
+        <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-center">
           <Hash className="w-4 h-4 text-slate-500 flex-shrink-0" />
           <span className="font-semibold text-slate-100 text-sm truncate">
             {currentChan?.name?.slice(1) || 'chat'}
           </span>
+          {canEditTopic && (
+            <button
+              type="button"
+              onClick={onEditTopic}
+              className="p-1 rounded text-slate-500 hover:text-slate-200 hover:bg-slate-800"
+              aria-label="Editar descripción del canal"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={onOpenSettings}
-            className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
-            aria-label="Notificaciones"
-          >
-            <SettingsIcon className="w-4 h-4" />
-          </button>
-          <button
-            onClick={onToggleUsers}
-            className={`flex items-center gap-1 px-2 py-1.5 rounded-lg transition-colors ${
-              showUsersDrawer
-                ? 'bg-indigo-500/15 text-indigo-300'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-            }`}
-            aria-label="Ver usuarios"
-            title="Usuarios en línea en este canal"
-          >
-            <Users className="w-4 h-4" />
-            <span className="text-xs tabular-nums">{userCount}</span>
-          </button>
-        </div>
+        <button
+          onClick={onToggleUsers}
+          className={`flex items-center gap-1 px-2 py-1.5 rounded-lg transition-colors ${
+            showUsersDrawer
+              ? 'bg-indigo-500/15 text-indigo-300'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+          }`}
+          aria-label="Ver usuarios"
+          title="Usuarios en línea en este canal"
+        >
+          <Users className="w-4 h-4" />
+          <span className="text-xs tabular-nums">{userCount}</span>
+        </button>
       </div>
     </>
   )

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useViewportClamp } from '../../hooks/use-viewport-clamp'
-import { Copy, Users, Trash2 } from '@/components/icons'
+import { Copy, Users, Trash2, Pencil } from '@/components/icons'
 
 export interface ChannelContextMenuState {
   show: boolean
@@ -15,10 +15,11 @@ interface ChannelContextMenuProps {
   onCopyName: (name: string) => void
   onManageMembers?: (channelId: number) => void
   onDelete?: (channelId: number) => void
+  onEditTopic?: (channelId: number) => void
 }
 
 export default function ChannelContextMenu({
-  state, onClose, onCopyName, onManageMembers, onDelete,
+  state, onClose, onCopyName, onManageMembers, onDelete, onEditTopic,
 }: ChannelContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
@@ -82,6 +83,16 @@ export default function ChannelContextMenu({
         <Copy className="w-4 h-4 text-slate-400" />
         Copiar nombre
       </button>
+      {channel.id !== undefined && channel.joined && channel.myRole && ['admin', 'mod'].includes(channel.myRole) && (
+        <button
+          type="button"
+          onClick={() => { onEditTopic?.(channel.id as number); onClose() }}
+          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
+        >
+          <Pencil className="w-4 h-4 text-indigo-400" />
+          Editar descripción
+        </button>
+      )}
       {channel.id !== undefined && channel.joined && channel.myRole && ['admin', 'mod'].includes(channel.myRole) && (
         <button
           type="button"

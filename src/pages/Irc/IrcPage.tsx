@@ -10,6 +10,7 @@ import MessageInput from "@/components/irc/MessageInput";
 import TypingIndicator from "@/components/irc/TypingIndicator";
 import JoinChannelModal from "@/components/irc/JoinChannelModal";
 import NickPromptModal from "@/components/irc/NickPromptModal";
+import EditChannelDescriptionModal from "@/components/irc/EditChannelDescriptionModal";
 import NotificationSettingsModal from "@/components/irc/NotificationSettingsModal";
 import ManageMembersModal from "@/components/irc/ManageMembersModal";
 import ForwardModal from "@/components/irc/ForwardModal";
@@ -20,7 +21,7 @@ import { useToasts } from "@/hooks/useToasts";
 import { ensureNotificationAudio, playMentionBeep, playBuzz, setVolume } from "@/lib/notification-sound";
 import { formatToast, showSystemNotification, useRequestNotificationPermission } from "@/lib/chat-notifs";
 import { useHeaderOffset } from "@/hooks/use-header-offset";
-import { clearSsoBudget, getSessionId, logout, onAuthFatal } from "@/lib/chat/session-api";
+import { api as mfApi, clearSsoBudget, getSessionId, logout, onAuthFatal } from "@/lib/chat/session-api";
 import { takeSnapshot } from "@/lib/session-debug";
 import { getOrCreateAudioContext, resumeAudioContext } from "@/voice/audioContext";
 import { Topbar } from "./Topbar";
@@ -57,6 +58,7 @@ export function Irc() {
   const [showNickModal, setShowNickModal] = useState(false);
   const [showChannelsDrawer, setShowChannelsDrawer] = useState(false);
   const [showUsersDrawer, setShowUsersDrawer] = useState(false);
+  const [showEditTopic, setShowEditTopic] = useState(false);
   const [buzzShake, setBuzzShake] = useState(false);
   const [connected, setConnected] = useState(false);
   const [tokenInvalid, setTokenInvalid] = useState(false);
@@ -64,6 +66,12 @@ export function Irc() {
   const [nick, setNick] = useState("");
   const [myUserId, setMyUserId] = useState<number | null>(null);
   const [googleName, setGoogleName] = useState<string | null>(null);
+  // ponytail: global_role comes from the late-auth /validate
+  // response. We need it here to know whether the local user is
+  // super_admin / admin on every channel so we can surface the
+  // "Edit topic" affordance in the topbar even before any per-
+  // channel role row exists.
+  const [globalRole, setGlobalRole] = useState<string>("user");
   const {
     floatingVideo,
     floatingContainerRef,
@@ -216,6 +224,7 @@ export function Irc() {
           setNick(state.user?.display_name || "")
           setMyUserId(state.user?.id ?? null)
           setGoogleName(state.user?.name || null)
+          setGlobalRole(state.user?.global_role ?? "user")
           if (
             state.user?.display_name &&
             state.user.display_name === state.user.email.split("@")[0] &&
@@ -397,6 +406,36 @@ export function Irc() {
     localStorage.setItem("chat.nick_prompted", "1")
     setShowNickModal(false)
   }, [pushToast])
+
+  // ponytail: editing the topic/description of the current channel.
+  // We PATCH the channel and rely on the next /channels refresh
+  // (or the WS broadcast, if the server emits one) to update the
+  // local copy. The topbar and context-menu both call into this.
+  const handleSaveTopic = useCallback(async (description: string | null) => {
+    if (currentChannel === null) return
+    try {
+      const client = clientRef.current
+      if (!client) return
+      const res = await mfApi<{ ok: boolean }>(
+        `/api/chat/channels/${currentChannel}`,
+        { method: "PATCH", body: JSON.stringify({ description }) },
+      )
+      if (!res?.ok) throw new Error("El servidor rechazó el cambio")
+      // Apply optimistically; the next refreshChannels will confirm.
+      setChannels(prev => {
+        const ch = prev.get(currentChannel)
+        if (!ch) return prev
+        const next = new Map(prev)
+        next.set(currentChannel, { ...ch, description })
+        return next
+      })
+      pushToast(description ? "Descripción actualizada" : "Descripción eliminada", "join")
+      // Nudge the server to push the new state to every other tab.
+      client.refreshChannels().catch(() => {})
+    } catch (e) {
+      pushToast(`No se pudo guardar: ${(e as Error).message}`, "error")
+    }
+  }, [currentChannel, pushToast])
 
   const handleLoadMore = useCallback(async () => {
     if (currentChannel === null) return
@@ -659,6 +698,37 @@ export function Irc() {
     return s
   }, [channels])
 
+  // ponytail: publish the global online count to window.ChatEngine
+  // so the shell's header can show the badge. We rebuild the same
+  // global set on every channel/member change; the shell polls
+  // this value every few seconds (see SiteHeader.tsx). The set
+  // is a stable type so the shell can deep-compare cheaply if
+  // it wants, but in practice the shell just reads `.size`.
+  useEffect(() => {
+    const engine = (window as { ChatEngine?: { onlineCount?: number } }).ChatEngine
+    if (engine) {
+      engine.onlineCount = onlineUserIds.size
+    }
+  }, [onlineUserIds])
+
+  // ponytail: expose the "open this modal" actions to the shell so
+  // the SiteHeader's user menu can launch the same nick/settings
+  // dialogs the chat micro used to host. The shell falls back to
+  // its own modal copies when the MF isn't mounted (e.g. on
+  // /profile), so this is purely an optimisation for the
+  // /irc route.
+  useEffect(() => {
+    const engine = (window as unknown as {
+      ChatEngine?: {
+        openNickModal?: () => void
+        openNotificationSettings?: () => void
+      }
+    }).ChatEngine
+    if (!engine) return
+    engine.openNickModal = () => setShowNickModal(true)
+    engine.openNotificationSettings = () => setShowSettingsModal(true)
+  }, [])
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -728,15 +798,26 @@ export function Irc() {
       <Topbar
         currentChan={currentChan ?? undefined}
         userCount={channelUserCount}
-        globalOnlineCount={onlineUserIds.size}
-        nick={nick}
-        connected={connected}
         showUsersDrawer={showUsersDrawer}
         onToggleUsers={() => setShowUsersDrawer((v) => !v)}
-        onOpenSettings={() => setShowSettingsModal(true)}
         onOpenChannels={() => setShowChannelsDrawer(true)}
-        onChangeNick={() => setShowNickModal(true)}
+        onEditTopic={() => setShowEditTopic(true)}
+        canEditTopic={
+          (globalRole === "super_admin" || globalRole === "admin") ||
+          (currentChan?.myRole === "admin" || currentChan?.myRole === "mod")
+        }
       />
+
+      {showEditTopic && currentChannel !== null && currentChan && (
+        <EditChannelDescriptionModal
+          open={showEditTopic}
+          channelId={currentChannel}
+          channelName={currentChan.name}
+          currentDescription={currentChan.description ?? null}
+          onClose={() => setShowEditTopic(false)}
+          onSaved={handleSaveTopic}
+        />
+      )}
 
       <div className="flex flex-1 overflow-hidden relative">
         <aside className="w-48 flex-shrink-0 border-r border-slate-800 hidden sm:block select-none">
@@ -754,6 +835,12 @@ export function Irc() {
             onCreateRequest={() => setShowJoinModal(true)}
             onCopyName={handleCopyText}
             onManageMembers={setManagingChannelId}
+            onEditTopic={(id) => {
+              const ch = channels.get(id)
+              if (!ch) return
+              setCurrentChannel(id)
+              setShowEditTopic(true)
+            }}
             onDelete={handleChannelDelete}
           />
         </aside>
@@ -971,6 +1058,12 @@ export function Irc() {
             onClose={() => setShowChannelsDrawer(false)}
             onCopyName={handleCopyText}
             onManageMembers={setManagingChannelId}
+            onEditTopic={(id) => {
+              const ch = channels.get(id)
+              if (!ch) return
+              setCurrentChannel(id)
+              setShowEditTopic(true);
+            }}
             onDelete={handleChannelDelete}
           />
       </Drawer>

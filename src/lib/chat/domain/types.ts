@@ -3,6 +3,12 @@ export interface UserInfo {
   email: string
   name: string | null
   display_name: string
+  // ponytail: late-auth returns a `global_role` per user
+  // (super_admin / admin / user). The chat backend honours it on
+  // every channel — the client mirrors it here so the topbar
+  // can show "edit topic" affordances for global admins on any
+  // channel, even ones where their per-channel role row is null.
+  global_role?: string | null
 }
 
 export interface ChannelUser {

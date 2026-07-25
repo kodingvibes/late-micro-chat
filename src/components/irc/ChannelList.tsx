@@ -17,6 +17,7 @@ interface ChannelListProps {
   onClose?: () => void
   onCopyName?: (name: string) => void
   onManageMembers?: (channelId: number) => void
+  onEditTopic?: (channelId: number) => void
   onDelete?: (channelId: number) => void
 }
 
@@ -24,7 +25,7 @@ export default function ChannelList({
   channels, categories, currentChannel, activeVoiceChannelId,
   onSelect,
   onVoiceJoin, onVoiceLeave,
-  onCreateRequest, onClose, onCopyName, onManageMembers, onDelete,
+  onCreateRequest, onClose, onCopyName, onManageMembers, onEditTopic, onDelete,
 }: ChannelListProps) {
   const [query, setQuery] = useState('')
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set())
@@ -205,6 +206,7 @@ export default function ChannelList({
         onClose={closeChMenu}
         onCopyName={(name) => onCopyName?.(name)}
         onManageMembers={onManageMembers}
+        onEditTopic={onEditTopic}
         onDelete={onDelete}
       />
     </div>
