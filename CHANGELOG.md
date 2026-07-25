@@ -1,3 +1,10 @@
+## [1.7.5](https://github.com/kodingvibes/late-micro-chat/compare/v1.7.4...v1.7.5) (2026-07-25)
+
+
+### Bug Fixes
+
+* **chat:** make the message area background strongly contrasting ([4522fa1](https://github.com/kodingvibes/late-micro-chat/commit/4522fa1f0e2424573f4546350cf154ee286c938b)), closes [#020617](https://github.com/kodingvibes/late-micro-chat/issues/020617) [#ffffff](https://github.com/kodingvibes/late-micro-chat/issues/ffffff)
+
 ## [1.7.4](https://github.com/kodingvibes/late-micro-chat/compare/v1.7.3...v1.7.4) (2026-07-25)
 
 
