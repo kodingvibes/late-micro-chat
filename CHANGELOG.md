@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.2.1...v1.3.0) (2026-07-25)
+
+
+### Features
+
+* **ui:** drop join/leave UI; every user is in every channel ([4789ac2](https://github.com/kodingvibes/late-micro-chat/commit/4789ac26c424d4f9d7ae9d326e9501ea4e94fab4))
+
 ## [1.2.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.2.0...v1.2.1) (2026-07-25)
 
 
