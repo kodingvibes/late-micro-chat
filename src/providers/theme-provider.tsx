@@ -15,10 +15,10 @@ const DEFAULT_THEME: LateTheme = {
   accentPrimary: "#6366f1",
   accentSoft: "#818cf8",
   accentRing: "#a5b4fc",
-  accentGlowA: "rgba(99,102,241,0.18)",
-  accentGlowB: "rgba(99,102,241,0.12)",
-  accentGlowALight: "rgba(79,70,229,0.16)",
-  accentGlowBLight: "rgba(99,102,241,0.10)",
+  accentGlowA: "rgba(99,102,241,0.70)",
+  accentGlowB: "rgba(99,102,241,0.45)",
+  accentGlowALight: "rgba(79,70,229,0.60)",
+  accentGlowBLight: "rgba(99,102,241,0.35)",
 };
 
 function snapshotFromWindow(): LateTheme {

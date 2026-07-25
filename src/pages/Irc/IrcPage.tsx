@@ -741,7 +741,7 @@ export function Irc() {
 
   return (
     <div
-      className={`bg-slate-950 flex flex-col overflow-hidden ${radioCurrent ? 'pb-14' : 'pb-0'} ${buzzShake ? 'shake-buzz' : ''}`}
+      className={`flex flex-col overflow-hidden bg-accent/5 ${radioCurrent ? 'pb-14' : 'pb-0'} ${buzzShake ? 'shake-buzz' : ''}`}
       style={{ height: `calc(${vh}px * 100 - ${headerHeight}px)` }}
     >
       {showJoinModal && (
@@ -846,12 +846,12 @@ export function Irc() {
         <main
           className="flex-1 flex flex-col min-w-0 relative"
           style={{
-            backgroundColor: '#0b1120',
+            backgroundColor: 'transparent',
             backgroundImage: [
-              'radial-gradient(at 20% 10%, rgba(99,102,241,0.10) 0px, transparent 50%)',
-              'radial-gradient(at 80% 0%, rgba(168,85,247,0.08) 0px, transparent 50%)',
-              'radial-gradient(at 90% 90%, rgba(14,165,233,0.07) 0px, transparent 50%)',
-              'radial-gradient(at 10% 100%, rgba(236,72,153,0.06) 0px, transparent 50%)',
+              'radial-gradient(at 20% 10%, var(--accent-glow-a, rgba(99,102,241,0.50)) 0px, transparent 50%)',
+              'radial-gradient(at 80% 0%, var(--accent-glow-b, rgba(99,102,241,0.30)) 0px, transparent 50%)',
+              'radial-gradient(at 90% 90%, var(--accent-glow-b, rgba(99,102,241,0.30)) 0px, transparent 50%)',
+              'radial-gradient(at 10% 100%, var(--accent-glow-a, rgba(99,102,241,0.50)) 0px, transparent 50%)',
               "url(/bg.svg)",
             ].join(', '),
             backgroundAttachment: 'fixed, fixed, fixed, fixed, fixed',
@@ -1005,7 +1005,7 @@ export function Irc() {
         </main>
 
         {showUsersDrawer && currentChannel !== null && (
-          <aside className="hidden sm:flex w-64 flex-shrink-0 border-l border-slate-800 flex-col bg-slate-900 select-none">
+          <aside className="hidden sm:flex w-64 flex-shrink-0 border-l border-slate-800 flex-col bg-slate-900/70 select-none">
             {showUsersDrawer && (
               <>
                 <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-800">
