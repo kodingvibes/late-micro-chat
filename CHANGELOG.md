@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.8.0...v1.8.1) (2026-07-25)
+
+
+### Bug Fixes
+
+* **theme:** chat irc.css blockquote/mentions follow accent, AudioWaveform reads accent-ring ([73d4bf4](https://github.com/kodingvibes/late-micro-chat/commit/73d4bf4b7d21045376984cdfdbf2f17527bff90d))
+
 # [1.8.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.7.5...v1.8.0) (2026-07-25)
 
 
