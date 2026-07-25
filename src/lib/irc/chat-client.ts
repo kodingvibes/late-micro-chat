@@ -231,6 +231,25 @@ export class ChatClient {
         const data = msg.data as { message_id: number; channel_id: number }
         this.updateMessage(data.channel_id, data.message_id, { content: '[eliminado]', hidden: true })
       }],
+      ['channel_deleted', (msg) => {
+        // ponytail: a hard delete from another tab (or the
+        // current one) just landed. Drop the channel from the
+        // local Map and emit state so every consumer (channel
+        // list, current-channel banner, message list) re-renders
+        // without the row. If the deleted channel was the
+        // current one, clear currentChannelId so the UI falls
+        // back to "select another channel" instead of trying to
+        // load history on a vanished id.
+        const data = msg.data as { channel_id: number; name: string }
+        if (!this.channels.has(data.channel_id)) return
+        this.channels.delete(data.channel_id)
+        const wasCurrent = this.currentChannelId === data.channel_id
+        if (wasCurrent) this.currentChannelId = null
+        this.emitState({
+          channels: new Map(this.channels),
+          currentChannel: wasCurrent ? null : this.currentChannelId,
+        })
+      }],
       ['typing', (msg) => {
         const data = msg.data as TypingPayload
         this.trackName(data.user_id, data.display_name)
