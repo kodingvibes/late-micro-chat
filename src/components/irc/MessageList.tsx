@@ -281,18 +281,26 @@ function ActionRow({ m, nick, isOwn, handleTouchStart, handleTouchMove, handleTo
   handleTouchCancel: (e: React.TouchEvent) => void
   onContextMenu?: (msg: ChatMessage, x: number, y: number) => void
 }) {
+  // ponytail: right-click / long-press handlers live on the action
+  // text itself, not on the row's outer div. The row has wide
+  // padding around the text and that empty area is where the user
+  // sometimes hits the menu by accident — e.g. just below a long
+  // line of messages. Gating the menu to the actual text bubble
+  // means a stray tap on whitespace does nothing.
   return (
     <div
       id={`msg-${m.id}`}
       className="group/msg flex gap-2 px-4 py-0.5 items-start select-none"
       style={{ contain: 'layout style' }}
-      onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(m, e.clientX, e.clientY) }}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchCancel}
     >
-      <div className="flex-1 min-w-0 max-w-full">
+      <div
+        className="flex-1 min-w-0 max-w-full"
+        onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(m, e.clientX, e.clientY) }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
+      >
         <ForwardedBlock message={m} />
         <div className="text-[15px] sm:text-sm italic text-slate-400">
           <span className="not-italic font-semibold" style={{ color: getNickColor(nick) }}>
@@ -354,13 +362,15 @@ function ImageRow({ m, nick, isOwn, showHeader, handleTouchStart, handleTouchMov
       id={`msg-${m.id}`}
       className={`group/msg flex items-start gap-1.5 px-4 py-0.5 select-none ${isOwn ? 'justify-end' : ''}`}
       style={{ contain: 'layout style' }}
-      onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(m, e.clientX, e.clientY) }}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchCancel}
     >
-      <div className={`flex flex-col max-w-[75%] sm:max-w-[65%] ${isOwn ? 'items-end' : 'items-start'}`}>
+      <div
+        className={`flex flex-col max-w-[75%] sm:max-w-[65%] ${isOwn ? 'items-end' : 'items-start'}`}
+        onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(m, e.clientX, e.clientY) }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
+      >
         {showHeader && (
           <div className="text-[11px] font-semibold mb-0.5" style={{ color: getNickColor(nick) }}>
             {nick}
@@ -448,13 +458,25 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
       id={`msg-${m.id}`}
       className={outerClass}
       style={{ contain: 'layout style' }}
-      onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(m, e.clientX, e.clientY) }}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchCancel}
     >
-      <div className={containerClass}>
+      {/* ponytail: context-menu / long-press handlers live on the
+          content column, not on the outer row. The row has wide
+          padding (px-4) and the timestamp span at the bottom
+          leaves a fair amount of whitespace on the right (own
+          messages) or left (other messages). A right-click or
+          long-press on that empty area would otherwise fire the
+          menu even though the user wasn't aiming at the bubble,
+          which is the confusion the user reported. Gating the
+          menu to the content column means a stray tap on
+          whitespace does nothing. */}
+      <div
+        className={containerClass}
+        onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(m, e.clientX, e.clientY) }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
+      >
         {onLinkOpen && (
           <div className={linkContainerClass}>
             <LazyMount minHeight={168}><LinkPreviewList content={m.content} ogData={m.og_data} onOpen={onLinkOpen} /></LazyMount>
