@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.3.0...v1.3.1) (2026-07-25)
+
+
+### Bug Fixes
+
+* **chat:** read user from window.LateSession instead of GET /api/chat/me ([3214aad](https://github.com/kodingvibes/late-micro-chat/commit/3214aadbebcd463dbafa6f209c9a190e6eb01bfa))
+
 # [1.3.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.2.1...v1.3.0) (2026-07-25)
 
 
