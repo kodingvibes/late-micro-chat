@@ -15,6 +15,10 @@ const DEFAULT_THEME: LateTheme = {
   accentPrimary: "#6366f1",
   accentSoft: "#818cf8",
   accentRing: "#a5b4fc",
+  accentGlowA: "rgba(99,102,241,0.18)",
+  accentGlowB: "rgba(99,102,241,0.12)",
+  accentGlowALight: "rgba(79,70,229,0.16)",
+  accentGlowBLight: "rgba(99,102,241,0.10)",
 };
 
 function snapshotFromWindow(): LateTheme {
@@ -31,6 +35,13 @@ function applyToDocument(t: LateTheme) {
   root.style.setProperty("--accent-primary", t.accentPrimary);
   root.style.setProperty("--accent-soft", t.accentSoft);
   root.style.setProperty("--accent-ring", t.accentRing);
+  // ponytail: pre-baked rgba tones from the shell so the
+  // page-level halo tracks the accent. The shell sets these
+  // in :root when it dispatches `late:theme-change`.
+  root.style.setProperty("--accent-glow-a", t.accentGlowA);
+  root.style.setProperty("--accent-glow-b", t.accentGlowB);
+  root.style.setProperty("--accent-glow-a-light", t.accentGlowALight);
+  root.style.setProperty("--accent-glow-b-light", t.accentGlowBLight);
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {

@@ -20,4 +20,8 @@ export interface LateTheme {
   accentPrimary: string;
   accentSoft: string;
   accentRing: string;
+  accentGlowA: string;
+  accentGlowB: string;
+  accentGlowALight: string;
+  accentGlowBLight: string;
 }
