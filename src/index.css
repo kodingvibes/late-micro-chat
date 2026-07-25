@@ -242,3 +242,17 @@
       transparent 70%
     );
 }
+
+/* ponytail: the chat message area needs a strongly contrasting
+ * surface so text reads well, but it should still pick up the
+ * active accent. In dark mode we mix a small amount of the
+ * accent into near-black (#020617); in light mode we mix it
+ * into white. The result is a dark panel in dark mode and a
+ * light panel in light mode, both subtly tinted by the
+ * chosen accent. */
+.bg-chat-main {
+  background-color: color-mix(in srgb, var(--accent-primary, #6366f1) 6%, #020617);
+}
+:root.theme-light .bg-chat-main {
+  background-color: color-mix(in srgb, var(--accent-primary, #6366f1) 6%, #ffffff);
+}
