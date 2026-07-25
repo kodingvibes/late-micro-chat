@@ -1,3 +1,10 @@
+## [1.7.4](https://github.com/kodingvibes/late-micro-chat/compare/v1.7.3...v1.7.4) (2026-07-25)
+
+
+### Bug Fixes
+
+* **chat:** make modals and side drawer translucent so the tinted body shows through ([e73f1c2](https://github.com/kodingvibes/late-micro-chat/commit/e73f1c23e35936e8e21136b379768ad763b1a857))
+
 ## [1.7.3](https://github.com/kodingvibes/late-micro-chat/compare/v1.7.2...v1.7.3) (2026-07-25)
 
 
