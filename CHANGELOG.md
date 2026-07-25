@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.5.0...v1.6.0) (2026-07-25)
+
+
+### Features
+
+* **chat:** standardise menu animations at 1000ms ([07a4b91](https://github.com/kodingvibes/late-micro-chat/commit/07a4b913b265e946ddde990671d3e14c3b8c87e9))
+
 # [1.5.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.4.1...v1.5.0) (2026-07-25)
 
 
