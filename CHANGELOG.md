@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.7.5...v1.8.0) (2026-07-25)
+
+
+### Features
+
+* **theme:** consume shared @late/theme package ([9eba5e1](https://github.com/kodingvibes/late-micro-chat/commit/9eba5e1cd1cfb8a8ab32679913861fc87f9eca4c))
+
 ## [1.7.5](https://github.com/kodingvibes/late-micro-chat/compare/v1.7.4...v1.7.5) (2026-07-25)
 
 
