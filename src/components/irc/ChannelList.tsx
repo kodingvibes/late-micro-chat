@@ -3,6 +3,7 @@ import type { ChannelState, ChannelCategory } from '../../lib/chat/domain/types'
 import ChannelContextMenu, { useChannelContextMenuState } from './ChannelContextMenu'
 import Avatar from './Avatar'
 import { Hash, ChevronDown, ChevronRight, Plus } from '@/components/icons'
+import { useLongPress } from '../../hooks/useLongPress'
 
 interface ChannelListProps {
   channels: Map<number, ChannelState>
@@ -144,77 +145,22 @@ export default function ChannelList({
               {/* Channels in category */}
               {!isCollapsed && visible.length > 0 && (
                 <div>
-                  {visible.map(chan => {
-                    const isVoice = chan.channelType === 'voice'
-                    const isActive = isVoice ? chan.id === activeVoiceChannelId : chan.name === currentChannel
-                    const voiceCount = chan.voiceParticipants ?? 0
-                    const voiceNames = chan.voiceParticipantNames ?? []
-
-                    return (
-                      <button
-                        key={chan.id}
-                        onClick={() => {
-                          if (isVoice) {
-                            isActive ? onVoiceLeave(chan.id) : onVoiceJoin(chan.id)
-                          } else {
-                            onSelect(chan.name)
-                          }
-                        }}
-                        onContextMenu={(e) => {
-                          e.preventDefault()
-                          setChMenu({ show: true, x: e.clientX, y: e.clientY, channel: chan })
-                        }}
-                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm transition-all text-left cursor-pointer select-none [-webkit-touch-callout:none] ${
-                          isActive
-                            ? isVoice
-                              ? 'bg-emerald-500/15 text-emerald-200 border-l-2 border-emerald-500'
-                              : 'bg-indigo-500/15 text-slate-100 border-l-2 border-indigo-500'
-                            : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 border-l-2 border-transparent'
-                        }`}
-                      >
-                        {isVoice ? (
-                          <span className="text-base flex-shrink-0">
-                            {isActive ? '🔊' : '🎧'}
-                          </span>
-                        ) : (
-                          <Hash className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-indigo-400' : 'text-slate-500'}`} />
-                        )}
-                        <span className="truncate flex-1 font-medium">
-                          {chan.name.replace(/^🔊\s*/, '').replace(/^#/, '')}
-                        </span>
-                        {isVoice && voiceCount > 0 && voiceNames.length > 0 && (
-                          <span className="flex items-center flex-shrink-0">
-                            {voiceNames.slice(0, 3).map(p => (
-                              <Avatar
-                                key={p.userId}
-                                nick={p.displayName}
-                                size="sm"
-                                className="ring-2 ring-slate-900 -ml-1.5 first:ml-0 w-5 h-5 text-[9px]"
-                              />
-                            ))}
-                            {voiceNames.length > 3 && (
-                              <span className="ml-1 text-[10px] font-medium tabular-nums text-slate-500">
-                                +{voiceNames.length - 3}
-                              </span>
-                            )}
-                          </span>
-                        )}
-                        {isVoice && voiceCount > 0 && voiceNames.length === 0 && (
-                          <span className={`text-[10px] font-medium tabular-nums flex items-center gap-1 ${
-                            isActive ? 'text-emerald-300' : 'text-slate-500'
-                          }`}>
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                            {voiceCount}
-                          </span>
-                        )}
-                        {!isVoice && chan.unread > 0 && (
-                          <span className="bg-indigo-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center tabular-nums">
-                            {chan.unread}
-                          </span>
-                        )}
-                      </button>
-                    )
-                  })}
+                  {visible.map(chan => (
+                    <ChannelRow
+                      key={chan.id}
+                      chan={chan}
+                      isActive={chan.channelType === 'voice' ? chan.id === activeVoiceChannelId : chan.name === currentChannel}
+                      onSelect={() => {
+                        if (chan.channelType === 'voice') {
+                          if (chan.id === activeVoiceChannelId) onVoiceLeave(chan.id)
+                          else onVoiceJoin(chan.id)
+                        } else {
+                          onSelect(chan.name)
+                        }
+                      }}
+                      onContextMenu={(x, y) => setChMenu({ show: true, x, y, channel: chan })}
+                    />
+                  ))}
                 </div>
               )}
             </div>
@@ -262,5 +208,109 @@ export default function ChannelList({
         onDelete={onDelete}
       />
     </div>
+  )
+}
+
+interface ChannelRowProps {
+  chan: ChannelState
+  isActive: boolean
+  onSelect: () => void
+  /** Desktop right-click and mobile long-press both call this
+   *  with the (clientX, clientY) where the menu should appear. */
+  onContextMenu: (x: number, y: number) => void
+}
+
+function ChannelRow({ chan, isActive, onSelect, onContextMenu }: ChannelRowProps) {
+  // ponytail: each row gets its own long-press timer via the
+  // shared hook. Desktop still uses onContextMenu; the hook
+  // adds the touch path so mobile (iOS + Android) opens the
+  // same menu after a 400ms hold. `consumeLongPressClick`
+  // suppresses the synthetic click that would otherwise also
+  // trigger `onSelect` when the user lifts the finger after
+  // the long-press fired.
+  const {
+    onTouchStart: lpTouchStart,
+    onTouchMove: lpTouchMove,
+    onTouchEnd: lpTouchEnd,
+    onTouchCancel: lpTouchCancel,
+    consumeLongPressClick,
+  } = useLongPress({
+    onLongPress: (e) => {
+      const t = e.touches[0]
+      if (t) onContextMenu(t.clientX, t.clientY)
+    },
+  })
+
+  const isVoice = chan.channelType === 'voice'
+  const voiceCount = chan.voiceParticipants ?? 0
+  const voiceNames = chan.voiceParticipantNames ?? []
+
+  return (
+    <button
+      onClick={(e) => {
+        if (consumeLongPressClick()) {
+          e.preventDefault()
+          e.stopPropagation()
+          return
+        }
+        onSelect()
+      }}
+      onContextMenu={(e) => {
+        e.preventDefault()
+        onContextMenu(e.clientX, e.clientY)
+      }}
+      onTouchStart={lpTouchStart}
+      onTouchMove={lpTouchMove}
+      onTouchEnd={lpTouchEnd}
+      onTouchCancel={lpTouchCancel}
+      className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm transition-all text-left cursor-pointer select-none [-webkit-touch-callout:none] ${
+        isActive
+          ? isVoice
+            ? 'bg-emerald-500/15 text-emerald-200 border-l-2 border-emerald-500'
+            : 'bg-indigo-500/15 text-slate-100 border-l-2 border-indigo-500'
+          : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 border-l-2 border-transparent'
+      }`}
+    >
+      {isVoice ? (
+        <span className="text-base flex-shrink-0">
+          {isActive ? '🔊' : '🎧'}
+        </span>
+      ) : (
+        <Hash className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-indigo-400' : 'text-slate-500'}`} />
+      )}
+      <span className="truncate flex-1 font-medium">
+        {chan.name.replace(/^🔊\s*/, '').replace(/^#/, '')}
+      </span>
+      {isVoice && voiceCount > 0 && voiceNames.length > 0 && (
+        <span className="flex items-center flex-shrink-0">
+          {voiceNames.slice(0, 3).map(p => (
+            <Avatar
+              key={p.userId}
+              nick={p.displayName}
+              size="sm"
+              className="ring-2 ring-slate-900 -ml-1.5 first:ml-0 w-5 h-5 text-[9px]"
+            />
+          ))}
+          {voiceNames.length > 3 && (
+            <span className="ml-1 text-[10px] font-medium tabular-nums text-slate-500">
+              +{voiceNames.length - 3}
+            </span>
+          )}
+        </span>
+      )}
+      {isVoice && voiceCount > 0 && voiceNames.length === 0 && (
+        <span className={`text-[10px] font-medium tabular-nums flex items-center gap-1 ${
+          isActive ? 'text-emerald-300' : 'text-slate-500'
+        }`}>
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          {voiceCount}
+        </span>
+      )}
+      {!isVoice && chan.unread > 0 && (
+        <span className="bg-indigo-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center tabular-nums">
+          {chan.unread}
+        </span>
+      )}
+    </button>
   )
 }

@@ -4,6 +4,7 @@ import { getNickColor } from '../../lib/irc/colors'
 import Avatar from './Avatar'
 import UserContextMenu, { useUserContextMenuState } from './UserContextMenu'
 import { Shield, ShieldCheck } from '@/components/icons'
+import { useLongPress } from '../../hooks/useLongPress'
 
 interface UserListProps {
   users: ChannelMember[]
@@ -59,37 +60,11 @@ export default function UserList({ users, onBuzz, onCopyName }: UserListProps) {
         {filtered.length > 0 && (
           <div>
             {filtered.map(u => (
-              <div
+              <UserRow
                 key={u.display_name}
-                className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-slate-800/60 transition-colors cursor-context-menu"
-                onContextMenu={(e) => {
-                  e.preventDefault()
-                  setUserMenu({ show: true, x: e.clientX, y: e.clientY, user: u })
-                }}
-              >
-                <div className="relative">
-                  <Avatar nick={u.display_name} size="sm" />
-                  {u.active && (
-                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-900 animate-dot-pulse" />
-                  )}
-                </div>
-                <span
-                  className="text-sm truncate"
-                  style={{ color: getNickColor(u.display_name) }}
-                >
-                  {u.display_name}
-                </span>
-                {u.role === 'admin' && (
-                  <span title="Admin del canal">
-                    <Shield className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-                  </span>
-                )}
-                {u.role === 'mod' && (
-                  <span title="Moderador">
-                    <ShieldCheck className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
-                  </span>
-                )}
-              </div>
+                user={u}
+                onContextMenu={(x, y) => setUserMenu({ show: true, x, y, user: u })}
+              />
             ))}
           </div>
         )}
@@ -100,6 +75,69 @@ export default function UserList({ users, onBuzz, onCopyName }: UserListProps) {
         onBuzz={(targetUserId) => onBuzz?.(targetUserId)}
         onCopyName={(name) => onCopyName?.(name)}
       />
+    </div>
+  )
+}
+
+interface UserRowProps {
+  user: ChannelMember
+  /** Desktop right-click and mobile long-press both call this
+   *  with the (clientX, clientY) where the menu should appear. */
+  onContextMenu: (x: number, y: number) => void
+}
+
+function UserRow({ user: u, onContextMenu }: UserRowProps) {
+  // ponytail: mobile long-press via the shared hook. iOS does
+  // not fire contextmenu from a touch, so the right-click path
+  // is dead on mobile without this. The hook cancels on
+  // movement past 10px so scrolling the list never opens the
+  // menu.
+  const {
+    onTouchStart: lpTouchStart,
+    onTouchMove: lpTouchMove,
+    onTouchEnd: lpTouchEnd,
+    onTouchCancel: lpTouchCancel,
+  } = useLongPress({
+    onLongPress: (e) => {
+      const t = e.touches[0]
+      if (t) onContextMenu(t.clientX, t.clientY)
+    },
+  })
+
+  return (
+    <div
+      onContextMenu={(e) => {
+        e.preventDefault()
+        onContextMenu(e.clientX, e.clientY)
+      }}
+      onTouchStart={lpTouchStart}
+      onTouchMove={lpTouchMove}
+      onTouchEnd={lpTouchEnd}
+      onTouchCancel={lpTouchCancel}
+      className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-slate-800/60 transition-colors cursor-context-menu select-none [-webkit-touch-callout:none]"
+    >
+      <div className="relative">
+        <Avatar nick={u.display_name} size="sm" />
+        {u.active && (
+          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-900 animate-dot-pulse" />
+        )}
+      </div>
+      <span
+        className="text-sm truncate"
+        style={{ color: getNickColor(u.display_name) }}
+      >
+        {u.display_name}
+      </span>
+      {u.role === 'admin' && (
+        <span title="Admin del canal">
+          <Shield className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+        </span>
+      )}
+      {u.role === 'mod' && (
+        <span title="Moderador">
+          <ShieldCheck className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+        </span>
+      )}
     </div>
   )
 }

@@ -17,6 +17,7 @@ import DayHeader from './DayHeader'
 import NewMessagesBadge from './NewMessagesBadge'
 import { useScrollState } from './useScrollState'
 import { estimateMessageHeight, setMeasuredHeight, getCachedHeight, clearHeights } from './MessageHeightCache'
+import { useLongPress } from '../../hooks/useLongPress'
 import './irc.css'
 
 const HEADER_INTERVAL_S = 300
@@ -272,10 +273,13 @@ function ContentBlock({ message, members, isOwn, onVideoFloat, onVideoPlay, onVi
   return <RichText text={m.content} members={members} isOwn={isOwn} />
 }
 
-function ActionRow({ m, nick, isOwn, handleTouchStart, clearTouchTimer, onContextMenu }: {
+function ActionRow({ m, nick, isOwn, handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel, onContextMenu }: {
   m: ChatMessage; nick: string; isOwn: boolean
   handleTouchStart: (e: React.TouchEvent) => void
-  clearTouchTimer: () => void; onContextMenu?: (msg: ChatMessage, x: number, y: number) => void
+  handleTouchMove: (e: React.TouchEvent) => void
+  handleTouchEnd: (e: React.TouchEvent) => void
+  handleTouchCancel: (e: React.TouchEvent) => void
+  onContextMenu?: (msg: ChatMessage, x: number, y: number) => void
 }) {
   return (
     <div
@@ -284,8 +288,9 @@ function ActionRow({ m, nick, isOwn, handleTouchStart, clearTouchTimer, onContex
       style={{ contain: 'layout style' }}
       onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(m, e.clientX, e.clientY) }}
       onTouchStart={handleTouchStart}
-      onTouchMove={clearTouchTimer}
-      onTouchEnd={clearTouchTimer}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchCancel}
     >
       <div className="flex-1 min-w-0 max-w-full">
         <ForwardedBlock message={m} />
@@ -316,9 +321,12 @@ function ActionRow({ m, nick, isOwn, handleTouchStart, clearTouchTimer, onContex
   )
 }
 
-function ImageRow({ m, nick, isOwn, showHeader, handleTouchStart, clearTouchTimer, onContextMenu, onImageOpen, onLinkOpen, nickByUserId, myUserId, onToggleReaction }: {
+function ImageRow({ m, nick, isOwn, showHeader, handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel, onContextMenu, onImageOpen, onLinkOpen, nickByUserId, myUserId, onToggleReaction }: {
   m: ChatMessage; nick: string; isOwn: boolean; showHeader: boolean
-  handleTouchStart: (e: React.TouchEvent) => void; clearTouchTimer: () => void
+  handleTouchStart: (e: React.TouchEvent) => void
+  handleTouchMove: (e: React.TouchEvent) => void
+  handleTouchEnd: (e: React.TouchEvent) => void
+  handleTouchCancel: (e: React.TouchEvent) => void
   onContextMenu?: (msg: ChatMessage, x: number, y: number) => void
   onImageOpen?: (images: string[], index: number) => void
   onLinkOpen?: (url: string) => void
@@ -348,8 +356,9 @@ function ImageRow({ m, nick, isOwn, showHeader, handleTouchStart, clearTouchTime
       style={{ contain: 'layout style' }}
       onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(m, e.clientX, e.clientY) }}
       onTouchStart={handleTouchStart}
-      onTouchMove={clearTouchTimer}
-      onTouchEnd={clearTouchTimer}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchCancel}
     >
       <div className={`flex flex-col max-w-[75%] sm:max-w-[65%] ${isOwn ? 'items-end' : 'items-start'}`}>
         {showHeader && (
@@ -403,7 +412,7 @@ function ImageRow({ m, nick, isOwn, showHeader, handleTouchStart, clearTouchTime
   )
 }
 
-function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserId, myUserId, onLinkOpen, onToggleReaction, onVideoFloat, onVideoPlay, onVideoRef, floatingVideo, handleTouchStart, clearTouchTimer, onContextMenu }: {
+function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserId, myUserId, onLinkOpen, onToggleReaction, onVideoFloat, onVideoPlay, onVideoRef, floatingVideo, handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel, onContextMenu }: {
   m: ChatMessage; nick: string; isOwn: boolean; showHeader: boolean; isNew: boolean
   members?: { id: number; display_name: string }[]
   nickByUserId?: Map<number, string>; myUserId?: number | null
@@ -411,7 +420,10 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
   onToggleReaction?: (messageId: number, emoji: string) => void
   onVideoFloat?: (attachmentId: string) => void; onVideoPlay?: (attachmentId: string) => void
   onVideoRef?: (attachmentId: string, el: HTMLVideoElement | null) => void; floatingVideo?: string | null
-  handleTouchStart: (e: React.TouchEvent) => void; clearTouchTimer: () => void
+  handleTouchStart: (e: React.TouchEvent) => void
+  handleTouchMove: (e: React.TouchEvent) => void
+  handleTouchEnd: (e: React.TouchEvent) => void
+  handleTouchCancel: (e: React.TouchEvent) => void
   onContextMenu?: (msg: ChatMessage, x: number, y: number) => void
 }) {
   const bubbleClass = isOwn
@@ -438,8 +450,9 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
       style={{ contain: 'layout style' }}
       onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(m, e.clientX, e.clientY) }}
       onTouchStart={handleTouchStart}
-      onTouchMove={clearTouchTimer}
-      onTouchEnd={clearTouchTimer}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchCancel}
     >
       <div className={containerClass}>
         {onLinkOpen && (
@@ -523,30 +536,32 @@ function MessageRow({
   const m = message
   const nick = nickByUserId?.get(m.user_id) ?? m.display_name
 
-  const touchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const clearTouchTimer = useCallback(() => {
-    if (touchTimerRef.current) {
-      clearTimeout(touchTimerRef.current)
-      touchTimerRef.current = null
-    }
-  }, [])
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    clearTouchTimer()
-    touchTimerRef.current = setTimeout(() => {
-      const touch = e.touches[0]
-      onContextMenu?.(m, touch.clientX, touch.clientY)
-    }, 400)
-  }, [m, onContextMenu, clearTouchTimer])
+  // ponytail: long-press via the shared hook. The hook keeps
+  // its own timer so the row only fires one long-press per
+  // gesture, and cancels on movement past 10px so scrolling
+  // the chat never opens the menu. The 400ms hold matches
+  // iOS Safari's native threshold.
+  const {
+    onTouchStart: lpTouchStart,
+    onTouchMove: lpTouchMove,
+    onTouchEnd: lpTouchEnd,
+    onTouchCancel: lpTouchCancel,
+  } = useLongPress({
+    onLongPress: (e) => {
+      const t = e.touches[0]
+      if (t) onContextMenu?.(m, t.clientX, t.clientY)
+    },
+  })
 
   const isAction = !!m.is_action
   const isImage = hasImageMarker(m.content)
 
   if (isAction) {
-    return <ActionRow m={m} nick={nick} isOwn={isOwn} handleTouchStart={handleTouchStart} clearTouchTimer={clearTouchTimer} onContextMenu={onContextMenu} />
+    return <ActionRow m={m} nick={nick} isOwn={isOwn} handleTouchStart={lpTouchStart} handleTouchMove={lpTouchMove} handleTouchEnd={lpTouchEnd} handleTouchCancel={lpTouchCancel} onContextMenu={onContextMenu} />
   }
 
   if (isImage && onImageOpen) {
-    return <ImageRow m={m} nick={nick} isOwn={isOwn} showHeader={showHeader} handleTouchStart={handleTouchStart} clearTouchTimer={clearTouchTimer} onContextMenu={onContextMenu} onImageOpen={onImageOpen} onLinkOpen={onLinkOpen} nickByUserId={nickByUserId} myUserId={myUserId} onToggleReaction={onToggleReaction} />
+    return <ImageRow m={m} nick={nick} isOwn={isOwn} showHeader={showHeader} handleTouchStart={lpTouchStart} handleTouchMove={lpTouchMove} handleTouchEnd={lpTouchEnd} handleTouchCancel={lpTouchCancel} onContextMenu={onContextMenu} onImageOpen={onImageOpen} onLinkOpen={onLinkOpen} nickByUserId={nickByUserId} myUserId={myUserId} onToggleReaction={onToggleReaction} />
   }
 
   return (
@@ -566,8 +581,10 @@ function MessageRow({
         onVideoPlay={onVideoPlay}
         onVideoRef={onVideoRef}
         floatingVideo={floatingVideo}
-        handleTouchStart={handleTouchStart}
-        clearTouchTimer={clearTouchTimer}
+        handleTouchStart={lpTouchStart}
+        handleTouchMove={lpTouchMove}
+        handleTouchEnd={lpTouchEnd}
+        handleTouchCancel={lpTouchCancel}
         onContextMenu={onContextMenu}
       />
     </div>
