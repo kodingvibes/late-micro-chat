@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.1.8...v1.2.0) (2026-07-25)
+
+
+### Features
+
+* bottom-anchored inverted chat scroll with state machine ([bef912e](https://github.com/kodingvibes/late-micro-chat/commit/bef912e91e43814548f172c5a392bfde04f88109))
+
 ## [1.1.8](https://github.com/kodingvibes/late-micro-chat/compare/v1.1.7...v1.1.8) (2026-07-24)
 
 
