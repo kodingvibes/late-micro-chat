@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.3.4...v1.4.0) (2026-07-25)
+
+
+### Features
+
+* **chat:** pre-position context menus offscreen + add entry animation ([6f7c2a5](https://github.com/kodingvibes/late-micro-chat/commit/6f7c2a5199028a0db46f4e5a954f83ead3bbbbef))
+
 ## [1.3.4](https://github.com/kodingvibes/late-micro-chat/compare/v1.3.3...v1.3.4) (2026-07-25)
 
 
