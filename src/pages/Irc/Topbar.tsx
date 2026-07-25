@@ -3,7 +3,9 @@ import type { ChannelState } from '@/lib/chat/domain/types'
 
 interface TopbarProps {
   currentChan: ChannelState | undefined
-  userCount: number
+  // ponytail: the appshell shows the live count badge on the
+  // Chat nav link, so the MF's own Topbar only needs a button
+  // to open the user list — no count attached.
   showUsersDrawer: boolean
   onToggleUsers: () => void
   onOpenChannels: () => void
@@ -13,7 +15,6 @@ interface TopbarProps {
 
 export function Topbar({
   currentChan,
-  userCount,
   showUsersDrawer,
   onToggleUsers,
   onOpenChannels,
@@ -62,7 +63,7 @@ export function Topbar({
       </div>
       <button
         onClick={onToggleUsers}
-        className={`flex items-center gap-1 px-2 py-1.5 rounded-lg transition-colors ${
+        className={`p-1.5 rounded-lg transition-colors ${
           showUsersDrawer
             ? 'bg-accent/15 text-accent'
             : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
@@ -71,7 +72,6 @@ export function Topbar({
         title="Usuarios en línea en este canal"
       >
         <Users className="w-4 h-4" />
-        <span className="text-xs tabular-nums">{userCount}</span>
       </button>
     </div>
   )

@@ -684,7 +684,6 @@ export function Irc() {
     }
     return out
   }, [typing, nickMap, currentChannel])
-  const channelUserCount = currentChan?.activeCount ?? currentChan?.memberCount ?? 0
   // Global online count across every channel the current user can see.
   // We sum unique user_ids whose `active` flag is true in each channel's
   // member list. Members we don't have yet (members not loaded) are
@@ -797,7 +796,6 @@ export function Irc() {
 
       <Topbar
         currentChan={currentChan ?? undefined}
-        userCount={channelUserCount}
         showUsersDrawer={showUsersDrawer}
         onToggleUsers={() => setShowUsersDrawer((v) => !v)}
         onOpenChannels={() => setShowChannelsDrawer(true)}
