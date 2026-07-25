@@ -770,7 +770,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
         ? <EditBar onClear={() => onClearEdit?.()} />
         : replyContext && <ReplyBar reply={replyContext} onClear={onClearReply!} />}
       {isFileDragging && channelId !== null && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-indigo-950/60 backdrop-blur-sm pointer-events-none transition-opacity duration-150">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-accent/60 backdrop-blur-sm pointer-events-none transition-opacity duration-150">
           <div className="bg-slate-900/90 border-2 border-dashed border-accent rounded-2xl p-8 sm:p-10 max-w-md mx-4 text-center shadow-2xl">
             <Upload className="w-10 h-10 text-accent mx-auto mb-3" />
             <p className="text-slate-100 font-semibold text-lg">Suelta archivos para adjuntar</p>

@@ -6,7 +6,10 @@ import { resolve } from "node:path";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
-    alias: { "@": resolve(__dirname, "./src") },
+    alias: {
+      "@": resolve(__dirname, "./src"),
+      "@late/theme": resolve(__dirname, "../late.kodingvibes.com/packages/late-theme"),
+    },
   },
   build: {
     outDir: "dist",

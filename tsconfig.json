@@ -17,7 +17,11 @@
     "noEmit": true,
     "types": ["vite/client"],
     "baseUrl": ".",
-    "paths": { "@/*": ["src/*"] }
+    "paths": {
+      "@/*": ["src/*"],
+      "@late/theme": ["../late.kodingvibes.com/packages/late-theme"],
+      "@late/theme/*": ["../late.kodingvibes.com/packages/late-theme/*"]
+    }
   },
   "include": ["src"]
 }

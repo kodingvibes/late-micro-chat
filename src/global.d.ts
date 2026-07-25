@@ -74,7 +74,7 @@ export interface LateSessionAPI {
 // micro mirrors those values onto its own documentElement so
 // the slate / accent / light-mode overrides declared in
 // index.css take effect on the chat surface too.
-import type { LateTheme } from "@/lib/theme";
+import type { LateTheme } from "@late/theme";
 
 declare global {
   interface Window {

@@ -437,7 +437,7 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
   onContextMenu?: (msg: ChatMessage, x: number, y: number) => void
 }) {
   const bubbleClass = isOwn
-    ? 'rounded-2xl bg-indigo-800 text-slate-50 shadow-bubble-own w-full transition-shadow hover:shadow-lg'
+    ? 'rounded-2xl bg-accent text-slate-50 shadow-bubble-own w-full transition-shadow hover:shadow-lg'
     : 'rounded-2xl bg-slate-800/70 text-slate-100 shadow-bubble w-full transition-shadow hover:shadow-lg'
   const headerClass = isOwn
     ? 'px-3 pt-1 pb-0.5 text-[11px] font-semibold opacity-80 border-b border-white/10'

@@ -321,7 +321,7 @@ export default function AudioWaveform({ src, filename }: AudioWaveformProps) {
         type="button"
         onClick={togglePlay}
         disabled={isLoading || hasError}
-        className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 hover:from-indigo-400 hover:to-violet-400 disabled:from-slate-700 disabled:to-slate-700 text-white flex items-center justify-center flex-shrink-0 transition-all shadow-md hover:shadow-lg hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:hover:scale-100"
+        className="w-11 h-11 rounded-full bg-accent hover:bg-accent-soft disabled:from-slate-700 disabled:to-slate-700 text-white flex items-center justify-center flex-shrink-0 transition-all shadow-md hover:shadow-lg hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:hover:scale-100"
         aria-label={isPlaying ? 'Pausar' : 'Reproducir'}
       >
         {isLoading ? (

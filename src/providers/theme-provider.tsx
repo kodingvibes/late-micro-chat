@@ -1,5 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import type { AccentName, LateTheme, ThemeMode } from "@/lib/theme";
+import { createContext, useContext, useEffect, useState } from "react";
+import type { AccentName, LateTheme, ThemeMode } from "@late/theme";
+import { DEFAULT_THEME } from "@late/theme";
 
 interface ThemeContextValue {
   mode: ThemeMode;
@@ -8,18 +9,6 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
-
-const DEFAULT_THEME: LateTheme = {
-  mode: "dark",
-  accent: "indigo",
-  accentPrimary: "#6366f1",
-  accentSoft: "#818cf8",
-  accentRing: "#a5b4fc",
-  accentGlowA: "rgba(99,102,241,0.70)",
-  accentGlowB: "rgba(99,102,241,0.45)",
-  accentGlowALight: "rgba(79,70,229,0.60)",
-  accentGlowBLight: "rgba(99,102,241,0.35)",
-};
 
 function snapshotFromWindow(): LateTheme {
   if (typeof window === "undefined") return DEFAULT_THEME;
@@ -35,9 +24,6 @@ function applyToDocument(t: LateTheme) {
   root.style.setProperty("--accent-primary", t.accentPrimary);
   root.style.setProperty("--accent-soft", t.accentSoft);
   root.style.setProperty("--accent-ring", t.accentRing);
-  // ponytail: pre-baked rgba tones from the shell so the
-  // page-level halo tracks the accent. The shell sets these
-  // in :root when it dispatches `late:theme-change`.
   root.style.setProperty("--accent-glow-a", t.accentGlowA);
   root.style.setProperty("--accent-glow-b", t.accentGlowB);
   root.style.setProperty("--accent-glow-a-light", t.accentGlowALight);
@@ -59,12 +45,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       applyToDocument(detail);
     };
     window.addEventListener("late:theme-change", onChange as EventListener);
-    // ponytail: the shell also installs a MutationObserver on
-    // <body> for the chat micro slot. We piggyback on a
-    // small `storage` listener to keep the MF in sync if the
-    // user changes the theme in a different tab. localStorage
-    // events fire on every window, so the MF picks up cross-
-    // tab theme swaps without polling.
     const onStorage = (e: StorageEvent) => {
       if (e.key === "late.theme") {
         const next = snapshotFromWindow();
@@ -89,15 +69,5 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 export function useTheme(): ThemeContextValue {
   const ctx = useContext(ThemeContext);
-  // ponytail: the hook is intentionally permissive — outside
-  // the provider the MF falls back to a sensible dark+indigo
-  // default so the page still renders if the wrapper is
-  // missing (e.g. in a Storybook story).
   return ctx ?? { mode: "dark", accent: "indigo", mounted: false };
 }
-
-// Re-export a no-op setter so existing call sites that
-// previously expected a ThemeContext with setters don't
-// blow up if anyone reaches for one. The MF only consumes
-// the theme; the shell owns the mutations.
-export const noop = useCallback;
