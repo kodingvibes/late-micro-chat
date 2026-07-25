@@ -1,3 +1,10 @@
+## [1.3.4](https://github.com/kodingvibes/late-micro-chat/compare/v1.3.3...v1.3.4) (2026-07-25)
+
+
+### Bug Fixes
+
+* **chat:** drop channel from local state on 'channel_deleted' WS event ([ef702e5](https://github.com/kodingvibes/late-micro-chat/commit/ef702e538c53e31f108b7e557c700279f570d38e))
+
 ## [1.3.3](https://github.com/kodingvibes/late-micro-chat/compare/v1.3.2...v1.3.3) (2026-07-25)
 
 
