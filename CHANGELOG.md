@@ -1,3 +1,10 @@
+## [1.7.3](https://github.com/kodingvibes/late-micro-chat/compare/v1.7.2...v1.7.3) (2026-07-25)
+
+
+### Bug Fixes
+
+* **chat:** let the shell's tinted body show through the chat page ([f0a9420](https://github.com/kodingvibes/late-micro-chat/commit/f0a9420b2fd5576d61a2294fb3651d56d14a05a3)), closes [#0b1120](https://github.com/kodingvibes/late-micro-chat/issues/0b1120)
+
 ## [1.7.2](https://github.com/kodingvibes/late-micro-chat/compare/v1.7.1...v1.7.2) (2026-07-25)
 
 
