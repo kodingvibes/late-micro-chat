@@ -1,3 +1,10 @@
+## [1.7.2](https://github.com/kodingvibes/late-micro-chat/compare/v1.7.1...v1.7.2) (2026-07-25)
+
+
+### Bug Fixes
+
+* **chat:** drop the in-Topbar user count, keep the Users button ([22ead74](https://github.com/kodingvibes/late-micro-chat/commit/22ead74454ca57a26f05ba697e972a971d3f972f))
+
 ## [1.7.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.7.0...v1.7.1) (2026-07-25)
 
 
