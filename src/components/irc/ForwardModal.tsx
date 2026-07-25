@@ -50,9 +50,9 @@ export default function ForwardModal({
   }, [message])
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm select-none" onClick={onClose}>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm select-none animate-menu-backdrop" onClick={onClose}>
       <div
-        className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[85vh]"
+        className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[85vh] animate-menu-pop"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

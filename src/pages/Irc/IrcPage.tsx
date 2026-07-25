@@ -1128,7 +1128,7 @@ function ToastStack({ toasts, onDismiss }: { toasts: { id: string; text: string;
           key={t.id}
           onClick={t.sticky ? undefined : () => onDismiss(t.id)}
           role={t.sticky ? 'alert' : 'status'}
-          className={`flex items-start gap-3 px-5 py-3 rounded-xl text-sm font-medium shadow-floating border backdrop-blur-sm transition-all animate-slide-in-from-top ${
+          className={`flex items-start gap-3 px-5 py-3 rounded-xl text-sm font-medium shadow-floating border backdrop-blur-sm transition-all animate-menu-toast ${
             t.sticky
               ? 'cursor-default'
               : 'cursor-pointer hover:scale-[1.02] hover:-translate-x-0.5'

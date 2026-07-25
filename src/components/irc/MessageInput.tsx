@@ -830,7 +830,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
               <Plus className="w-5 h-5" />
             </button>
             {showMobileMenu && (
-              <div className="absolute bottom-full mb-1 left-0 z-40 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-1.5 w-44 select-none" onClick={(e) => e.stopPropagation()}>
+              <div className="absolute bottom-full mb-1 left-0 z-40 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-1.5 w-44 select-none animate-menu-up" onClick={(e) => e.stopPropagation()}>
                 <button
                   type="button"
                   onClick={() => { imageInputRef.current?.click(); setShowMobileMenu(false) }}
@@ -887,7 +887,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
               <Paperclip className="w-5 h-5" />
             </button>
             {showClipMenu && (
-              <div className="absolute bottom-full mb-1 left-0 z-40 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-1.5 w-44 select-none" onClick={(e) => e.stopPropagation()}>
+              <div className="absolute bottom-full mb-1 left-0 z-40 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-1.5 w-44 select-none animate-menu-up" onClick={(e) => e.stopPropagation()}>
                 {[
                   { kind: 'audio', icon: Music, label: 'Audio' },
                   { kind: 'video', icon: Video, label: 'Video' },
@@ -937,7 +937,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
           </div>
           <div className="flex-1 relative min-w-0">
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute bottom-full left-0 right-0 mb-1 bg-slate-900 border border-slate-700 rounded-lg shadow-xl max-h-48 overflow-y-auto z-40 select-none">
+              <div className="absolute bottom-full left-0 right-0 mb-1 bg-slate-900 border border-slate-700 rounded-lg shadow-xl max-h-48 overflow-y-auto z-40 select-none animate-menu-up">
                 {suggestions.map((s, i) => (
                   <button
                     key={i}

@@ -199,7 +199,7 @@ export default function ParticipantTile({
               {locallyMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
             </button>
             {showVolume && !locallyMuted && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-slate-900 border border-slate-700 rounded-lg p-2 shadow-xl z-50 flex flex-col items-center gap-1">
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-slate-900 border border-slate-700 rounded-lg p-2 shadow-xl z-50 flex flex-col items-center gap-1 animate-menu-tooltip">
                 <span className="text-[8px] text-slate-500">Vol.</span>
                 <input
                   type="range"

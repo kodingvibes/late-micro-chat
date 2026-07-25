@@ -94,11 +94,11 @@ export default function ManageMembersModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 select-none animate-fade-in"
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 select-none animate-menu-backdrop"
       onClick={onClose}
     >
       <div
-        className="bg-slate-900 rounded-2xl p-5 w-full max-w-md mx-4 shadow-floating border border-slate-800 animate-scale-in flex flex-col max-h-[80vh]"
+        className="bg-slate-900 rounded-2xl p-5 w-full max-w-md mx-4 shadow-floating border border-slate-800 animate-menu-pop flex flex-col max-h-[80vh]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4 flex-shrink-0">

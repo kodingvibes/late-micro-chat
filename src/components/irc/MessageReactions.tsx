@@ -71,7 +71,7 @@ function ReactionDetailPopup({
   return createPortal(
     <div
       ref={ref}
-      className="fixed z-[270] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-2 px-3 min-w-[160px] max-w-[220px] overflow-y-auto select-none"
+      className="fixed z-[270] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-2 px-3 min-w-[160px] max-w-[220px] overflow-y-auto select-none animate-menu-pop"
       style={{ left, top, maxHeight: 200 }}
     >
       <div className="flex items-center gap-2 pb-1.5 mb-1.5 border-b border-slate-700/50">
@@ -247,7 +247,7 @@ export function CompactReactionButton({
       </div>
       {open && (
         <div
-          className={`absolute top-full mt-1 z-30 grid grid-cols-7 gap-1 bg-slate-900 border border-slate-700 rounded-2xl p-2 shadow-xl w-[230px] ${
+          className={`absolute top-full mt-1 z-30 grid grid-cols-7 gap-1 bg-slate-900 border border-slate-700 rounded-2xl p-2 shadow-xl w-[230px] animate-menu-drop ${
             align === 'right' ? 'right-0' : 'left-0'
           }`}
         >

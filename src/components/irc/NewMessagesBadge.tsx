@@ -18,7 +18,7 @@ export default function NewMessagesBadge({ count, onClick }: NewMessagesBadgePro
     <button
       type="button"
       onClick={onClick}
-      className="absolute bottom-4 right-4 sm:right-6 z-20 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500 hover:bg-indigo-400 text-white shadow-lg text-xs font-medium transition-colors"
+      className="absolute bottom-4 right-4 sm:right-6 z-20 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500 hover:bg-indigo-400 text-white shadow-lg text-xs font-medium transition-colors animate-menu-up"
       aria-label={label}
     >
       <span>{label}</span>

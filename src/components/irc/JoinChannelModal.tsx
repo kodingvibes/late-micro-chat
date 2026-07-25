@@ -25,11 +25,11 @@ export default function JoinChannelModal({ onSubmit, onCancel }: JoinChannelModa
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 select-none animate-fade-in"
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 select-none animate-menu-backdrop"
       onClick={onCancel}
     >
       <div
-        className="bg-slate-900 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-floating border border-slate-800 animate-scale-in"
+        className="bg-slate-900 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-floating border border-slate-800 animate-menu-pop"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-lg font-bold text-slate-100 mb-1">Crear canal</h2>

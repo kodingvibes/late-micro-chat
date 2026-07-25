@@ -115,7 +115,7 @@ export default function MessageContextMenu({
       data-placement={placement}
       data-state={ready ? 'open' : 'measuring'}
       data-irc-context-menu
-      className="irc-context-menu fixed bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none"
+      className="irc-context-menu fixed z-[250] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none animate-menu-pop"
       style={style}
       onClick={(e) => e.stopPropagation()}
     >

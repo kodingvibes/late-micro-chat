@@ -39,7 +39,7 @@ export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
   return (
     <div
       ref={ref}
-      className="absolute bottom-full mb-2 left-0 z-40 w-72 max-w-[calc(100vw-1.5rem)] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2 select-none"
+      className="absolute bottom-full mb-2 left-0 z-40 w-72 max-w-[calc(100vw-1.5rem)] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2 select-none animate-menu-up"
       role="dialog"
       aria-label="Emojis"
     >

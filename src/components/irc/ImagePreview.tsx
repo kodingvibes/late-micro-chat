@@ -52,7 +52,7 @@ export function ImageContextMenuPortal({
   return createPortal(
     <div
       ref={ref}
-      className="fixed z-[310] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none"
+      className="fixed z-[310] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none animate-menu-pop"
       style={{ left, top }}
       onClick={(e) => e.stopPropagation()}
     >
@@ -287,7 +287,7 @@ export function ImageLightbox({ images, index, onIndexChange, onClose }: ImageLi
 
   return (
     <div
-      className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 select-none"
+      className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 select-none animate-menu-backdrop"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
