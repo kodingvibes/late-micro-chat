@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.2.0...v1.2.1) (2026-07-25)
+
+
+### Bug Fixes
+
+* render chat window in chronological order ([8952ce4](https://github.com/kodingvibes/late-micro-chat/commit/8952ce4cbf1b10b9c15a7a2312429d6d0998616f))
+
 # [1.2.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.1.8...v1.2.0) (2026-07-25)
 
 
