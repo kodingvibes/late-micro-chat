@@ -178,6 +178,38 @@
   pointer-events: none;
 }
 
+/* ponytail: context menu entry animation. The hook parks the
+   menu offscreen with visibility:hidden while it measures, then
+   flips to opacity:1 at the clamped coordinates. The animation
+   runs once when the menu transitions from the measuring state
+   to the open state — a fade-in + a small slide whose direction
+   follows the placement the clamp picked (DOWN below the
+   origin, UP when the clamp flipped it above the bottom of the
+   viewport). */
+.irc-context-menu {
+  /* ponytail: the position itself snaps from offscreen to
+     final in a single frame (the menu is hidden during that
+     snap, so the user never sees it). We only animate opacity
+     and transform, never left/top, so the snap is instant. */
+  will-change: opacity, transform;
+}
+
+.irc-context-menu[data-state="open"][data-placement="down"] {
+  animation: irc-context-menu-enter-down 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.irc-context-menu[data-state="open"][data-placement="up"] {
+  animation: irc-context-menu-enter-up 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes irc-context-menu-enter-down {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes irc-context-menu-enter-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .scrollbar-hide {
   scrollbar-width: none;
   -ms-overflow-style: none;

@@ -94,7 +94,15 @@ export default function MessageContextMenu({
   }, [state.show, onClose])
 
   const { x, y } = state
-  const { x: adjustedX, y: adjustedY } = useViewportClamp(ref, x, y, state.show)
+  // ponytail: estimate the worst-case size (emoji picker adds
+  // ~140px of height when expanded). The clamp hook uses this
+  // to pre-position offscreen; without it, opening the picker
+  // could push the menu off the bottom of the viewport on
+  // short windows because the position was calculated for the
+  // collapsed size.
+  const { style, ready, placement } = useViewportClamp(ref, x, y, state.show, {
+    estimatedSize: { width: 220, height: 360 },
+  })
 
   if (!state.show || !state.message) return null
 
@@ -104,8 +112,11 @@ export default function MessageContextMenu({
   return (
     <div
       ref={ref}
-      className="fixed z-[250] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none"
-      style={{ left: adjustedX, top: adjustedY }}
+      data-placement={placement}
+      data-state={ready ? 'open' : 'measuring'}
+      data-irc-context-menu
+      className="irc-context-menu fixed bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none"
+      style={style}
       onClick={(e) => e.stopPropagation()}
     >
       <button

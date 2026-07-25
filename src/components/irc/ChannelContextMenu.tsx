@@ -46,7 +46,13 @@ export default function ChannelContextMenu({
   }, [state.show, onClose])
 
   const { x, y } = state
-  const { x: adjustedX, y: adjustedY } = useViewportClamp(ref, x, y, state.show)
+  // ponytail: the menu can show a description block and a delete-
+  // confirmation sub-panel; estimate the worst case so the
+  // pre-position has enough room and the menu never gets
+  // pushed off the viewport after the snap.
+  const { style, ready, placement } = useViewportClamp(ref, x, y, state.show, {
+    estimatedSize: { width: 240, height: 220 },
+  })
 
   if (!state.show || !state.channel) return null
 
@@ -55,8 +61,11 @@ export default function ChannelContextMenu({
   return (
     <div
       ref={ref}
-      className="fixed z-[250] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none"
-      style={{ left: adjustedX, top: adjustedY }}
+      data-placement={placement}
+      data-state={ready ? 'open' : 'measuring'}
+      data-irc-context-menu
+      className="irc-context-menu fixed bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none"
+      style={style}
       onClick={(e) => e.stopPropagation()}
     >
       {channel.description && (
