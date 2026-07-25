@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/kodingvibes/late-micro-chat/compare/v1.3.1...v1.3.2) (2026-07-25)
+
+
+### Bug Fixes
+
+* **chat:** place top virtual gap at the top of the window slice ([9d66e63](https://github.com/kodingvibes/late-micro-chat/commit/9d66e6395b912b1042ab2ebf13c2d66c804e2819))
+
 ## [1.3.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.3.0...v1.3.1) (2026-07-25)
 
 
