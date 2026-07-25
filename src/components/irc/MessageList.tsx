@@ -149,13 +149,14 @@ function buildDisplayList(
     const d = new Date(msg.created_at * 1000)
     const day = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
     if (day !== lastDay) {
-      // ponytail: with column-reverse the divider is rendered at
-      // the END of the previous day (i.e. just before the first
-      // message of the NEW day, in DOM order). Because messages
-      // are emitted newest-first in the DOM, this divider is the
-      // last sibling of the previous day and the first sibling of
-      // the new day — exactly the "above today's group" visual
-      // we want.
+      // ponytail: the divider is emitted just before the first
+      // message of a new day, in chronological order. The
+      // virtualizer renders the slice top→bottom in source order
+      // inside a block that's a child of the column-reverse
+      // container. The divider therefore sits between the last
+      // message of the previous day and the first message of the
+      // new day, which is the "above today's group" visual the
+      // user expects.
       items.push({
         type: 'day',
         message: msg,
@@ -607,10 +608,13 @@ export default function MessageList({
   }, [channelMembers, nickByUserId])
 
   // Build the chronological display list once per render. The
-  // virtualizer below picks a window out of this list. The list
-  // contains both bubbles and day dividers; dividers live at
-  // the END of each day in DOM order, which with column-reverse
-  // makes them appear at the TOP of each day visually.
+  // virtualizer below picks a window out of this list. Source
+  // order is oldest → newest; the chat container's
+  // `flex-direction: column-reverse` does the visual inversion
+  // at the container level only, so the slice itself stays in
+  // chronological order. Day dividers are emitted just before
+  // the first message of each new day, which renders the label
+  // "above today's group" in the visible flow.
   const items = useMemo(
     () => buildDisplayList(messages, currentNick, nickByUserId ?? new Map(), bubbleWidth),
     [messages, currentNick, nickByUserId, bubbleWidth],
@@ -623,9 +627,9 @@ export default function MessageList({
   // cheap: the old window stays in the DOM while React computes
   // the new one, and the browser gets a single commit. The
   // scroll itself never moves because the new item is appended
-  // at index 0 of the window (in DOM order = at the bottom
-  // visually) and the column-reverse + IO state machine handle
-  // the rest.
+  // to the end of the chronological list, which the column-
+  // reverse container then places at the visual bottom without
+  // any scroll adjustment.
   const deferredItems = useDeferredValue(items)
   const itemsForRender = deferredItems
 
@@ -651,12 +655,18 @@ export default function MessageList({
     return { startIdx: start, endIdx: end, topGap: topH, bottomGap: bottomH }
   }, [itemsForRender, totalItems])
 
-  // Render the window in reversed order so the column-reverse
-  // layout puts the newest message at the bottom of the visual
-  // stack (which is also the bottom of the scroll viewport when
-  // scrollTop is 0).
+  // Render the window in chronological order. The chat container
+  // is a flex column-reverse, but this slice is rendered inside
+  // a regular block (`.irc-col-reverse` is `display: block`,
+  // not column-reverse — the inversion is at the container level
+  // only). So the slice flows top→bottom in source order, and
+  // `column-reverse` on the parent places the whole block near
+  // the visual bottom of the chat. Inside the block, oldest
+  // messages sit at the top and the newest at the bottom, which
+  // is the layout the user expects when they read the chat from
+  // top to bottom.
   const windowItems = useMemo(
-    () => itemsForRender.slice(startIdx, endIdx).slice().reverse(),
+    () => itemsForRender.slice(startIdx, endIdx),
     [itemsForRender, startIdx, endIdx],
   )
 
