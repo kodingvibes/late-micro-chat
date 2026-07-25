@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.4.0...v1.4.1) (2026-07-25)
+
+
+### Bug Fixes
+
+* **chat:** gate message context menu to the bubble, not the row ([86c6fe1](https://github.com/kodingvibes/late-micro-chat/commit/86c6fe19b2250aa7262ede0744270167557c406f))
+
 # [1.4.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.3.4...v1.4.0) (2026-07-25)
 
 
