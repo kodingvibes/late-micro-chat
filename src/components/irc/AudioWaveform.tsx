@@ -153,9 +153,8 @@ export default function AudioWaveform({ src, filename }: AudioWaveformProps) {
         const x = i * barW
         const y = mid - barH / 2
         const frac = i / n
-        c2d.fillStyle = frac < playedFrac
-          ? 'rgb(165, 180, 254)'
-          : 'rgba(148, 163, 184, 0.45)'
+        const accentRing = getComputedStyle(document.documentElement).getPropertyValue('--accent-ring').trim() || '#a5b4fc'
+        c2d.fillStyle = frac < playedFrac ? accentRing : 'rgba(148, 163, 184, 0.45)'
         c2d.fillRect(x + 0.5, y, Math.max(1, barW - 1.5), barH)
       }
     }

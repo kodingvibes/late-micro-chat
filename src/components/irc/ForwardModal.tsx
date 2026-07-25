@@ -146,7 +146,7 @@ export default function ForwardModal({
             type="button"
             disabled={selectedId === null || sending}
             onClick={handleConfirm}
-            className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-colors bg-cyan-500 hover:bg-cyan-400 text-white disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-colors bg-accent hover:bg-accent-soft text-white disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed"
           >
             {sending ? (
               <>

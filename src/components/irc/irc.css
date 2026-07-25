@@ -21,7 +21,8 @@
 .rich-text ul { list-style-type: disc; }
 .rich-text ol { list-style-type: decimal; }
 .rich-text blockquote {
-  border-left: 2px solid rgba(99, 102, 241, 0.5);
+  border-left: 2px solid var(--accent-primary, #6366f1);
+  border-left-color: color-mix(in srgb, var(--accent-primary, #6366f1) 50%, transparent);
   padding-left: 0.5rem;
   color: rgb(148, 163, 184);
   font-style: italic;
@@ -91,14 +92,14 @@
 }
 .rich-text .mention {
   font-weight: 600;
-  background: rgba(99, 102, 241, 0.25);
+  background: color-mix(in srgb, var(--accent-primary, #6366f1) 25%, transparent);
   border-radius: 0.25rem;
   padding: 0 0.2rem;
-  color: rgb(199, 210, 254);
+  color: var(--accent-ring, #a5b4fc);
 }
 .rich-text-own .mention {
-  background: rgba(34, 211, 238, 0.25);
-  color: rgb(165, 243, 252);
+  background: color-mix(in srgb, var(--accent-soft, #818cf8) 25%, transparent);
+  color: var(--accent-primary, #6366f1);
 }
 .rich-text .mention-mass {
   background: rgba(244, 114, 182, 0.25);
