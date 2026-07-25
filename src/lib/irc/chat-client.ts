@@ -367,10 +367,26 @@ export class ChatClient {
 
   async start(): Promise<void> {
     try {
-      // Load profile
-      const me = await this.api<UserInfo>('GET', '/api/chat/me')
-      this.user = me
-      this.emitState({ user: this.user })
+      // ponytail: identity lives in late-auth, not in this service.
+      // window.LateSession is set by the shell before the micro
+      // mounts; reading it avoids a /api/chat/me round-trip that
+      // the post-extraction chat-bridge no longer answers.
+      const session = (window as any).LateSession
+      const sessionUser = session?.user
+      if (sessionUser && sessionUser.id && sessionUser.display_name) {
+        this.user = {
+          id: sessionUser.id,
+          email: sessionUser.email,
+          name: sessionUser.name ?? null,
+          display_name: sessionUser.display_name,
+        }
+        this.emitState({ user: this.user })
+      } else {
+        // Defensive fallback: no shell session means the
+        // page never finished auth. The page surfaces this as
+        // a redirect to SSO.
+        throw new Error("no session; redirect to sso")
+      }
       // Load channels
       const chans = await this.api<ChannelInfo[]>('GET', '/api/chat/channels')
       this.channels = new Map()
