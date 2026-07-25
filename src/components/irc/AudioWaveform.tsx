@@ -313,7 +313,10 @@ export default function AudioWaveform({ src, filename }: AudioWaveformProps) {
   }, [])
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-slate-700/40 min-w-[260px] shadow-soft transition-all hover:border-indigo-500/30 hover:shadow-card">
+    <div
+      className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-slate-700/40 min-w-[260px] shadow-soft transition-all hover:border-indigo-500/30 hover:shadow-card"
+      style={{ contain: 'layout paint' }}
+    >
       <button
         type="button"
         onClick={togglePlay}

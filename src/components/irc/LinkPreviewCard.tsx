@@ -16,6 +16,11 @@ interface LinkPreviewCardProps {
  * Width comes from the message column, not from the card: `data-og-card`
  * lets MessageList lock the column to the message max-width whenever a
  * card is present, so the card and its bubble are always flush.
+ *
+ * ponytail: the wrapper is rendered with a fixed height by the
+ * parent (LinkPreviewList reserves 168px per URL). h-full + overflow-
+ * hidden keep the card from reflowing the chat when the resolved
+ * image is taller than 16:9 or the description is multi-line.
  */
 export default function LinkPreviewCard({ og, onOpen }: LinkPreviewCardProps) {
   const hasImage = !!og.image
@@ -27,11 +32,11 @@ export default function LinkPreviewCard({ og, onOpen }: LinkPreviewCardProps) {
       type="button"
       onClick={() => onOpen(og.url)}
       data-og-card
-      className="block w-full text-left rounded-lg border-l-4 border-indigo-500 border border-slate-700/60 bg-slate-900/60 hover:bg-slate-900 transition-colors overflow-hidden"
+      className="block w-full h-full text-left rounded-lg border-l-4 border-indigo-500 border border-slate-700/60 bg-slate-900/60 hover:bg-slate-900 transition-colors overflow-hidden"
       aria-label={`Abrir ${title}`}
     >
       {hasImage && (
-        <div className="w-full aspect-video bg-slate-950">
+        <div className="w-full aspect-video bg-slate-950 shrink-0">
           <img
             src={og.image}
             alt=""
@@ -44,7 +49,7 @@ export default function LinkPreviewCard({ og, onOpen }: LinkPreviewCardProps) {
           />
         </div>
       )}
-      <div className="min-w-0 p-2.5">
+      <div className="min-w-0 p-2.5 overflow-hidden">
         {siteName && (
           <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 truncate">
             {siteName}

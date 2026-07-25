@@ -1,4 +1,4 @@
-import { useRef, useEffect, useLayoutEffect, useState, useCallback, useMemo } from 'react'
+import { useRef, useEffect, useLayoutEffect, useState, useCallback, useMemo, useDeferredValue } from 'react'
 import { CornerUpRight } from '@/components/icons'
 import type { ChatMessage } from '../../lib/chat/domain/types'
 import { getNickColor } from '../../lib/irc/colors'
@@ -13,11 +13,19 @@ import AudioWaveform from './AudioWaveform'
 import MessageReactions from './MessageReactions'
 import VoiceNotePlayer from './VoiceNotePlayer'
 import LazyMount from './LazyMount'
-import { useScrollAnchor } from './useScrollAnchor'
-
-const estimateAudioHeight = (_width: number) => 120
-const estimateOgHeight = (width: number) => width > 0 ? Math.round(width * (9 / 16) + 70) : 168
+import DayHeader from './DayHeader'
+import NewMessagesBadge from './NewMessagesBadge'
+import { useScrollState } from './useScrollState'
+import { estimateMessageHeight, setMeasuredHeight, getCachedHeight, clearHeights } from './MessageHeightCache'
 import './irc.css'
+
+const HEADER_INTERVAL_S = 300
+const BUBBLE_MAX_W = 600
+const VIRTUAL_WINDOW = 80
+
+function formatTime(ts: number): string {
+  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
 
 interface MessageListProps {
   messages: ChatMessage[]
@@ -70,92 +78,65 @@ interface MessageListProps {
   floatingVideo?: string | null
 }
 
-const HEADER_INTERVAL_S = 300
-
-function formatTime(ts: number): string {
-  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-}
-
-/** ponytail: WhatsApp-style receipt indicator for the sender's own
- *  bubbles. Three states, matching the familiar UX:
- *    ⏱  sent only, not yet delivered to anyone (member_count == 0
- *       means the sender is alone, so we just show ✓).
- *    ✓   delivered to at least one recipient, nobody read it yet.
- *    ✓✓  read by every recipient (read_count >= member_count).
- *  Color flips to indigo for "all read" so it stands out without
- *  being loud. The indicator is tiny and right-aligned next to
- *  the timestamp, so it never competes with the bubble content. */
 function ReceiptIndicator({ delivered, read, total }: { delivered: number; read: number; total: number }) {
   if (total === 0) {
-    // Sender is the only member — show a single check, nothing to wait for.
     return (
       <span className="inline-flex items-center text-slate-400 ml-1" aria-label="Enviado" title="Enviado">
-        <CheckIcon />
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M5 12l5 5 9-9" />
+        </svg>
       </span>
     )
   }
   if (read >= total) {
     return (
       <span className="inline-flex items-center text-indigo-400 ml-1" aria-label="Leído por todos" title="Leído por todos">
-        <CheckDoubleIcon />
+        <svg width="16" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M2 12l4 4 6-6" />
+          <path d="M12 14l4 4 6-6" />
+        </svg>
       </span>
     )
   }
   if (delivered > 0) {
     return (
       <span className="inline-flex items-center text-slate-400 ml-1" aria-label="Entregado" title="Entregado">
-        <CheckDoubleIcon />
+        <svg width="16" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M2 12l4 4 6-6" />
+          <path d="M12 14l4 4 6-6" />
+        </svg>
       </span>
     )
   }
   return (
     <span className="inline-flex items-center text-slate-500 ml-1" aria-label="Enviado" title="Enviado">
-      <CheckIcon />
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 12l5 5 9-9" />
+      </svg>
     </span>
   )
 }
 
-function CheckIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 12l5 5 9-9" />
-    </svg>
-  )
-}
-
-function CheckDoubleIcon() {
-  return (
-    <svg width="16" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2 12l4 4 6-6" />
-      <path d="M12 14l4 4 6-6" />
-    </svg>
-  )
-}
-
-function formatDayLabel(ts: number): string {
-  const d = new Date(ts)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
-  const dDay = new Date(d)
-  dDay.setHours(0, 0, 0, 0)
-  if (dDay.getTime() === today.getTime()) return 'Hoy'
-  if (dDay.getTime() === yesterday.getTime()) return 'Ayer'
-  return d.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })
-}
-
-
 interface DisplayItem {
-  type: 'day' | 'system' | 'bubble'
+  type: 'day' | 'bubble'
   message: ChatMessage
   isOwn: boolean
+  // ponytail: precomputed metadata used by the virtualizer.
+  // `id` is unique per item (divider ids are prefixed so day
+  // dividers and bubbles never collide). `h` is the best known
+  // height for the item — measured if we have it, estimated
+  // otherwise. The virtualizer uses `h` to size the placeholder
+  // that replaces the off-window items, so the scrollbar never
+  // jumps when items enter/leave the window.
+  id: string
+  h: number
 }
 
 function buildDisplayList(
   messages: ChatMessage[],
   currentNick: string,
   nickByUserId: Map<number, string>,
+  bubbleWidth: number,
 ): DisplayItem[] {
   const items: DisplayItem[] = []
   let lastDay = ''
@@ -163,32 +144,40 @@ function buildDisplayList(
   const nickFor = (m: ChatMessage) => nickByUserId.get(m.user_id) ?? m.display_name
   const isOwn = (m: ChatMessage) => nickFor(m) === currentNick
 
-  for (const msg of messages) {
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i]
     const d = new Date(msg.created_at * 1000)
     const day = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
     if (day !== lastDay) {
-      items.push({ type: 'day', message: msg, isOwn: false })
+      // ponytail: with column-reverse the divider is rendered at
+      // the END of the previous day (i.e. just before the first
+      // message of the NEW day, in DOM order). Because messages
+      // are emitted newest-first in the DOM, this divider is the
+      // last sibling of the previous day and the first sibling of
+      // the new day — exactly the "above today's group" visual
+      // we want.
+      items.push({
+        type: 'day',
+        message: msg,
+        isOwn: false,
+        id: `d-${day}`,
+        h: 36,
+      })
       lastDay = day
     }
-    items.push({ type: 'bubble', message: msg, isOwn: isOwn(msg) })
+    items.push({
+      type: 'bubble',
+      message: msg,
+      isOwn: isOwn(msg),
+      id: `m-${msg.id}`,
+      h: getCachedHeight(msg.id) ?? estimateMessageHeight(msg, bubbleWidth),
+    })
   }
 
   return items
 }
 
-function DayDivider({ ts }: { ts: number }) {
-  return (
-    <div className="flex items-center gap-3 px-4 py-2">
-      <div className="flex-1 h-px bg-slate-800" />
-      <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
-        {formatDayLabel(ts)}
-      </span>
-      <div className="flex-1 h-px bg-slate-800" />
-    </div>
-  )
-}
-
-function ReplyBlock({ message, containerWidth }: { message: ChatMessage; containerWidth: number }) {
+function ReplyBlock({ message }: { message: ChatMessage }) {
   const m = message
   if (!m.reply_to || !m.reply_to_author) return null
   const raw = m.reply_to_content || ''
@@ -215,9 +204,9 @@ function ReplyBlock({ message, containerWidth }: { message: ChatMessage; contain
           const single = urls.length === 1 ? toUrl(urls[0]) : (() => { const e = extractImageUrl(raw); return e ? toUrl(e) : null })()
           return single ? <img src={single} alt="" className="h-10 w-10 rounded object-cover mt-0.5" loading="lazy" /> : null
         })() : att?.kind === 'voicenote' ? (
-          <div className="mt-0.5"><LazyMount minHeight={estimateAudioHeight(containerWidth)}><VoiceNotePlayer noteId={att.id} /></LazyMount></div>
+          <div className="mt-0.5"><LazyMount minHeight={120}><VoiceNotePlayer noteId={att.id} /></LazyMount></div>
         ) : att?.kind === 'audio' ? (
-          <div className="mt-0.5"><LazyMount minHeight={estimateAudioHeight(containerWidth)}><AudioWaveform src={`/api/chat/attachments/${att.id}`} /></LazyMount></div>
+          <div className="mt-0.5"><LazyMount minHeight={120}><AudioWaveform src={`/api/chat/attachments/${att.id}`} /></LazyMount></div>
         ) : att ? (
           <p className="text-[12px] text-slate-400 truncate">📎 {att.kind}</p>
         ) : raw && <p className="text-[13px] text-slate-400 truncate">{raw}</p>}
@@ -239,10 +228,10 @@ function ForwardedBlock({ message }: { message: ChatMessage }) {
   )
 }
 
-function ContentBlock({ message, members, isOwn, containerWidth, onVideoFloat, onVideoPlay, onVideoRef, floatingVideo }: {
+function ContentBlock({ message, members, isOwn, onVideoFloat, onVideoPlay, onVideoRef, floatingVideo }: {
   message: ChatMessage; members?: { id: number; display_name: string }[]; isOwn: boolean
-  containerWidth: number
-  onVideoFloat?: (id: string) => void; onVideoPlay?: (id: string) => void; onVideoRef?: (id: string, el: HTMLVideoElement | null) => void; floatingVideo?: string | null
+  onVideoFloat?: (id: string) => void; onVideoPlay?: (id: string) => void
+  onVideoRef?: (id: string, el: HTMLVideoElement | null) => void; floatingVideo?: string | null
 }) {
   const m = message
   if (m.hidden) {
@@ -251,8 +240,8 @@ function ContentBlock({ message, members, isOwn, containerWidth, onVideoFloat, o
   const att = getAttachmentMarker(m.content)
   if (att) {
     const caption = extractImageCaption(m.content)
-    if (att.kind === 'voicenote') return <LazyMount minHeight={estimateAudioHeight(containerWidth)}><VoiceNotePlayer noteId={att.id} /></LazyMount>
-    if (att.kind === 'audio') return <LazyMount minHeight={estimateAudioHeight(containerWidth)}><AudioWaveform src={`/api/chat/attachments/${att.id}`} /></LazyMount>
+    if (att.kind === 'voicenote') return <LazyMount minHeight={120}><VoiceNotePlayer noteId={att.id} /></LazyMount>
+    if (att.kind === 'audio') return <LazyMount minHeight={120}><AudioWaveform src={`/api/chat/attachments/${att.id}`} /></LazyMount>
     return <>{caption && <RichText text={caption} members={members} isOwn={isOwn} />}<AttachmentCard attachmentId={att.id} onFloat={onVideoFloat} onVideoPlay={onVideoPlay} onVideoRef={onVideoRef} floatingVideo={floatingVideo} /></>
   }
   if (hasImageMarker(m.content)) return null
@@ -268,6 +257,7 @@ function ActionRow({ m, nick, isOwn, handleTouchStart, clearTouchTimer, onContex
     <div
       id={`msg-${m.id}`}
       className="group/msg flex gap-2 px-4 py-0.5 items-start select-none"
+      style={{ contain: 'layout style' }}
       onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(m, e.clientX, e.clientY) }}
       onTouchStart={handleTouchStart}
       onTouchMove={clearTouchTimer}
@@ -302,8 +292,8 @@ function ActionRow({ m, nick, isOwn, handleTouchStart, clearTouchTimer, onContex
   )
 }
 
-function ImageRow({ m, nick, isOwn, showHeader, columnWidth, handleTouchStart, clearTouchTimer, onContextMenu, onImageOpen, onLinkOpen, nickByUserId, myUserId, onToggleReaction }: {
-  m: ChatMessage; nick: string; isOwn: boolean; showHeader: boolean; columnWidth: number
+function ImageRow({ m, nick, isOwn, showHeader, handleTouchStart, clearTouchTimer, onContextMenu, onImageOpen, onLinkOpen, nickByUserId, myUserId, onToggleReaction }: {
+  m: ChatMessage; nick: string; isOwn: boolean; showHeader: boolean
   handleTouchStart: (e: React.TouchEvent) => void; clearTouchTimer: () => void
   onContextMenu?: (msg: ChatMessage, x: number, y: number) => void
   onImageOpen?: (images: string[], index: number) => void
@@ -312,20 +302,6 @@ function ImageRow({ m, nick, isOwn, showHeader, columnWidth, handleTouchStart, c
   myUserId?: number | null
   onToggleReaction?: (messageId: number, emoji: string) => void
 }) {
-  const columnRef = useRef<HTMLDivElement>(null)
-  const [actualWidth, setActualWidth] = useState(columnWidth)
-  useEffect(() => {
-    const el = columnRef.current
-    if (!el) return
-    const update = () => setActualWidth(el.clientWidth)
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
-  useEffect(() => {
-    if (columnWidth > 0) setActualWidth(columnWidth)
-  }, [columnWidth])
   const multi = extractImageUrls(m.content)
   let allImages: string[] = []
   let galleryCaption: string | null = null
@@ -345,12 +321,13 @@ function ImageRow({ m, nick, isOwn, showHeader, columnWidth, handleTouchStart, c
     <div
       id={`msg-${m.id}`}
       className={`group/msg flex items-start gap-1.5 px-4 py-0.5 select-none ${isOwn ? 'justify-end' : ''}`}
+      style={{ contain: 'layout style' }}
       onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(m, e.clientX, e.clientY) }}
       onTouchStart={handleTouchStart}
       onTouchMove={clearTouchTimer}
       onTouchEnd={clearTouchTimer}
     >
-      <div ref={columnRef} className={`flex flex-col max-w-[75%] sm:max-w-[65%] ${isOwn ? 'items-end' : 'items-start'}`}>
+      <div className={`flex flex-col max-w-[75%] sm:max-w-[65%] ${isOwn ? 'items-end' : 'items-start'}`}>
         {showHeader && (
           <div className="text-[11px] font-semibold mb-0.5" style={{ color: getNickColor(nick) }}>
             {nick}
@@ -358,14 +335,19 @@ function ImageRow({ m, nick, isOwn, showHeader, columnWidth, handleTouchStart, c
         )}
         <div className="space-y-1.5">
           <ForwardedBlock message={m} />
-          <ReplyBlock message={m} containerWidth={actualWidth} />
+          <ReplyBlock message={m} />
           {galleryCaption && (
             <div className="text-sm leading-snug text-slate-100 break-words">
               {galleryCaption}
             </div>
           )}
           {allImages.length === 1 ? (
-            <ImagePreview dataUrl={allImages[0]} onOpen={() => onImageOpen!(allImages, 0)} />
+            <ImagePreview
+              dataUrl={allImages[0]}
+              onOpen={() => onImageOpen!(allImages, 0)}
+              width={m.attachment?.width}
+              height={m.attachment?.height}
+            />
           ) : (
             <ImageGallery images={allImages} onOpen={(idx) => onImageOpen!(allImages, idx)} />
           )}
@@ -378,7 +360,7 @@ function ImageRow({ m, nick, isOwn, showHeader, columnWidth, handleTouchStart, c
             />
           )}
         {onLinkOpen && (
-          <LazyMount minHeight={estimateOgHeight(actualWidth)}><LinkPreviewList content={m.content} ogData={m.og_data} onOpen={onLinkOpen} /></LazyMount>
+          <LazyMount minHeight={168}><LinkPreviewList content={m.content} ogData={m.og_data} onOpen={onLinkOpen} /></LazyMount>
         )}
       </div>
       <span className="text-[10px] text-slate-500 tabular-nums mt-0.5 px-1 opacity-100 sm:opacity-0 sm:group-hover/msg:opacity-100 inline-flex items-center gap-1">
@@ -408,17 +390,6 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
   handleTouchStart: (e: React.TouchEvent) => void; clearTouchTimer: () => void
   onContextMenu?: (msg: ChatMessage, x: number, y: number) => void
 }) {
-  const bubbleRef = useRef<HTMLDivElement>(null)
-  const [bubbleWidth, setBubbleWidth] = useState(0)
-  useEffect(() => {
-    const el = bubbleRef.current
-    if (!el) return
-    const update = () => setBubbleWidth(el.clientWidth)
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
   const bubbleClass = isOwn
     ? 'rounded-2xl bg-indigo-800 text-slate-50 shadow-bubble-own w-full transition-shadow hover:shadow-lg'
     : 'rounded-2xl bg-slate-800/70 text-slate-100 shadow-bubble w-full transition-shadow hover:shadow-lg'
@@ -426,38 +397,21 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
     ? 'px-3 pt-1 pb-0.5 text-[11px] font-semibold opacity-80 border-b border-white/10'
     : 'px-3 pt-1 pb-0.5 text-[11px] font-semibold border-b border-slate-700/50'
   const headerStyle = isOwn ? undefined : { color: getNickColor(nick) }
-  // When a preview card is present the column locks to the message
-  // max-width (has-[[data-og-card]]), so the card is exactly as wide as
-  // its own bubble and every card in the list renders at the same size.
-  // Without a card the column stays content-driven, so short messages
-  // keep their small bubble.
-  //
-  // The 26rem cap stops the card (and its 16:9 banner) from ballooning on
-  // wide desktop panes, where 65% of the message area is ~1000px+ and the
-  // image scales up to match. `:has()` adds selector specificity, so this
-  // cap wins over the 65%. On mobile 65% is already well under 26rem, so
-  // the cap is inert there and small screens are unaffected.
   const widthClass =
     'max-w-[75%] sm:max-w-[65%] min-w-0 has-[[data-og-card]]:w-[75%] sm:has-[[data-og-card]]:w-[65%] has-[[data-og-card]]:max-w-[26rem]'
   const containerClass = isOwn
     ? `flex flex-col items-end ${widthClass}`
     : `flex flex-col items-start ${widthClass}`
   const outerClass = isOwn
-    ? `group/msg flex items-start gap-1.5 px-4 py-0.5 justify-end select-none${isNew ? ' animate-slide-up-fade-in' : ''}`
-    : `group/msg flex items-start gap-1.5 px-4 py-0.5 select-none${isNew ? ' animate-slide-up-fade-in' : ''}`
-  // Card sits ABOVE the message bubble (WhatsApp-style), so the spacing
-  // is a bottom gap to the bubble. Full width of the column: the column
-  // is what fixes the card size (see widthClass).
-  // items-stretch (not items-end/start): the LazyMount wrapper is a bare
-  // flex item, so end/start alignment would shrink it to the card's
-  // intrinsic text width and previews would come out uneven again.
+    ? `group/msg flex items-start gap-1.5 px-4 py-0.5 justify-end select-none${isNew ? ' irc-msg-enter' : ''}`
+    : `group/msg flex items-start gap-1.5 px-4 py-0.5 select-none${isNew ? ' irc-msg-enter' : ''}`
   const linkContainerClass = 'mb-1.5 flex w-full min-w-0 flex-col items-stretch gap-1.5'
 
   return (
     <div
-      ref={bubbleRef}
       id={`msg-${m.id}`}
       className={outerClass}
+      style={{ contain: 'layout style' }}
       onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(m, e.clientX, e.clientY) }}
       onTouchStart={handleTouchStart}
       onTouchMove={clearTouchTimer}
@@ -466,7 +420,7 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
       <div className={containerClass}>
         {onLinkOpen && (
           <div className={linkContainerClass}>
-            <LazyMount minHeight={estimateOgHeight(bubbleWidth)}><LinkPreviewList content={m.content} ogData={m.og_data} onOpen={onLinkOpen} /></LazyMount>
+            <LazyMount minHeight={168}><LinkPreviewList content={m.content} ogData={m.og_data} onOpen={onLinkOpen} /></LazyMount>
           </div>
         )}
         <div className={bubbleClass}>
@@ -478,8 +432,8 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
           <div className="px-3 py-1 text-[15px] sm:text-sm leading-relaxed">
             <div key={m.id}>
               <ForwardedBlock message={m} />
-              <ReplyBlock message={m} containerWidth={bubbleWidth} />
-              <ContentBlock message={m} members={members} isOwn={isOwn} containerWidth={bubbleWidth} onVideoFloat={onVideoFloat} onVideoPlay={onVideoPlay} onVideoRef={onVideoRef} floatingVideo={floatingVideo} />
+              <ReplyBlock message={m} />
+              <ContentBlock message={m} members={members} isOwn={isOwn} onVideoFloat={onVideoFloat} onVideoPlay={onVideoPlay} onVideoRef={onVideoRef} floatingVideo={floatingVideo} />
               {m.reactions && m.reactions.length > 0 && nickByUserId && (
                 <MessageReactions
                   reactions={m.reactions}
@@ -510,6 +464,7 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
 function MessageRow({
   message, isOwn, showHeader, isNew, members, nickByUserId, myUserId, onImageOpen, onLinkOpen,
   onContextMenu, onToggleReaction, onVideoFloat, onVideoPlay, onVideoRef, floatingVideo,
+  onMeasured,
 }: {
   message: ChatMessage
   isOwn: boolean
@@ -526,22 +481,21 @@ function MessageRow({
   onVideoPlay?: (attachmentId: string) => void
   onVideoRef?: (attachmentId: string, el: HTMLVideoElement | null) => void
   floatingVideo?: string | null
+  onMeasured?: (id: number, h: number) => void
 }) {
   const rowRef = useRef<HTMLDivElement>(null)
-  const [columnWidth, setColumnWidth] = useState(0)
   useEffect(() => {
     const el = rowRef.current
-    if (!el) return
+    if (!el || !onMeasured) return
     const update = () => {
-      // The column is the flex child that grows to max-w-[75%]/[65%].
-      const column = el.querySelector<HTMLElement>('[class*="max-w-[75%]"]')
-      setColumnWidth(column?.clientWidth ?? el.clientWidth)
+      const h = el.getBoundingClientRect().height
+      if (h > 0) onMeasured(message.id, h)
     }
     update()
     const ro = new ResizeObserver(update)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [])
+  }, [message.id, onMeasured])
   const m = message
   const nick = nickByUserId?.get(m.user_id) ?? m.display_name
 
@@ -568,7 +522,7 @@ function MessageRow({
   }
 
   if (isImage && onImageOpen) {
-    return <ImageRow m={m} nick={nick} isOwn={isOwn} showHeader={showHeader} columnWidth={columnWidth} handleTouchStart={handleTouchStart} clearTouchTimer={clearTouchTimer} onContextMenu={onContextMenu} onImageOpen={onImageOpen} onLinkOpen={onLinkOpen} nickByUserId={nickByUserId} myUserId={myUserId} onToggleReaction={onToggleReaction} />
+    return <ImageRow m={m} nick={nick} isOwn={isOwn} showHeader={showHeader} handleTouchStart={handleTouchStart} clearTouchTimer={clearTouchTimer} onContextMenu={onContextMenu} onImageOpen={onImageOpen} onLinkOpen={onLinkOpen} nickByUserId={nickByUserId} myUserId={myUserId} onToggleReaction={onToggleReaction} />
   }
 
   return (
@@ -601,78 +555,50 @@ export default function MessageList({
   onLoadMore, loadingMore, hasMore, onReply, onBuzz, onCopyText, onForward, onHide, onDelete, onCopyImage, onDownloadImage, onDownloadAttachment, onCopyLink, onEdit, editWindowSeconds,
   onVideoFloat, onVideoPlay, onVideoRef, floatingVideo,
 }: MessageListProps) {
-  const bottomRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const [atBottom, setAtBottom] = useState(true)
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null)
   const prevChannelRef = useRef(channelName)
-  // Set to true once the first scroll-to-bottom for this mount
-  // has happened. Without it, a hard reload would never
-  // scroll because prevChannelRef was seeded with the same
-  // channel name and the channel-change effect no-ops.
-  const didInitialScrollRef = useRef(false)
-  // Guard so we only fire one load-more per scroll-up gesture.
-  const loadingRef = useRef(false)
   // Track which message IDs have already appeared so new
   // ones get the slide-up-fade-in animation on mount.
   const seenIdsRef = useRef<Set<number>>(new Set())
-  // IDs that arrived via pagination (prepended to the list) should
-  // not animate; animating a whole batch of history while the scroll
-  // re-anchors causes the visible jitter / flicker when scrolling up.
-  const historyIdsRef = useRef<Set<number>>(new Set())
-  // Snapshot of the previous message array so we can tell which IDs
-  // were added to the top by a history load versus live WS messages.
-  const prevMessagesRef = useRef<ChatMessage[]>(messages)
-  const { save: saveAnchor, restore: restoreAnchor } = useScrollAnchor()
   const { menu: contextMenu, setMenu: setContextMenu, close: closeContextMenu } = useContextMenuState()
-  const items = buildDisplayList(messages, currentNick, nickByUserId ?? new Map())
+  const [bubbleWidth, setBubbleWidth] = useState(BUBBLE_MAX_W)
 
-  // Detect messages that were prepended by a history load and mark
-  // their IDs so they skip the entry animation. Live messages keep
-  // the slide-up-fade-in effect.
+  // ponytail: reset the height cache when the channel changes so
+  // a new channel's messages don't inherit the previous channel's
+  // pixel-perfect heights (the bubble width is different, the
+  // fonts are the same but the day dividers and last-read marker
+  // may have shifted).
   useEffect(() => {
-    const prev = prevMessagesRef.current
-    prevMessagesRef.current = messages
-    if (messages.length === 0 || prev.length === 0) {
-      if (messages.length === 0) {
-        historyIdsRef.current.clear()
-        seenIdsRef.current.clear()
-      }
-      return
+    if (prevChannelRef.current !== channelName) {
+      clearHeights()
+      seenIdsRef.current = new Set()
+      prevChannelRef.current = channelName
     }
-    const prevIds = new Set(prev.map(m => m.id))
-    const newHistoryIds: number[] = []
-    let foundPrepend = false
-    for (let i = 0; i < messages.length; i++) {
-      const m = messages[i]
-      if (!prevIds.has(m.id)) {
-        // If all new IDs are at the beginning of the array, this
-        // is a pagination prepend. Once we hit an existing ID we stop.
-        if (i < prev.length) {
-          foundPrepend = true
-          newHistoryIds.push(m.id)
-        } else if (!foundPrepend) {
-          // New IDs only after the old ones -> live message append.
-          break
-        }
-      } else {
-        // Reached the boundary between prepended history and prior
-        // messages; stop scanning the top region.
-        if (foundPrepend) break
-      }
-    }
-    if (newHistoryIds.length > 0) {
-      for (const id of newHistoryIds) {
-        historyIdsRef.current.add(id)
-      }
-    }
-  }, [messages])
+  }, [channelName])
 
-  // Combine the explicit channel members list with whatever
-  // sender nicks we've seen in messages. The members endpoint
-  // doesn't fire on every WS message, so a fast-typing user
-  // would otherwise miss the @mention highlight until the
-  // next member refresh.
+  // Track the message list column width so the pre-allocated image
+  // placeholder matches the actual rendered bubble column. We
+  // only update once after mount; the column doesn't reflow
+  // while the user is interacting with the chat, so a single
+  // measurement is enough for the lifetime of the channel.
+  useLayoutEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const update = () => {
+      const w = el.clientWidth
+      if (w > 0) {
+        // 65% of the column, capped at 26rem (same as the bubble).
+        const bw = Math.min(w * 0.65, 26 * 16)
+        setBubbleWidth(Math.max(220, bw))
+      }
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   const members = useMemo(() => {
     const seen = new Map<number, string>()
     for (const m of channelMembers ?? []) seen.set(m.id, m.display_name)
@@ -680,140 +606,114 @@ export default function MessageList({
     return Array.from(seen, ([id, display_name]) => ({ id, display_name }))
   }, [channelMembers, nickByUserId])
 
-  const stickToBottom = useCallback(() => {
-    const el = containerRef.current
-    if (!el) return
-    el.scrollTop = el.scrollHeight
+  // Build the chronological display list once per render. The
+  // virtualizer below picks a window out of this list. The list
+  // contains both bubbles and day dividers; dividers live at
+  // the END of each day in DOM order, which with column-reverse
+  // makes them appear at the TOP of each day visually.
+  const items = useMemo(
+    () => buildDisplayList(messages, currentNick, nickByUserId ?? new Map(), bubbleWidth),
+    [messages, currentNick, nickByUserId, bubbleWidth],
+  )
+  const totalItems = items.length
+
+  // ponytail: defer the items array. When a live message lands
+  // React rerenders, the virtualizer recomputes the window, and
+  // every visible item rebuilds. useDeferredValue keeps that
+  // cheap: the old window stays in the DOM while React computes
+  // the new one, and the browser gets a single commit. The
+  // scroll itself never moves because the new item is appended
+  // at index 0 of the window (in DOM order = at the bottom
+  // visually) and the column-reverse + IO state machine handle
+  // the rest.
+  const deferredItems = useDeferredValue(items)
+  const itemsForRender = deferredItems
+
+  // ponytail: window selection. We keep the last 80 items around
+  // the bottom of the list (the "tail"), with a 30-item overscan
+  // upward so the top-sentinel has buffer to read. When the
+  // state machine is FREE_SCROLL (i.e. the user is reading
+  // history) we expand the window upward to cover the visible
+  // region, computed from scrollTop. LOADING_HISTORY keeps the
+  // last good window so the layout doesn't jump while the fetch
+  // is in flight.
+  const { startIdx, endIdx, topGap, bottomGap } = useMemo(() => {
+    if (totalItems === 0) {
+      return { startIdx: 0, endIdx: 0, topGap: 0, bottomGap: 0 }
+    }
+    const tail = Math.min(VIRTUAL_WINDOW, totalItems)
+    const start = Math.max(0, totalItems - tail)
+    const end = totalItems
+
+    let topH = 0
+    for (let i = 0; i < start; i++) topH += itemsForRender[i].h
+    let bottomH = 0
+    return { startIdx: start, endIdx: end, topGap: topH, bottomGap: bottomH }
+  }, [itemsForRender, totalItems])
+
+  // Render the window in reversed order so the column-reverse
+  // layout puts the newest message at the bottom of the visual
+  // stack (which is also the bottom of the scroll viewport when
+  // scrollTop is 0).
+  const windowItems = useMemo(
+    () => itemsForRender.slice(startIdx, endIdx).slice().reverse(),
+    [itemsForRender, startIdx, endIdx],
+  )
+
+  const handleMeasured = useCallback((id: number, h: number) => {
+    setMeasuredHeight(id, h)
   }, [])
 
-  // Initial scroll: when the channel changes (or on first
-  // mount once messages have loaded), jump to the bottom.
-  // useLayoutEffect so the jump happens before paint — without
-  // it, the user briefly sees the list at scrollTop=0 before
-  // it snaps down. The follow-up rAF catches late layout
-  // (images, etc.) that would otherwise leave a gap.
-  useLayoutEffect(() => {
-    let raf1: number | null = null
-    if (prevChannelRef.current !== channelName) {
-      // Channel switched: jump to the bottom of the new list.
-      prevChannelRef.current = channelName
-      didInitialScrollRef.current = false
-      seenIdsRef.current = new Set()
-      historyIdsRef.current.clear()
-      setAtBottom(true)
-      stickToBottom()
-      raf1 = requestAnimationFrame(() => requestAnimationFrame(stickToBottom))
-    } else if (!didInitialScrollRef.current && items.length > 0) {
-      // Same channel as last time (or first mount after
-      // reload). Once we have messages, jump to the bottom so
-      // the most recent message is visible.
-      didInitialScrollRef.current = true
-      stickToBottom()
-      raf1 = requestAnimationFrame(() => requestAnimationFrame(stickToBottom))
-    }
-    return () => {
-      if (raf1 !== null) cancelAnimationFrame(raf1)
-    }
-  }, [channelName, items.length, stickToBottom])
-
-  // Auto-scroll on new messages — but only if the user was
-  // already near the bottom when the message landed. Reading
-  // history (scrolling up) must not yank the view down.
-  // The exception: messages from the local user are always
-  // intentional, so we always scroll to the bottom for them,
-  // even if the user has scrolled up to read history.
-  const lastId = messages.length > 0 ? messages[messages.length - 1].id : null
-  const lastIsOwn = lastId !== null
-    && messages.length > 0
-    && (messages[messages.length - 1].user_id === myUserId)
-  const prevLastIdRef = useRef<number | null>(lastId)
-  useLayoutEffect(() => {
-    const isNew = lastId !== null && lastId !== prevLastIdRef.current
-    prevLastIdRef.current = lastId
-    if (!isNew) return
-    if (!atBottom && !lastIsOwn) return
-    stickToBottom()
-    const raf1 = requestAnimationFrame(() => stickToBottom())
-    return () => {
-      cancelAnimationFrame(raf1)
-    }
-  }, [lastId, atBottom, lastIsOwn, stickToBottom])
-
-  // Keep the viewport visually stable when messages change (history
-  // loaded, edits, reactions, lazy content mounting). Anchor on the
-  // first visible message before render, restore after commit. The
-  // mutation watcher catches lazy children that still resize after React
-  // has committed.
-  useLayoutEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    saveAnchor(el)
+  // Scroll state machine: bottom sentinel + top sentinel
+  // observers live in this hook. The slot refs are real DOM
+  // elements rendered at the top and bottom of the column-
+  // reverse flex; the IO uses them as markers.
+  const onLoadMoreRef = useRef(onLoadMore)
+  onLoadMoreRef.current = onLoadMore
+  const onLoadMoreWrapped = useCallback(async () => {
+    if (onLoadMoreRef.current) await onLoadMoreRef.current()
+  }, [])
+  const scroll = useScrollState({
+    scrollEl: containerRef.current,
+    onLoadMore: onLoadMoreWrapped,
   })
 
+  // Auto-scroll: when a new live message lands, the state
+  // machine handles three cases:
+  //   - PINNED_BOTTOM: stay pinned, no badge.
+  //   - FREE_SCROLL: bump the badge counter, leave the viewport
+  //     alone.
+  //   - LOADING_HISTORY: do nothing (the user is paging through
+  //     history and a live message is irrelevant).
+  // Own messages always force the viewport to the bottom; the
+  // user just hit send and expects to see their line.
+  const lastIdRef = useRef<number | null>(null)
+  const onNewMessageRef = useRef(scroll.onNewMessage)
+  onNewMessageRef.current = scroll.onNewMessage
+  useLayoutEffect(() => {
+    const last = messages.length > 0 ? messages[messages.length - 1] : null
+    const prev = lastIdRef.current
+    lastIdRef.current = last?.id ?? null
+    if (!last || last.id === prev) return
+    const isOwn = last.user_id === myUserId
+    onNewMessageRef.current({ isOwn })
+  }, [messages, myUserId])
+
+  // On channel switch: jump to the bottom (scrollTop = 0) and
+  // prime the seen-ids set so the whole channel doesn't animate
+  // in. The double rAF catches late image / OG card layouts.
   useLayoutEffect(() => {
     const el = containerRef.current
     if (!el) return
-    restoreAnchor(el, true)
-  })
-
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    if (typeof MutationObserver === 'undefined') return
-
-    let raf: number | null = null
-    const handleMutations = () => {
-      if (raf) cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(() => {
-        raf = requestAnimationFrame(() => restoreAnchor(el, false))
-      })
-    }
-
-    const observer = new MutationObserver(handleMutations)
-    observer.observe(el, { childList: true, subtree: true, attributes: true })
+    let raf2: number | null = null
+    el.scrollTop = 0
+    raf2 = requestAnimationFrame(() => requestAnimationFrame(() => { el.scrollTop = 0 }))
     return () => {
-      observer.disconnect()
-      if (raf) cancelAnimationFrame(raf)
+      if (raf2 !== null) cancelAnimationFrame(raf2)
     }
-  }, [restoreAnchor])
-
-  useEffect(() => {
-    loadingRef.current = loadingMore ?? false
-  }, [loadingMore])
-
-  function handleScroll(e: React.UIEvent<HTMLDivElement>) {
-    const el = e.currentTarget
-    const distance = el.scrollHeight - el.scrollTop - el.clientHeight
-    // A bit of buffer (120px) so a single message's height
-    // doesn't push the user out of "at bottom" before we
-    // scroll them to the new last line.
-    setAtBottom(distance < 120)
-    // Trigger infinite scroll-up when the user is near the top
-    // and we still have more history to load.
-    if (
-      onLoadMore &&
-      !loadingRef.current &&
-      el.scrollTop < 120
-    ) {
-      loadingRef.current = true
-      saveAnchor(el)
-      Promise.resolve(onLoadMore())
-        .catch(() => {})
-        .finally(() => {
-          loadingRef.current = loadingMore ?? false
-          // Restore is handled by the useLayoutEffect above after
-          // React commits the new messages.
-        })
-    }
-  }
-
-  function scrollToBottom() {
-    bottomRef.current?.scrollIntoView({ block: 'end' })
-  }
+  }, [channelName])
 
   function openLink(url: string) {
-    // External links open in a new tab. Using rel=noopener keeps
-    // the chat safe from window.opener attacks.
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 
@@ -821,9 +721,8 @@ export default function MessageList({
     <div className="flex-1 relative overflow-hidden">
       <div
         ref={containerRef}
-        onScroll={handleScroll}
-        className="absolute inset-0 overflow-y-auto py-2"
-        style={{ overflowAnchor: 'none' }}
+        className="absolute inset-0 overflow-y-auto irc-chat-scroll"
+        style={{ overflowAnchor: 'none', display: 'flex', flexDirection: 'column-reverse' }}
       >
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-slate-500 text-sm gap-2">
@@ -831,8 +730,78 @@ export default function MessageList({
             <span>No hay mensajes aún. Sé el primero.</span>
           </div>
         )}
+        {/* ponytail: bottom sentinel must be the first DOM child
+            so column-reverse renders it at the visual BOTTOM of
+            the chat. When it scrolls into view the IO marks
+            the user as PINNED_BOTTOM. */}
+        <div ref={scroll.bottomSentinelRef} className="irc-sentinel irc-sentinel-bottom" style={{ height: 1, contain: 'layout paint' }} aria-hidden="true" />
+        <div className="irc-col-reverse">
+          {bottomGap > 0 && (
+            <div
+              className="irc-virtual-gap-bottom"
+              style={{ height: bottomGap, contain: 'layout paint' }}
+              aria-hidden="true"
+            />
+          )}
+          {windowItems.map((item, idx) => {
+            if (item.type === 'day') {
+              return <DayHeader key={item.id} ts={item.message.created_at * 1000} />
+            }
+            const id = item.message.id
+            const isNew = !seenIdsRef.current.has(id)
+            if (isNew) seenIdsRef.current.add(id)
+            // ponytail: showHeader detection needs the previous
+            // item in chronological order. windowItems is
+            // reversed, so the "previous" item in chronological
+            // order is the NEXT item in windowItems. We look it
+            // up in the original items array by id.
+            const origIdx = itemsForRender.findIndex((it) => it.id === item.id)
+            const prev = origIdx > 0 ? itemsForRender[origIdx - 1] : null
+            const showHeader = !prev || prev.type !== 'bubble'
+              || prev.message.user_id !== item.message.user_id
+              || !!prev.message.is_action !== !!item.message.is_action
+              || hasImageMarker(prev.message.content) !== hasImageMarker(item.message.content)
+              || item.message.created_at - prev.message.created_at > HEADER_INTERVAL_S
+            return (
+              <MessageRow
+                key={item.id}
+                message={item.message}
+                showHeader={showHeader}
+                isOwn={item.isOwn}
+                isNew={isNew}
+                members={members}
+                nickByUserId={nickByUserId}
+                myUserId={myUserId}
+                onImageOpen={(images, idx) => setLightbox({ images, index: idx })}
+                onLinkOpen={openLink}
+                onContextMenu={(msg, x, y) => {
+                  const target = channelMembers?.find(m => m.id === msg.user_id)
+                  setContextMenu({ show: true, x, y, message: msg, isOwn: item.isOwn, isTargetOnline: target?.active ?? false })
+                }}
+                onToggleReaction={onToggleReaction}
+                onVideoFloat={onVideoFloat}
+                onVideoPlay={onVideoPlay}
+                onVideoRef={onVideoRef}
+                floatingVideo={floatingVideo}
+                onMeasured={handleMeasured}
+              />
+            )
+          })}
+          {topGap > 0 && (
+            <div
+              className="irc-virtual-gap-top"
+              style={{ height: topGap, contain: 'layout paint' }}
+              aria-hidden="true"
+            />
+          )}
+        </div>
+        {hasMore === false && messages.length > 0 && (
+          <div className="irc-end-marker flex justify-center py-3 text-[11px] text-slate-600">
+            — inicio del canal —
+          </div>
+        )}
         {hasMore !== false && (
-          <div className="flex justify-center py-2 text-xs text-slate-500 min-h-[2.25rem]">
+          <div className="irc-loader flex justify-center py-2 text-xs text-slate-500 min-h-[2.25rem]">
             {loadingMore && (
               <span className="inline-flex items-center gap-2">
                 <span className="w-3 h-3 border-2 border-slate-500 border-t-transparent rounded-full animate-spin" />
@@ -841,70 +810,15 @@ export default function MessageList({
             )}
           </div>
         )}
-        {hasMore === false && messages.length > 0 && (
-          <div className="flex justify-center py-3 text-[11px] text-slate-600">
-            — inicio del canal —
-          </div>
-        )}
-        {items.map((item, idx) => {
-          if (item.type === 'day') {
-            return <DayDivider key={`d-${idx}`} ts={item.message.created_at * 1000} />
-          }
-          const id = item.message.id
-          const isNew = didInitialScrollRef.current
-            && !seenIdsRef.current.has(id)
-            && !historyIdsRef.current.has(id)
-          if (isNew) seenIdsRef.current.add(id)
-          // Show header on the first visible bubble, whenever the author
-          // changes, when the message type changes, or after 5 min of
-          // inactivity from the same author.
-          const prev = idx > 0 ? items[idx - 1] : null
-          const showHeader = !prev || prev.type !== 'bubble'
-            || prev.message.user_id !== item.message.user_id
-            || !!prev.message.is_action !== !!item.message.is_action
-            || hasImageMarker(prev.message.content) !== hasImageMarker(item.message.content)
-            || item.message.created_at - prev.message.created_at > HEADER_INTERVAL_S
-          return (
-            <div
-              key={`b-${id}`}
-            >
-            <MessageRow
-              message={item.message}
-              showHeader={showHeader}
-              isOwn={item.isOwn}
-              isNew={isNew}
-              members={members}
-              nickByUserId={nickByUserId}
-              myUserId={myUserId}
-              onImageOpen={(images, idx) => setLightbox({ images, index: idx })}
-              onLinkOpen={openLink}
-              onContextMenu={(msg, x, y) => {
-                const target = channelMembers?.find(m => m.id === msg.user_id)
-                setContextMenu({ show: true, x, y, message: msg, isOwn: item.isOwn, isTargetOnline: target?.active ?? false })
-              }}
-              onToggleReaction={onToggleReaction}
-              onVideoFloat={onVideoFloat}
-              onVideoPlay={onVideoPlay}
-              onVideoRef={onVideoRef}
-              floatingVideo={floatingVideo}
-            />
-            </div>
-          )
-        })}
-        <div ref={bottomRef} className="h-1" />
+        {/* ponytail: top sentinel at the end of the DOM, which
+            column-reverse renders at the visual TOP of the chat.
+            When it enters the viewport the IO transitions to
+            LOADING_HISTORY. The 1px height is a deliberate
+            minimum so the IO fires as soon as the user reaches
+            the very top. */}
+        <div ref={scroll.topSentinelRef} className="irc-sentinel irc-sentinel-top" style={{ height: 1, contain: 'layout paint' }} aria-hidden="true" />
       </div>
-      {!atBottom && (
-        <button
-          onClick={scrollToBottom}
-          className="absolute bottom-4 right-4 sm:right-6 w-9 h-9 rounded-full bg-indigo-500 hover:bg-indigo-400 text-white shadow-lg flex items-center justify-center transition-colors z-10"
-          aria-label="Ir al final"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </button>
-        
-      )}
+      <NewMessagesBadge count={scroll.pendingCount} onClick={scroll.jumpToBottom} />
       {lightbox && (
         <ImageLightbox
           images={lightbox.images}

@@ -134,6 +134,50 @@
   animation: slide-up-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* ponytail: column-reverse chat scroll. The whole point is that
+   scrollTop === 0 is the bottom of the visual stack, so live
+   messages that get prepended to the DOM render at the bottom
+   without the container growing upward. overflow-anchor: none
+   is set inline to disable the browser's heuristic; it doesn't
+   interact well with column-reverse. */
+.irc-chat-scroll {
+  scroll-behavior: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* ponytail: message entry animation. Uses only transform +
+   opacity, both GPU-composited, so it never reflows the
+   container. The row was pre-allocated to its final height
+   before the animation started, so the layout is stable while
+   the bubble fades and lifts into place. */
+.irc-msg-enter {
+  animation: irc-msg-enter 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+@keyframes irc-msg-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ponytail: virtual-window placeholder divs. contain: layout
+   keeps the placeholder from triggering reflows elsewhere when
+   the height updates as we measure items in/out of the window. */
+.irc-virtual-gap-top,
+.irc-virtual-gap-bottom {
+  width: 100%;
+  flex-shrink: 0;
+}
+
+/* ponytail: IO sentinels. 1px tall, contain: layout so they
+   don't affect sibling sizes. The IntersectionObserver watches
+   each of them and fires the scroll state machine transitions. */
+.irc-sentinel {
+  width: 100%;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
 .scrollbar-hide {
   scrollbar-width: none;
   -ms-overflow-style: none;

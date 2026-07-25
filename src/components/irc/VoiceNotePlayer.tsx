@@ -30,7 +30,10 @@ export default function VoiceNotePlayer({ noteId }: VoiceNotePlayerProps) {
 
   if (error) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/50 text-slate-500 text-xs">
+      <div
+        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/50 text-slate-500 text-xs"
+        style={{ contain: 'layout paint' }}
+      >
         {error}
       </div>
     )
@@ -38,7 +41,10 @@ export default function VoiceNotePlayer({ noteId }: VoiceNotePlayerProps) {
 
   if (!note) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/50 text-slate-500 text-xs">
+      <div
+        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/50 text-slate-500 text-xs"
+        style={{ contain: 'layout paint' }}
+      >
         <div className="w-4 h-4 border border-slate-500 border-t-transparent rounded-full animate-spin" />
         Loading...
       </div>
@@ -46,7 +52,10 @@ export default function VoiceNotePlayer({ noteId }: VoiceNotePlayerProps) {
   }
 
   return (
-    <div className="flex flex-col gap-1 min-w-[260px]">
+    <div
+      className="flex flex-col gap-1 min-w-[260px]"
+      style={{ contain: 'layout paint' }}
+    >
       <AudioWaveform src={`/api/chat/voice-notes/${noteId}`} />
       <div className="flex items-center gap-2 px-1">
         <span className="text-[10px] text-indigo-400 font-medium bg-indigo-500/10 px-1.5 py-0.5 rounded-full">

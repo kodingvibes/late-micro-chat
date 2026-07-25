@@ -33,6 +33,11 @@ export interface ChatMessage {
   reply_to_user_id?: number | null
   hidden?: boolean
   forwarded_from?: ForwardedFrom | null
+  // ponytail: server-attached attachment metadata (for image
+  // messages especially) so the client can pre-allocate the row
+  // height from width/height without an extra round-trip. Older
+  // servers won't fill this; fallbacks in the client handle that.
+  attachment?: AttachmentMeta | null
   // Read-receipt counters (sender's bubble only). `member_count`
   // is the channel's member count minus the sender — the denominator
   // for "all read". 0 means the sender is alone in the channel and
@@ -51,6 +56,11 @@ export interface AttachmentMeta {
   size_bytes: number
   created_at: number
   expires_at: number
+  // Image dimensions in pixels, set by the backend at upload time.
+  // Used to reserve a placeholder of the exact size so the row
+  // doesn't reflow when the image loads. Only set for kind='image'.
+  width?: number | null
+  height?: number | null
 }
 
 export interface Reaction {

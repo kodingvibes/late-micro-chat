@@ -80,22 +80,56 @@ export function ImageContextMenuPortal({
 interface ImagePreviewProps {
   dataUrl: string
   onOpen: (src: string) => void
+  width?: number | null
+  height?: number | null
 }
 
-export default function ImagePreview({ dataUrl, onOpen }: ImagePreviewProps) {
+const IMG_MAX_H = 288
+
+// ponytail: when the server tells us the real image dimensions
+// (AttachmentMeta.width/height) we render an <img> with width/
+// height HTML attributes. The browser reserves the final box
+// before the bytes hit, so the row never reflows. Without the
+// metadata we fall back to max-h-72 (288px) which is the previous
+// behavior. The cap also clips server-known images that would
+// otherwise blow past max-h-72 on narrow columns.
+function fittedDims(w: number | null | undefined, h: number | null | undefined, maxW: number) {
+  if (!w || !h || w <= 0 || h <= 0) return null
+  const capW = Math.max(120, Math.min(maxW, w))
+  const ratio = w / h
+  const outH = Math.min(IMG_MAX_H, Math.round(capW / ratio))
+  return { w: capW, h: outH }
+}
+
+export default function ImagePreview({ dataUrl, onOpen, width, height }: ImagePreviewProps) {
+  const dims = fittedDims(width, height, 512)
   return (
     <button
       onClick={() => onOpen(dataUrl)}
       className="block rounded-lg overflow-hidden border border-slate-700/60 hover:border-indigo-500 transition-colors"
       aria-label="Abrir imagen"
+      style={{ contain: 'layout paint' }}
     >
-      <img
-        src={dataUrl}
-        alt="imagen pegada"
-        className="block max-w-full max-h-72 object-contain bg-slate-950"
-        loading="lazy"
-        draggable={false}
-      />
+      {dims ? (
+        <img
+          src={dataUrl}
+          alt="imagen pegada"
+          width={dims.w}
+          height={dims.h}
+          className="block max-w-full object-contain bg-slate-950"
+          style={{ height: dims.h, width: dims.w }}
+          loading="lazy"
+          draggable={false}
+        />
+      ) : (
+        <img
+          src={dataUrl}
+          alt="imagen pegada"
+          className="block max-w-full max-h-72 object-contain bg-slate-950"
+          loading="lazy"
+          draggable={false}
+        />
+      )}
     </button>
   )
 }
@@ -113,6 +147,7 @@ export function ImageGallery({ images, onOpen }: ImageGalleryProps) {
         onClick={() => onOpen(0)}
         className="block rounded-lg overflow-hidden border border-slate-700/60 hover:border-indigo-500 transition-colors"
         aria-label="Abrir galería"
+        style={{ contain: 'layout paint' }}
       >
         <img
           src={images[0]}
