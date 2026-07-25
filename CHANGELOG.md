@@ -1,3 +1,10 @@
+## [1.7.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.7.0...v1.7.1) (2026-07-25)
+
+
+### Bug Fixes
+
+* **chat:** ship --accent-glow-a / -b vars + .bg-accent-glow utility ([5ca6fb9](https://github.com/kodingvibes/late-micro-chat/commit/5ca6fb98d5d40a06af3743a50e656ef315180997))
+
 # [1.7.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.6.0...v1.7.0) (2026-07-25)
 
 
