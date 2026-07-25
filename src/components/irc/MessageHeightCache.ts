@@ -28,8 +28,8 @@ export function clearHeights() {
 // been measured once. The goal isn't pixel-perfect — it's a height
 // close enough that virtualization never inserts an obvious gap
 // while a row is still being measured. Tune from real layouts.
-const LINE_HEIGHT = 22
-const TEXT_PAD = 32 // px-3 py-1 + breathing room
+const LINE_HEIGHT = 20
+const TEXT_PAD = 24 // px-3 py-1 (top+bottom = 8) + breathing
 const HEADER = 22
 const TIMESTAMP = 14
 const DAY_DIVIDER = 36
@@ -40,32 +40,44 @@ const VIDEO_CARD = 200
 const DOC_CARD = 72
 const REACTION_ROW = 24
 const REPLY_BLOCK = 28
+const FORWARDED_BLOCK = 20
+// ponytail: rough char width at text-sm (15px). Real value is ~7.5px
+// for proportional fonts; we use 8 to be slightly conservative on
+// wrapping, which over-estimates a bit (better than under, since
+// under-estimation creates the empty-space bug we're fixing).
+const CHARS_PER_PX = 0.125
 
-function estimateTextLines(text: string, maxCharsPerLine = 50): number {
+function estimateTextLines(text: string, bubbleWidth: number): number {
   if (!text) return 1
+  const charsPerLine = Math.max(20, Math.floor(bubbleWidth * CHARS_PER_PX))
   let lines = 0
   for (const raw of text.split('\n')) {
-    const len = raw.length
-    if (len === 0) {
+    if (raw.length === 0) {
       lines += 1
-    } else {
-      lines += Math.max(1, Math.ceil(len / maxCharsPerLine))
+      continue
     }
+    // ponytail: long unbroken tokens (URLs, code) wrap anywhere in
+    // .rich-text, so they wrap at charsPerLine too. No special
+    // handling needed.
+    lines += Math.max(1, Math.ceil(raw.length / charsPerLine))
   }
   return lines
 }
 
-export function estimateMessageHeight(msg: ChatMessage, bubbleWidth: number): number {
+export function estimateMessageHeight(
+  msg: ChatMessage,
+  bubbleWidth: number,
+  showHeader: boolean = true,
+): number {
   if (msg.is_action) return ACTION + 8
 
   const hasImage = hasImageMarker(msg.content)
   const att = !hasImage ? getAttachmentMarker(msg.content) : null
-  const showHeader = true // worst case; rarely more than 1 line
   let h = TEXT_PAD + TIMESTAMP + 8
 
   if (showHeader) h += HEADER
 
-  // Reply cite (small block above the bubble)
+  if (msg.forwarded_from) h += FORWARDED_BLOCK
   if (msg.reply_to && msg.reply_to_author) h += REPLY_BLOCK + 4
 
   if (hasImage) {
@@ -98,10 +110,15 @@ export function estimateMessageHeight(msg: ChatMessage, bubbleWidth: number): nu
       h += DOC_CARD + 8
     }
   } else {
-    h += estimateTextLines(msg.content) * LINE_HEIGHT
+    h += estimateTextLines(msg.content, bubbleWidth) * LINE_HEIGHT
   }
 
-  if (msg.reactions && msg.reactions.length > 0) h += REACTION_ROW + 4
+  if (msg.reactions && msg.reactions.length > 0) {
+    // ponytail: reactions wrap every ~4 chips. Tall reaction rows
+    // add more height than the single-row estimate.
+    const reactionLines = Math.max(1, Math.ceil(msg.reactions.length / 4))
+    h += reactionLines * REACTION_ROW + 4
+  }
   return Math.max(40, h)
 }
 

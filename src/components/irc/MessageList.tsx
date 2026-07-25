@@ -144,34 +144,57 @@ function buildDisplayList(
   const nickFor = (m: ChatMessage) => nickByUserId.get(m.user_id) ?? m.display_name
   const isOwn = (m: ChatMessage) => nickFor(m) === currentNick
 
+  // ponytail: first pass — emit dividers so the second pass can
+  // resolve a "previous bubble" for showHeader detection without
+  // skipping day dividers (the old code compared across day
+  // boundaries and forced a header on every first message of a
+  // day, which is correct, but we still need the right
+  // "prev" reference inside a day).
+  const staged: Array<{ kind: 'day' | 'bubble'; day: string; msg: ChatMessage }> = []
   for (let i = 0; i < messages.length; i++) {
     const msg = messages[i]
     const d = new Date(msg.created_at * 1000)
     const day = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
     if (day !== lastDay) {
-      // ponytail: the divider is emitted just before the first
-      // message of a new day, in chronological order. The
-      // virtualizer renders the slice top→bottom in source order
-      // inside a block that's a child of the column-reverse
-      // container. The divider therefore sits between the last
-      // message of the previous day and the first message of the
-      // new day, which is the "above today's group" visual the
-      // user expects.
-      items.push({
-        type: 'day',
-        message: msg,
-        isOwn: false,
-        id: `d-${day}`,
-        h: 36,
-      })
+      staged.push({ kind: 'day', day, msg })
       lastDay = day
     }
+    staged.push({ kind: 'bubble', day, msg })
+  }
+
+  for (let i = 0; i < staged.length; i++) {
+    const s = staged[i]
+    if (s.kind === 'day') {
+      items.push({
+        type: 'day',
+        message: s.msg,
+        isOwn: false,
+        id: `d-${s.day}`,
+        h: 36,
+      })
+      continue
+    }
+    const msg = s.msg
+    // ponytail: walk back to the previous bubble item, ignoring
+    // day dividers. Two messages in the same day with the same
+    // author within HEADER_INTERVAL_S (and same type) get a
+    // headerless continuation. Matches the runtime logic in
+    // MessageList below.
+    let prevBubble: ChatMessage | null = null
+    for (let j = i - 1; j >= 0; j--) {
+      if (staged[j].kind === 'bubble') { prevBubble = staged[j].msg; break }
+    }
+    const showHeader = !prevBubble
+      || prevBubble.user_id !== msg.user_id
+      || !!prevBubble.is_action !== !!msg.is_action
+      || hasImageMarker(prevBubble.content) !== hasImageMarker(msg.content)
+      || msg.created_at - prevBubble.created_at > HEADER_INTERVAL_S
     items.push({
       type: 'bubble',
       message: msg,
       isOwn: isOwn(msg),
       id: `m-${msg.id}`,
-      h: getCachedHeight(msg.id) ?? estimateMessageHeight(msg, bubbleWidth),
+      h: getCachedHeight(msg.id) ?? estimateMessageHeight(msg, bubbleWidth, showHeader),
     })
   }
 
@@ -649,11 +672,40 @@ export default function MessageList({
     const start = Math.max(0, totalItems - tail)
     const end = totalItems
 
+    // ponytail: topGap represents the *unrendered* items above
+    // the window (older history). It MUST be placed as the
+    // first DOM child of the slice so it sits at the visual
+    // top, not the visual bottom (where the column-reverse
+    // container would push it and create the empty space the
+    // user is seeing).
     let topH = 0
     for (let i = 0; i < start; i++) topH += itemsForRender[i].h
     let bottomH = 0
     return { startIdx: start, endIdx: end, topGap: topH, bottomGap: bottomH }
   }, [itemsForRender, totalItems])
+
+  // ponytail: when a new history page lands, topGap grows because
+  // startIdx dropped (more items above the window). Without a
+  // scrollTop bump the user would visually jump downward. The
+  // bump is "previous topGap - new topGap" added to scrollTop so
+  // the first item of the window stays under the same pixel.
+  // We do this after React commits, via useLayoutEffect, so the
+  // DOM has the new placeholder height before we adjust.
+  const prevTopGapRef = useRef(topGap)
+  useLayoutEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const prev = prevTopGapRef.current
+    if (prev !== topGap) {
+      // ponytail: only compensate upward growth of the top
+      // placeholder. If the gap shrank (history fetch returned
+      // 0 new items, just re-rendered) the user is already
+      // closer to the top, no bump needed.
+      const delta = topGap - prev
+      if (delta > 0) el.scrollTop += delta
+      prevTopGapRef.current = topGap
+    }
+  }, [topGap])
 
   // Render the window in chronological order. The chat container
   // is a flex column-reverse, but this slice is rendered inside
@@ -746,14 +798,23 @@ export default function MessageList({
             the user as PINNED_BOTTOM. */}
         <div ref={scroll.bottomSentinelRef} className="irc-sentinel irc-sentinel-bottom" style={{ height: 1, contain: 'layout paint' }} aria-hidden="true" />
         <div className="irc-col-reverse">
-          {bottomGap > 0 && (
+          {/* ponytail: topGap MUST be the first child of the
+              slice. It represents the unrendered older history
+              above the window. The slice is rendered top→bottom
+              in source order, so a first child sits at the visual
+              top of the block. Putting it at the END (as the
+              previous code did) was the root cause of the empty
+              space the user was seeing at the bottom: the
+              column-reverse container would push the giant
+              placeholder below the last message. */}
+          {topGap > 0 && (
             <div
-              className="irc-virtual-gap-bottom"
-              style={{ height: bottomGap, contain: 'layout paint' }}
+              className="irc-virtual-gap-top"
+              style={{ height: topGap, contain: 'layout paint' }}
               aria-hidden="true"
             />
           )}
-          {windowItems.map((item, idx) => {
+          {windowItems.map((item) => {
             if (item.type === 'day') {
               return <DayHeader key={item.id} ts={item.message.created_at * 1000} />
             }
@@ -761,17 +822,20 @@ export default function MessageList({
             const isNew = !seenIdsRef.current.has(id)
             if (isNew) seenIdsRef.current.add(id)
             // ponytail: showHeader detection needs the previous
-            // item in chronological order. windowItems is
-            // reversed, so the "previous" item in chronological
-            // order is the NEXT item in windowItems. We look it
-            // up in the original items array by id.
-            const origIdx = itemsForRender.findIndex((it) => it.id === item.id)
-            const prev = origIdx > 0 ? itemsForRender[origIdx - 1] : null
-            const showHeader = !prev || prev.type !== 'bubble'
-              || prev.message.user_id !== item.message.user_id
-              || !!prev.message.is_action !== !!item.message.is_action
-              || hasImageMarker(prev.message.content) !== hasImageMarker(item.message.content)
-              || item.message.created_at - prev.message.created_at > HEADER_INTERVAL_S
+            // bubble in chronological order, skipping any day
+            // divider that may sit between them. windowItems is
+            // the chronological slice, so the previous bubble
+            // is just before this one in windowItems.
+            let prevBubble: { user_id: number; content: string; is_action?: boolean; created_at: number } | null = null
+            for (let j = windowItems.indexOf(item) - 1; j >= 0; j--) {
+              const w = windowItems[j]
+              if (w.type === 'bubble') { prevBubble = w.message; break }
+            }
+            const showHeader = !prevBubble
+              || prevBubble.user_id !== item.message.user_id
+              || !!prevBubble.is_action !== !!item.message.is_action
+              || hasImageMarker(prevBubble.content) !== hasImageMarker(item.message.content)
+              || item.message.created_at - prevBubble.created_at > HEADER_INTERVAL_S
             return (
               <MessageRow
                 key={item.id}
@@ -797,10 +861,10 @@ export default function MessageList({
               />
             )
           })}
-          {topGap > 0 && (
+          {bottomGap > 0 && (
             <div
-              className="irc-virtual-gap-top"
-              style={{ height: topGap, contain: 'layout paint' }}
+              className="irc-virtual-gap-bottom"
+              style={{ height: bottomGap, contain: 'layout paint' }}
               aria-hidden="true"
             />
           )}
