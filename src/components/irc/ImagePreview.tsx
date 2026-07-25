@@ -61,7 +61,7 @@ export function ImageContextMenuPortal({
         onClick={handleCopy}
         className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
       >
-        <Copy className="w-4 h-4 text-indigo-400" />
+        <Copy className="w-4 h-4 text-accent" />
         Copiar imagen
       </button>
       <button
@@ -69,7 +69,7 @@ export function ImageContextMenuPortal({
         onClick={handleDownload}
         className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
       >
-        <Download className="w-4 h-4 text-indigo-400" />
+        <Download className="w-4 h-4 text-accent" />
         Descargar imagen
       </button>
     </div>,
@@ -106,7 +106,7 @@ export default function ImagePreview({ dataUrl, onOpen, width, height }: ImagePr
   return (
     <button
       onClick={() => onOpen(dataUrl)}
-      className="block rounded-lg overflow-hidden border border-slate-700/60 hover:border-indigo-500 transition-colors"
+      className="block rounded-lg overflow-hidden border border-slate-700/60 hover:border-accent transition-colors"
       aria-label="Abrir imagen"
       style={{ contain: 'layout paint' }}
     >
@@ -145,7 +145,7 @@ export function ImageGallery({ images, onOpen }: ImageGalleryProps) {
     return (
       <button
         onClick={() => onOpen(0)}
-        className="block rounded-lg overflow-hidden border border-slate-700/60 hover:border-indigo-500 transition-colors"
+        className="block rounded-lg overflow-hidden border border-slate-700/60 hover:border-accent transition-colors"
         aria-label="Abrir galería"
         style={{ contain: 'layout paint' }}
       >
@@ -172,7 +172,7 @@ export function ImageGallery({ images, onOpen }: ImageGalleryProps) {
             <button
               key={i}
               onClick={() => onOpen(i)}
-              className="flex-shrink-0 rounded-md overflow-hidden border border-slate-700/60 hover:border-indigo-500 transition-colors relative"
+              className="flex-shrink-0 rounded-md overflow-hidden border border-slate-700/60 hover:border-accent transition-colors relative"
               aria-label={`Ir a imagen ${i + 1}`}
             >
               <img

@@ -138,7 +138,7 @@ export default function MessageReactions({
             }}
             className={`inline-flex items-center gap-1.5 rounded-full text-sm pl-1.5 pr-2 py-1 border transition-colors ${
               mine
-                ? 'bg-indigo-500/30 border-indigo-400/60 text-indigo-100 hover:bg-indigo-500/40'
+                ? 'bg-accent/30 border-accent/60 text-accent-soft hover:bg-accent/30'
                 : 'bg-slate-800/60 border-slate-700/50 text-slate-300 hover:bg-slate-800'
             }`}
           >
@@ -226,7 +226,7 @@ export function CompactReactionButton({
               onClick={() => onToggle(r.emoji)}
               className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[11px] transition-colors ${
                 r.mine
-                  ? 'bg-indigo-500/30 text-indigo-100 hover:bg-indigo-500/40'
+                  ? 'bg-accent/30 text-accent-soft hover:bg-accent/30'
                   : 'text-slate-300 hover:bg-slate-800'
               }`}
             >

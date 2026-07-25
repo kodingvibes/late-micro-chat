@@ -58,7 +58,7 @@ export default function VoiceNotePlayer({ noteId }: VoiceNotePlayerProps) {
     >
       <AudioWaveform src={`/api/chat/voice-notes/${noteId}`} />
       <div className="flex items-center gap-2 px-1">
-        <span className="text-[10px] text-indigo-400 font-medium bg-indigo-500/10 px-1.5 py-0.5 rounded-full">
+        <span className="text-[10px] text-accent font-medium bg-accent/10 px-1.5 py-0.5 rounded-full">
           Radio/AM
         </span>
         {note.amount > 0 && (

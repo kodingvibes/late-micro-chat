@@ -98,7 +98,7 @@ export default function EditChannelDescriptionModal({
             onChange={(e) => setValue(e.target.value)}
             rows={3}
             maxLength={280}
-            className="w-full px-3 py-2 rounded-lg border border-slate-700 bg-slate-950 text-slate-200 text-sm focus:outline-none focus:border-indigo-500"
+            className="w-full px-3 py-2 rounded-lg border border-slate-700 bg-slate-950 text-slate-200 text-sm focus:outline-none focus:border-accent"
             placeholder="Descripción o topic del canal…"
           />
           <div className="text-[10px] text-slate-500 text-right tabular-nums">
@@ -118,7 +118,7 @@ export default function EditChannelDescriptionModal({
             type="button"
             onClick={save}
             disabled={saving}
-            className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-indigo-500 hover:bg-indigo-400 text-white disabled:opacity-60"
+            className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-accent hover:bg-accent-soft text-white disabled:opacity-60"
           >
             {saving ? "Guardando..." : "Guardar"}
           </button>

@@ -14,7 +14,7 @@ export default function ConnectionStatus({ connected, nick, onChangeNick }: Conn
           {onChangeNick ? (
             <button
               onClick={onChangeNick}
-              className="font-mono text-slate-300 hover:text-indigo-300 underline-offset-2 hover:underline transition-colors"
+              className="font-mono text-slate-300 hover:text-accent-soft underline-offset-2 hover:underline transition-colors"
               title="Cambiar tu nick"
             >
               {nick}

@@ -89,7 +89,7 @@ export default function ChannelContextMenu({
           onClick={() => { onEditTopic?.(channel.id as number); onClose() }}
           className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
         >
-          <Pencil className="w-4 h-4 text-indigo-400" />
+          <Pencil className="w-4 h-4 text-accent" />
           Editar descripción
         </button>
       )}
@@ -99,7 +99,7 @@ export default function ChannelContextMenu({
           onClick={() => { onManageMembers?.(channel.id as number); onClose() }}
           className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
         >
-          <Users className="w-4 h-4 text-indigo-400" />
+          <Users className="w-4 h-4 text-accent" />
           Administrar miembros
         </button>
       )}

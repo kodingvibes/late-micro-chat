@@ -64,7 +64,7 @@ export function Topbar({
         onClick={onToggleUsers}
         className={`flex items-center gap-1 px-2 py-1.5 rounded-lg transition-colors ${
           showUsersDrawer
-            ? 'bg-indigo-500/15 text-indigo-300'
+            ? 'bg-accent/15 text-accent'
             : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
         }`}
         aria-label="Ver usuarios"

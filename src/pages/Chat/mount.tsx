@@ -1,4 +1,5 @@
 import { Irc } from "@/pages/Irc/IrcPage";
+import { ThemeProvider } from "@/providers/theme-provider";
 
 // Mount helper: the shell renders <div id="micro-chat-root" /> on /irc and
 // we drop our own React tree into it. Re-mounts on every route change are cheap.
@@ -10,6 +11,15 @@ export function mountChatPage(root: HTMLElement) {
     return;
   }
   const reactRoot = ReactDOMClient.createRoot(root);
-  reactRoot.render(<Irc />);
+  // ponytail: wrap the chat tree in a ThemeProvider so the
+  // surface can flip between light and dark and follow the
+  // shell's chosen accent. The provider reads
+  // window.LateTheme (set by the shell) and dispatches
+  // `late:theme-change` updates.
+  reactRoot.render(
+    <ThemeProvider>
+      <Irc />
+    </ThemeProvider>,
+  );
   return () => reactRoot.unmount();
 }

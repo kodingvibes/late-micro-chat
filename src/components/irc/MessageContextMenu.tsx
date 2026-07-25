@@ -127,7 +127,7 @@ export default function MessageContextMenu({
         }}
         className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
       >
-        <SmilePlus className="w-4 h-4 text-indigo-400" />
+        <SmilePlus className="w-4 h-4 text-accent" />
         Reaccionar
         <span className="ml-auto text-[10px] text-slate-500">{showEmojiPicker ? '▲' : '▼'}</span>
       </button>

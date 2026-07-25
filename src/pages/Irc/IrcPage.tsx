@@ -733,7 +733,7 @@ export function Irc() {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin" />
           <div className="text-slate-400 text-sm">Conectando al chat...</div>
         </div>
       </div>
@@ -1134,7 +1134,7 @@ function ToastStack({ toasts, onDismiss }: { toasts: { id: string; text: string;
               : 'cursor-pointer hover:scale-[1.02] hover:-translate-x-0.5'
           } ${
             t.type === 'mention'
-              ? 'bg-indigo-900/95 border-indigo-500/40 text-indigo-200 hover:border-indigo-400/70'
+              ? 'bg-accent/15 border-accent/40 text-accent-soft hover:border-accent/70'
               : t.type === 'join'
               ? 'bg-emerald-900/95 border-emerald-500/30 text-emerald-200 hover:border-emerald-400/70'
               : 'bg-rose-900/95 border-rose-500/30 text-rose-200 hover:border-rose-400/70'

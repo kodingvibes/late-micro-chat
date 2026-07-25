@@ -111,7 +111,7 @@ export default function ChannelList({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar canal..."
-            className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+            className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-xs placeholder-slate-500 focus:outline-none focus:border-accent transition-colors"
           />
         </div>
       </div>
@@ -194,7 +194,7 @@ export default function ChannelList({
       <div className="px-3 py-2 border-t border-slate-800">
         <button
           onClick={onCreateRequest}
-          className="w-full flex items-center gap-2 text-xs text-slate-500 hover:text-indigo-400 transition-colors py-1"
+          className="w-full flex items-center gap-2 text-xs text-slate-500 hover:text-accent transition-colors py-1"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>Crear canal</span>
@@ -269,7 +269,7 @@ function ChannelRow({ chan, isActive, onSelect, onContextMenu }: ChannelRowProps
         isActive
           ? isVoice
             ? 'bg-emerald-500/15 text-emerald-200 border-l-2 border-emerald-500'
-            : 'bg-indigo-500/15 text-slate-100 border-l-2 border-indigo-500'
+            : 'bg-accent/15 text-slate-100 border-l-2 border-accent'
           : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 border-l-2 border-transparent'
       }`}
     >
@@ -278,7 +278,7 @@ function ChannelRow({ chan, isActive, onSelect, onContextMenu }: ChannelRowProps
           {isActive ? '🔊' : '🎧'}
         </span>
       ) : (
-        <Hash className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-indigo-400' : 'text-slate-500'}`} />
+        <Hash className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-accent' : 'text-slate-500'}`} />
       )}
       <span className="truncate flex-1 font-medium">
         {chan.name.replace(/^🔊\s*/, '').replace(/^#/, '')}
@@ -309,7 +309,7 @@ function ChannelRow({ chan, isActive, onSelect, onContextMenu }: ChannelRowProps
         </span>
       )}
       {!isVoice && chan.unread > 0 && (
-        <span className="bg-indigo-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center tabular-nums">
+        <span className="bg-accent text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center tabular-nums">
           {chan.unread}
         </span>
       )}

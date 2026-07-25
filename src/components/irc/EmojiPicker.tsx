@@ -49,7 +49,7 @@ export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
         placeholder="Buscar emoji…"
         value={filter}
         onChange={e => setFilter(e.target.value)}
-        className="w-full px-2.5 py-1.5 mb-2 rounded-md bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:border-indigo-500"
+        className="w-full px-2.5 py-1.5 mb-2 rounded-md bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:border-accent"
       />
       <div className="grid grid-cols-6 gap-1 max-h-60 overflow-y-auto">
         {filtered.map(e => (

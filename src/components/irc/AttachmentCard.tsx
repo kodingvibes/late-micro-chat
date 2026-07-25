@@ -194,7 +194,7 @@ export default function AttachmentCard({
         {ext || '?'}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-slate-200 truncate group-hover:text-indigo-300 transition-colors">{meta.filename}</div>
+        <div className="text-sm font-medium text-slate-200 truncate group-hover:text-accent-soft transition-colors">{meta.filename}</div>
         <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
           <span>{formatFileSize(meta.size_bytes)}</span>
           <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{expiresLabel}</span>

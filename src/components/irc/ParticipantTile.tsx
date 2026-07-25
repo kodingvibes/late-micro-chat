@@ -154,7 +154,7 @@ export default function ParticipantTile({
                 min="0" max="100"
                 value={amount}
                 onChange={e => onAmountChange(Number(e.target.value))}
-                className="w-full h-1 accent-indigo-500"
+                className="w-full h-1 accent-accent"
               />
               <span className="text-[9px] text-slate-500 tabular-nums w-4 text-right">{amount}</span>
             </div>
@@ -206,7 +206,7 @@ export default function ParticipantTile({
                   min="0" max="100"
                   value={volume}
                   onChange={e => onVolumeChange(Number(e.target.value))}
-                  className="w-16 h-1 accent-indigo-500 rotate-0"
+                  className="w-16 h-1 accent-accent rotate-0"
                   style={{ writingMode: 'horizontal-tb' }}
                 />
                 <span className="text-[9px] text-slate-500 tabular-nums">{volume}</span>

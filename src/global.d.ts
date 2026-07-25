@@ -57,15 +57,30 @@ export interface LateSessionAPI {
   readonly user: LateUser | null;
   readonly ssoUrl: string;
   api<T>(path: string, init?: RequestInit): Promise<T>;
+  updateProfile?(patch: {
+    display_name?: string;
+    name?: string;
+    avatar_url?: string | null;
+    preferences?: Record<string, unknown>;
+  }): Promise<LateUser>;
   logout(): void;
   redirectToSso(): void;
   onAuthFatal(handler: () => void): () => void;
   clearSsoBudget?(): void;
 }
 
+// ponytail: the shell publishes the active theme on
+// window.LateTheme whenever the user changes it. The chat
+// micro mirrors those values onto its own documentElement so
+// the slate / accent / light-mode overrides declared in
+// index.css take effect on the chat surface too.
+import type { LateTheme } from "@/lib/theme";
+
 declare global {
   interface Window {
     RadioEngine?: RadioEngine;
     LateSession?: LateSessionAPI;
+    LateTheme?: LateTheme;
+    ChatEngine?: { version: string; onlineCount?: number; openNickModal?: () => void; openNotificationSettings?: () => void };
   }
 }

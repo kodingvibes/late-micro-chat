@@ -45,7 +45,7 @@ export default function JoinChannelModal({ onSubmit, onCancel }: JoinChannelModa
               type="text"
               value={name}
               onChange={(e) => { setName(e.target.value); setError('') }}
-              className="w-full pl-8 pr-3 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-slate-100 text-base font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all"
+              className="w-full pl-8 pr-3 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-slate-100 text-base font-mono focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
               autoFocus
               placeholder="mi-canal"
               maxLength={40}
@@ -62,7 +62,7 @@ export default function JoinChannelModal({ onSubmit, onCancel }: JoinChannelModa
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-semibold transition-colors text-sm"
+              className="flex-1 px-4 py-2 rounded-lg bg-accent hover:bg-accent-soft text-white font-semibold transition-colors text-sm"
             >
               Crear
             </button>

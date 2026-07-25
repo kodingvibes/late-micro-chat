@@ -70,8 +70,8 @@ function ReplyBar({ reply, onClear }: { reply: ChatMessage; onClear: () => void 
   )
   return (
     <div className="px-3 py-1.5 bg-slate-900 border-t border-slate-800 flex items-center gap-2 text-sm">
-      <MessageSquareQuote className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-      <span className="text-indigo-300 font-medium truncate shrink-0">{reply.display_name}</span>
+      <MessageSquareQuote className="w-3.5 h-3.5 text-accent shrink-0" />
+      <span className="text-accent font-medium truncate shrink-0">{reply.display_name}</span>
       {content}
       <button onClick={onClear} className="ml-auto shrink-0 w-5 h-5 rounded-full hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-slate-100 transition-colors" aria-label="Cancelar respuesta">
         <X className="w-3.5 h-3.5" />
@@ -107,7 +107,7 @@ function InviteModal({
         <p className="text-sm text-slate-400 mb-6">{user.display_name} no está en este canal. ¿Quieres agregarlo?</p>
         <div className="flex gap-3">
           <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors text-sm font-medium">No</button>
-          <button onClick={onConfirm} className="flex-1 px-4 py-2.5 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-semibold transition-colors text-sm">Sí, invitar</button>
+          <button onClick={onConfirm} className="flex-1 px-4 py-2.5 rounded-lg bg-accent hover:bg-accent-soft text-white font-semibold transition-colors text-sm">Sí, invitar</button>
         </div>
       </div>
     </div>
@@ -719,7 +719,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
               type="button"
               disabled={uploading}
               onClick={sendVoiceNote}
-              className="w-10 h-10 rounded-full bg-indigo-500 hover:bg-indigo-400 disabled:bg-slate-700 text-white flex items-center justify-center flex-shrink-0 transition-colors"
+              className="w-10 h-10 rounded-full bg-accent hover:bg-accent-soft disabled:bg-slate-700 text-white flex items-center justify-center flex-shrink-0 transition-colors"
               aria-label="Enviar audio"
             >
               <ArrowUp className="w-4 h-4" />
@@ -762,7 +762,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
       )}
       {uploading && (
         <div className="px-3 py-1.5 text-xs text-slate-500 bg-slate-950 border-t border-slate-800 flex items-center gap-2">
-          <span className="w-3 h-3 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <span className="w-3 h-3 border-2 border-accent border-t-transparent rounded-full animate-spin" />
           Subiendo archivo…
         </div>
       )}
@@ -771,8 +771,8 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
         : replyContext && <ReplyBar reply={replyContext} onClear={onClearReply!} />}
       {isFileDragging && channelId !== null && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-indigo-950/60 backdrop-blur-sm pointer-events-none transition-opacity duration-150">
-          <div className="bg-slate-900/90 border-2 border-dashed border-indigo-400 rounded-2xl p-8 sm:p-10 max-w-md mx-4 text-center shadow-2xl">
-            <Upload className="w-10 h-10 text-indigo-300 mx-auto mb-3" />
+          <div className="bg-slate-900/90 border-2 border-dashed border-accent rounded-2xl p-8 sm:p-10 max-w-md mx-4 text-center shadow-2xl">
+            <Upload className="w-10 h-10 text-accent mx-auto mb-3" />
             <p className="text-slate-100 font-semibold text-lg">Suelta archivos para adjuntar</p>
             <p className="text-slate-400 text-sm mt-1">Imágenes, audio, video o documentos</p>
           </div>
@@ -945,7 +945,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
                     onMouseDown={(e) => { e.preventDefault(); insertSuggestion(s) }}
                     onMouseEnter={() => setActiveIdx(i)}
                     className={`w-full text-left px-3 py-1.5 text-sm flex items-center gap-2 ${
-                      i === activeIdx ? 'bg-indigo-500/20 text-slate-100' : 'text-slate-300 hover:bg-slate-800'
+                      i === activeIdx ? 'bg-accent/20 text-slate-100' : 'text-slate-300 hover:bg-slate-800'
                     }`}
                   >
                     {trigger === '@' ? (
@@ -958,7 +958,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
                       </>
                     ) : (
                       <>
-                        <span className="font-mono text-indigo-400">{s.display_name.split(' ')[0]}</span>
+                        <span className="font-mono text-accent">{s.display_name.split(' ')[0]}</span>
                         <span className="text-slate-500 text-xs truncate">{s.display_name.split(' ').slice(1).join(' ')}</span>
                       </>
                     )}
@@ -978,7 +978,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
               className={`w-full px-3 sm:px-4 py-2.5 rounded-xl border text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 transition-all leading-snug resize-none overflow-y-auto max-h-36 break-words ${
                 recording
                   ? 'bg-slate-950 border-rose-700/50 focus:border-rose-500 focus:ring-rose-500/30'
-                  : 'bg-slate-900 border-slate-700 focus:border-indigo-500 focus:ring-indigo-500/30'
+                  : 'bg-slate-900 border-slate-700 focus:border-accent focus:ring-accent/30'
               }`}
               style={{ minHeight: '44px', maxWidth: '100%', fontSize: '16px' }}
             />
@@ -1036,7 +1036,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
               recording
                 ? 'bg-rose-500 hover:bg-rose-400 text-white animate-pulse'
                 : canSend
-                  ? 'bg-indigo-500 hover:bg-indigo-400 text-white'
+                  ? 'bg-accent hover:bg-accent-soft text-white'
                   : 'bg-slate-700 text-slate-500'
             }`}
           >

@@ -36,7 +36,7 @@ export default function NickPromptModal({ suggestedNick, onSubmit, onCancel }: N
             type="text"
             value={nick}
             onChange={(e) => { setNick(e.target.value); setError('') }}
-            className="w-full px-4 py-3 rounded-lg bg-slate-950 border border-slate-700 text-slate-100 text-lg font-mono focus:outline-none focus:border-indigo-500 transition-colors"
+            className="w-full px-4 py-3 rounded-lg bg-slate-950 border border-slate-700 text-slate-100 text-lg font-mono focus:outline-none focus:border-accent transition-colors"
             autoFocus
             maxLength={32}
           />
@@ -51,7 +51,7 @@ export default function NickPromptModal({ suggestedNick, onSubmit, onCancel }: N
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 rounded-lg bg-indigo-500 text-white font-semibold hover:bg-indigo-400 transition-colors"
+              className="flex-1 px-4 py-2 rounded-lg bg-accent text-white font-semibold hover:bg-accent-soft transition-colors"
             >
               Entrar
             </button>

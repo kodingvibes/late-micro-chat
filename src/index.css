@@ -79,3 +79,132 @@
 .animate-menu-toast {
   animation: menu-toast 1s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
+/* ponytail: the chat MF ships a runtime theme so it can
+ * match the shell. Tailwind 4 inlines the slate / accent
+ * colour values into the utility class itself, so we have
+ * to redeclare each class under a more-specific selector
+ * to make a runtime mode swap actually repaint. The shell
+ * sets the same variables (--accent-primary etc.) and
+ * `theme-light` / `theme-dark` classes on the
+ * documentElement; this MF's ThemeProvider applies them to
+ * its own root so the styles below cascade through the
+ * chat tree. */
+
+/* Accent primitives — read from the runtime CSS variables
+ * the shell (and this MF's ThemeProvider) set on :root. */
+.bg-accent { background-color: var(--accent-primary, #6366f1); }
+.bg-accent-soft { background-color: var(--accent-soft, #818cf8); }
+.bg-accent-ring { background-color: var(--accent-ring, #a5b4fc); }
+.text-accent { color: var(--accent-primary, #6366f1); }
+.text-accent-soft { color: var(--accent-soft, #818cf8); }
+.ring-accent { box-shadow: 0 0 0 3px var(--accent-ring, #a5b4fc); }
+.border-accent { border-color: var(--accent-primary, #6366f1); }
+.hover\:bg-accent-soft:hover { background-color: var(--accent-soft, #818cf8); }
+.hover\:text-accent-soft:hover { color: var(--accent-soft, #818cf8); }
+.focus\:border-accent:focus { border-color: var(--accent-primary, #6366f1); }
+
+.bg-accent\/15 { background-color: var(--accent-primary, #6366f1); }
+@supports (color: color-mix(in lab, red, red)) {
+  .bg-accent\/15 {
+    background-color: color-mix(in srgb, var(--accent-primary, #6366f1) 15%, transparent);
+  }
+}
+.bg-accent\/20 {
+  background-color: color-mix(in srgb, var(--accent-primary, #6366f1) 20%, transparent);
+}
+.bg-accent\/30 {
+  background-color: color-mix(in srgb, var(--accent-primary, #6366f1) 30%, transparent);
+}
+.bg-accent\/40 {
+  background-color: color-mix(in srgb, var(--accent-primary, #6366f1) 40%, transparent);
+}
+.bg-accent\/10 {
+  background-color: color-mix(in srgb, var(--accent-primary, #6366f1) 10%, transparent);
+}
+.text-accent\/80 {
+  color: color-mix(in srgb, var(--accent-primary, #6366f1) 80%, transparent);
+}
+.ring-accent\/30 {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary, #6366f1) 30%, transparent);
+}
+.border-accent\/30 {
+  border-color: color-mix(in srgb, var(--accent-primary, #6366f1) 30%, transparent);
+}
+.border-accent\/40 {
+  border-color: color-mix(in srgb, var(--accent-primary, #6366f1) 40%, transparent);
+}
+.border-accent\/60 {
+  border-color: color-mix(in srgb, var(--accent-primary, #6366f1) 60%, transparent);
+}
+.hover\:border-accent\/30:hover {
+  border-color: color-mix(in srgb, var(--accent-primary, #6366f1) 30%, transparent);
+}
+.hover\:border-accent\/70:hover {
+  border-color: color-mix(in srgb, var(--accent-primary, #6366f1) 70%, transparent);
+}
+.accent-accent { accent-color: var(--accent-primary, #6366f1); }
+
+/* Backgrounds (light mode inverts the ramp). */
+:root.theme-light .bg-slate-950 { background-color: #f8fafc; }
+:root.theme-light .bg-slate-900 { background-color: #ffffff; }
+:root.theme-light .bg-slate-800 { background-color: #e2e8f0; }
+:root.theme-light .bg-slate-700 { background-color: #cbd5e1; }
+:root.theme-light .bg-slate-600 { background-color: #94a3b8; }
+:root.theme-light .bg-slate-500 { background-color: #64748b; }
+:root.theme-light .bg-slate-200 { background-color: #cbd5e1; }
+:root.theme-light .bg-slate-50  { background-color: #f1f5f9; }
+
+/* Translucent backgrounds. */
+:root.theme-light .bg-slate-950\/80 { background-color: rgba(248, 250, 252, 0.8); }
+:root.theme-light .bg-slate-900\/80 { background-color: rgba(255, 255, 255, 0.8); }
+:root.theme-light .bg-slate-900\/60 { background-color: rgba(255, 255, 255, 0.6); }
+:root.theme-light .bg-slate-900\/40 { background-color: rgba(255, 255, 255, 0.4); }
+:root.theme-light .bg-slate-800\/60 { background-color: rgba(241, 245, 249, 0.7); }
+:root.theme-light .bg-slate-800\/40 { background-color: rgba(241, 245, 249, 0.4); }
+
+/* Text colors. */
+:root.theme-light .text-slate-100 { color: #0f172a; }
+:root.theme-light .text-slate-200 { color: #1e293b; }
+:root.theme-light .text-slate-300 { color: #334155; }
+:root.theme-light .text-slate-400 { color: #475569; }
+:root.theme-light .text-slate-500 { color: #64748b; }
+:root.theme-light .text-slate-600 { color: #94a3b8; }
+:root.theme-light .text-slate-700 { color: #cbd5e1; }
+:root.theme-light .text-slate-900 { color: #020617; }
+
+/* Borders. */
+:root.theme-light .border-slate-800 { border-color: #e2e8f0; }
+:root.theme-light .border-slate-700 { border-color: #cbd5e1; }
+:root.theme-light .border-slate-200 { border-color: #e2e8f0; }
+:root.theme-light .border-slate-100 { border-color: #f1f5f9; }
+
+/* Hover states. */
+:root.theme-light .hover\:bg-slate-800:hover { background-color: #e2e8f0; }
+:root.theme-light .hover\:bg-slate-700:hover { background-color: #cbd5e1; }
+:root.theme-light .hover\:bg-slate-200:hover { background-color: #e2e8f0; }
+:root.theme-light .hover\:bg-slate-100:hover { background-color: #f1f5f9; }
+:root.theme-light .hover\:text-slate-100:hover { color: #0f172a; }
+:root.theme-light .hover\:text-slate-200:hover { color: #1e293b; }
+:root.theme-light .hover\:text-slate-300:hover { color: #334155; }
+:root.theme-light .hover\:border-slate-500:hover { border-color: #94a3b8; }
+:root.theme-light .hover\:border-slate-700:hover { border-color: #cbd5e1; }
+:root.theme-light .hover\:border-slate-800:hover { border-color: #e2e8f0; }
+
+:root.theme-light .divide-slate-800 > * + * { border-color: #e2e8f0; }
+
+:root.theme-light .shadow-floating { box-shadow: 0 12px 36px -8px rgba(15, 23, 42, 0.18), 0 4px 12px -2px rgba(15, 23, 42, 0.1); }
+:root.theme-light .shadow-soft { box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.1), 0 2px 4px -2px rgba(15, 23, 42, 0.1); }
+
+/* In light mode the active nav pill should use a deeper tone
+ * of the accent so it reads on the light background. */
+:root.theme-light .bg-accent\/15 {
+  background-color: color-mix(in srgb, var(--accent-primary, #6366f1) 12%, transparent);
+}
+
+/* Dark focus rings become a slightly darker accent tone on
+ * light surfaces so they remain visible against the brighter
+ * background. */
+:root.theme-light .ring-indigo-500\/30 { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary, #6366f1) 30%, transparent); }
+:root.theme-light .focus\:ring-indigo-500\/30:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary, #6366f1) 30%, transparent); }
+:root.theme-light .focus\:ring-indigo-500:focus { box-shadow: 0 0 0 1px var(--accent-primary, #6366f1); }

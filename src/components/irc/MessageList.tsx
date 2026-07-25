@@ -91,7 +91,7 @@ function ReceiptIndicator({ delivered, read, total }: { delivered: number; read:
   }
   if (read >= total) {
     return (
-      <span className="inline-flex items-center text-indigo-400 ml-1" aria-label="Leído por todos" title="Leído por todos">
+      <span className="inline-flex items-center text-accent ml-1" aria-label="Leído por todos" title="Leído por todos">
         <svg width="16" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M2 12l4 4 6-6" />
           <path d="M12 14l4 4 6-6" />
@@ -210,9 +210,9 @@ function ReplyBlock({ message }: { message: ChatMessage }) {
   const att = !isImageReply ? getAttachmentMarker(raw) : null
   const caption = isImageReply ? (extractImagesCaption(raw) || extractImageCaption(raw)) : null
   return (
-    <div className="flex items-start gap-2 pl-2 py-0.5 mb-1 border-l-2 border-indigo-500/40">
+    <div className="flex items-start gap-2 pl-2 py-0.5 mb-1 border-l-2 border-accent/40">
       <div className="flex-1 min-w-0">
-        <span className="text-[11px] font-semibold text-indigo-400/80">{m.reply_to_author}</span>
+        <span className="text-[11px] font-semibold text-accent/80">{m.reply_to_author}</span>
         {caption && <p className="text-[12px] text-slate-400 truncate">{caption}</p>}
         {isImageReply ? (() => {
           const urls = extractImageUrls(raw)

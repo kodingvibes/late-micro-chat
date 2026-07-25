@@ -55,14 +55,14 @@ export default function NotificationSettingsModal({ prefs, onSave, onClose }: No
                 onClick={() => setMode(opt.value)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
                   mode === opt.value
-                    ? 'bg-indigo-500/20 border border-indigo-500/40'
+                    ? 'bg-accent/20 border border-accent/40'
                     : 'bg-slate-800/50 border border-transparent hover:bg-slate-800'
                 }`}
               >
                 <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                  mode === opt.value ? 'border-indigo-400' : 'border-slate-600'
+                  mode === opt.value ? 'border-accent' : 'border-slate-600'
                 }`}>
-                  {mode === opt.value && <div className="w-2 h-2 rounded-full bg-indigo-400" />}
+                  {mode === opt.value && <div className="w-2 h-2 rounded-full bg-accent" />}
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-medium text-slate-200">{opt.label}</div>
@@ -85,7 +85,7 @@ export default function NotificationSettingsModal({ prefs, onSave, onClose }: No
               max={100}
               value={volume}
               onChange={(e) => setVolume(Number(e.target.value))}
-              className="flex-1 accent-indigo-500"
+              className="flex-1 accent-accent"
             />
             <span className="text-sm text-slate-300 tabular-nums w-10 text-right">{volume}%</span>
           </div>
@@ -106,7 +106,7 @@ export default function NotificationSettingsModal({ prefs, onSave, onClose }: No
                 aria-checked={t.value}
                 onClick={() => t.set(!t.value)}
                 className={`relative w-10 h-5 rounded-full transition-colors ${
-                  t.value ? 'bg-indigo-500' : 'bg-slate-700'
+                  t.value ? 'bg-accent' : 'bg-slate-700'
                 }`}
               >
                 <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
@@ -120,7 +120,7 @@ export default function NotificationSettingsModal({ prefs, onSave, onClose }: No
         <button
           type="button"
           onClick={handleSave}
-          className="w-full py-2.5 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-semibold transition-colors text-sm"
+          className="w-full py-2.5 rounded-lg bg-accent hover:bg-accent-soft text-white font-semibold transition-colors text-sm"
         >
           Guardar
         </button>

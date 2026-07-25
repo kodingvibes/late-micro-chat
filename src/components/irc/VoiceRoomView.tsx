@@ -222,7 +222,7 @@ export default function VoiceRoomView({
             onClick={() => setShowInput(!showInput)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               showInput
-                ? 'bg-indigo-500/15 text-indigo-300'
+                ? 'bg-accent/15 text-accent'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
             }`}
           >
@@ -323,7 +323,7 @@ export default function VoiceRoomView({
                       type="checkbox"
                       checked={vadOn}
                       onChange={e => setVadOn(e.target.checked)}
-                      className="accent-indigo-500"
+                      className="accent-accent"
                     />
                     <Activity className="w-3 h-3" />
                     Auto-detectar voz
@@ -336,11 +336,11 @@ export default function VoiceRoomView({
                         min="0" max="100"
                         value={Math.round(vadThreshold * 200)}
                         onChange={e => setVadThreshold(Number(e.target.value) / 200)}
-                        className="w-32 h-1 accent-indigo-500"
+                        className="w-32 h-1 accent-accent"
                       />
                       <div className="w-16 h-1 bg-slate-800 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-indigo-400 transition-[width] duration-75"
+                          className="h-full bg-accent transition-[width] duration-75"
                           style={{ width: `${Math.min(100, level * 400)}%` }}
                         />
                       </div>
@@ -453,7 +453,7 @@ function VoiceChatInput({
     >
       {replyContext && (
         <div className="flex items-center gap-1.5 mb-1 text-[11px] text-slate-400">
-          <span className="truncate">Respondiendo a <span className="text-indigo-300">{replyContext.display_name}</span></span>
+          <span className="truncate">Respondiendo a <span className="text-accent">{replyContext.display_name}</span></span>
           <button type="button" onClick={onClearReply} className="ml-auto text-slate-500 hover:text-slate-200">
             <X className="w-3 h-3" />
           </button>
@@ -523,13 +523,13 @@ function VoiceChatInput({
           }}
           placeholder={placeholder || 'Escribe un mensaje...'}
           rows={1}
-          className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border bg-slate-900 border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 resize-none text-sm leading-snug"
+          className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border bg-slate-900 border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 resize-none text-sm leading-snug"
           style={{ minHeight: '32px', maxHeight: '120px' }}
         />
         <button
           type="submit"
           disabled={text.trim().length === 0}
-          className="w-7 h-7 rounded-full bg-indigo-500 hover:bg-indigo-400 disabled:bg-slate-700 disabled:text-slate-500 text-white flex items-center justify-center flex-shrink-0 transition-colors self-end flex-none"
+          className="w-7 h-7 rounded-full bg-accent hover:bg-accent-soft disabled:bg-slate-700 disabled:text-slate-500 text-white flex items-center justify-center flex-shrink-0 transition-colors self-end flex-none"
           aria-label="Enviar"
         >
           <ArrowUp className="w-3.5 h-3.5" />
