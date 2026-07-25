@@ -1,3 +1,10 @@
+## [1.3.3](https://github.com/kodingvibes/late-micro-chat/compare/v1.3.2...v1.3.3) (2026-07-25)
+
+
+### Bug Fixes
+
+* **chat:** add mobile long-press to channel and user context menus ([80e2caf](https://github.com/kodingvibes/late-micro-chat/commit/80e2cafa676d665dbd005a97a4d49d2f30b17202))
+
 ## [1.3.2](https://github.com/kodingvibes/late-micro-chat/compare/v1.3.1...v1.3.2) (2026-07-25)
 
 
