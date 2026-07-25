@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.4.1...v1.5.0) (2026-07-25)
+
+
+### Features
+
+* **chat:** lean topbar, edit topic modal, shell integration ([1c9589f](https://github.com/kodingvibes/late-micro-chat/commit/1c9589f25e8dbf3720e25d818e775f04201b484d))
+
 ## [1.4.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.4.0...v1.4.1) (2026-07-25)
 
 
