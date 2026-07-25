@@ -605,16 +605,10 @@ export function Irc() {
     })
   }, [maybeFloatOnChannelSwitch, channels])
 
-  const handleChannelJoin = useCallback((name: string) => {
-    const cleanName = name.replace(/^#/, "")
-    clientRef.current?.joinChannel(cleanName).then((c) => {
-      setCurrentChannel(c.id)
-    }).catch((err) => {
-      console.error("joinChannel failed", err)
-    })
-    setShowChannelsDrawer(false)
-    setShowJoinModal(false)
-  }, [])
+  // ponytail: handleChannelJoin (and the onJoin prop on ChannelList)
+  // are gone. Every channel you can see is one you can click into;
+  // the create flow goes through handleJoinSubmit below, which still
+  // works for "Crear canal" in the UI.
 
   const handleVoiceJoin = useCallback((channelId: number) => {
     // ponytail: create + resume the AudioContext INSIDE the click
@@ -642,30 +636,6 @@ export function Irc() {
     setActiveVoiceChannelId(null)
   }, [])
 
-  const handleChannelLeave = useCallback(async (channelId: number) => {
-    try {
-      await clientRef.current?.api('POST', `/api/chat/channels/${channelId}/leave`)
-      pushToast('Saliste del canal', 'join')
-      if (channelId === currentChannel) {
-        const first = Array.from(channels.values()).find(c => c.joined && c.id !== channelId)
-        if (first) {
-          const prev = channels.get(channelId)
-          if (prev) {
-            const updated = { ...prev, joined: false }
-            const next = new Map(channels)
-            next.set(channelId, updated)
-            setChannels(next)
-          }
-          handleChannelSelect(first.id)
-        } else {
-          setCurrentChannel(null)
-        }
-      }
-    } catch (err) {
-      pushToast(`Error al salir: ${(err as Error).message}`, 'error')
-    }
-  }, [channels, currentChannel])
-
   const handleChannelDelete = useCallback(async (channelId: number) => {
     const ch = channels.get(channelId)
     if (!ch) return
@@ -687,21 +657,12 @@ export function Irc() {
     }
   }, [channels, currentChannel, activeVoiceChannelId])
 
-  const handleChannelJoinById = useCallback(async (channelId: number) => {
-    const ch = channels.get(channelId)
-    if (!ch) return
-    try {
-      await clientRef.current?.api('POST', `/api/chat/channels/${channelId}/join`)
-      // Mark joined locally; reload to get fresh member counts + last_message.
-      const updated = { ...ch, joined: true }
-      const next = new Map(channels)
-      next.set(channelId, updated)
-      setChannels(next)
-      handleChannelSelect(channelId)
-    } catch (err) {
-      pushToast(`Error al unirse: ${(err as Error).message}`, 'error')
-    }
-  }, [channels])
+  // ponytail: handleChannelLeave and handleChannelJoinById are gone.
+  // Every user is in every channel, so leaving and joining both
+  // collapsed to no-ops on the server. Removing the handlers here
+  // drops the dead "Unirse" / "Salir del canal" UI from the
+  // channel list and context menu. The backend keeps the routes
+  // as 200 no-ops for any stray old client.
 
   const handleJoinSubmit = useCallback((name: string) => {
     if (!name) return
@@ -884,19 +845,12 @@ export function Irc() {
               const ch = Array.from(channels.values()).find(c => c.name === name)
               if (ch) handleChannelSelect(ch.id)
             }}
-            onJoin={(name) => {
-              const ch = Array.from(channels.values()).find(c => c.name === name)
-              if (ch) handleChannelSelect(ch.id)
-              else handleChannelJoin(name)
-            }}
             onVoiceJoin={handleVoiceJoin}
             onVoiceLeave={handleVoiceLeave}
             onCreateRequest={() => setShowJoinModal(true)}
-            onLeave={handleChannelLeave}
             onCopyName={handleCopyText}
             onManageMembers={setManagingChannelId}
             onDelete={handleChannelDelete}
-            onJoinById={handleChannelJoinById}
           />
         </aside>
 
@@ -1107,20 +1061,13 @@ export function Irc() {
               const ch = Array.from(channels.values()).find(c => c.name === name)
               if (ch) handleChannelSelect(ch.id)
             }}
-            onJoin={(name) => {
-              const ch = Array.from(channels.values()).find(c => c.name === name)
-              if (ch) handleChannelSelect(ch.id)
-              else handleChannelJoin(name)
-            }}
             onVoiceJoin={handleVoiceJoin}
             onVoiceLeave={handleVoiceLeave}
             onCreateRequest={() => { setShowChannelsDrawer(false); setShowJoinModal(true) }}
             onClose={() => setShowChannelsDrawer(false)}
-            onLeave={handleChannelLeave}
             onCopyName={handleCopyText}
             onManageMembers={setManagingChannelId}
             onDelete={handleChannelDelete}
-            onJoinById={handleChannelJoinById}
           />
       </Drawer>
       <Drawer

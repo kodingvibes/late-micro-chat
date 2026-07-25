@@ -10,22 +10,20 @@ interface ChannelListProps {
   currentChannel: string | null
   activeVoiceChannelId: number | null
   onSelect: (name: string) => void
-  onJoin: (name: string) => void
   onVoiceJoin: (channelId: number) => void
   onVoiceLeave: (channelId: number) => void
   onCreateRequest: () => void
   onClose?: () => void
-  onLeave?: (channelId: number) => void
   onCopyName?: (name: string) => void
   onManageMembers?: (channelId: number) => void
   onDelete?: (channelId: number) => void
-  onJoinById?: (channelId: number) => void
 }
 
 export default function ChannelList({
   channels, categories, currentChannel, activeVoiceChannelId,
-  onSelect, onJoin: _onJoin, onVoiceJoin, onVoiceLeave,
-  onCreateRequest, onClose, onLeave, onCopyName, onManageMembers, onDelete, onJoinById,
+  onSelect,
+  onVoiceJoin, onVoiceLeave,
+  onCreateRequest, onClose, onCopyName, onManageMembers, onDelete,
 }: ChannelListProps) {
   const [query, setQuery] = useState('')
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set())
@@ -39,13 +37,12 @@ export default function ChannelList({
   const filterFn = (name: string) =>
     !query.trim() || name.toLowerCase().includes(query.toLowerCase())
 
-  // Group channels by category
-  const { categoryGroups, uncategorized, nonJoinedGroups } = useMemo(() => {
-    const chans = Array.from(channels.values()).filter(c => c.joined)
-    const nonJoined = Array.from(channels.values()).filter(c => !c.joined)
+  // ponytail: every user belongs to every channel, so the "joined" /
+  // "non-joined" split is gone. Bucket straight into category groups.
+  const { categoryGroups, uncategorized } = useMemo(() => {
     const groups = new Map<number, ChannelState[]>()
     const uncat: ChannelState[] = []
-    for (const c of chans) {
+    for (const c of channels.values()) {
       if (c.categoryId !== null) {
         const list = groups.get(c.categoryId) || []
         list.push(c)
@@ -54,7 +51,6 @@ export default function ChannelList({
         uncat.push(c)
       }
     }
-    // Sort channels within each group by position, then name
     for (const [id, list] of groups) {
       list.sort((a, b) => {
         if (a.position !== b.position) return a.position - b.position
@@ -63,18 +59,7 @@ export default function ChannelList({
       groups.set(id, list)
     }
     uncat.sort((a, b) => a.name.localeCompare(b.name))
-    // Non-joined: bucket by categoryId (null = uncategorized bucket keyed by -1)
-    const njGroups = new Map<number, ChannelState[]>()
-    for (const c of nonJoined) {
-      const key = c.categoryId ?? -1
-      const list = njGroups.get(key) || []
-      list.push(c)
-      njGroups.set(key, list)
-    }
-    for (const list of njGroups.values()) {
-      list.sort((a, b) => a.name.localeCompare(b.name))
-    }
-    return { categoryGroups: groups, uncategorized: uncat, nonJoinedGroups: njGroups }
+    return { categoryGroups: groups, uncategorized: uncat }
   }, [channels])
 
   // Sort categories by position
@@ -255,57 +240,8 @@ export default function ChannelList({
           </div>
         )}
 
-        {/* Other channels (not joined yet) */}
-        {Array.from(nonJoinedGroups.values()).some(list => list.length > 0) && (
-          <div>
-            <div className="px-3 pt-3 pb-1 text-[10px] font-semibold text-slate-600 uppercase tracking-wider border-t border-slate-800/60 mt-2">
-              Otros canales
-            </div>
-            {sortedCategories
-              .map(cat => ({
-                cat,
-                list: (nonJoinedGroups.get(cat.id) || []).filter(c => filterFn(c.name)),
-              }))
-              .filter(({ list }) => list.length > 0)
-              .map(({ cat, list }) => (
-                <div key={`nj-${cat.id}`}>
-                  <div className="px-3 pt-1.5 pb-0.5 text-[10px] text-slate-600">
-                    {cat.name}
-                  </div>
-                  {list.map(chan => (
-                    <button
-                      key={chan.id}
-                      onClick={() => onJoinById?.(chan.id)}
-                      onContextMenu={(e) => {
-                        e.preventDefault()
-                        setChMenu({ show: true, x: e.clientX, y: e.clientY, channel: chan })
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-sm transition-colors text-left text-slate-500 hover:bg-slate-800/60 hover:text-slate-300 border-l-2 border-transparent cursor-pointer select-none [-webkit-touch-callout:none]"
-                    >
-                      <Hash className="w-4 h-4 flex-shrink-0 text-slate-600" />
-                      <span className="truncate flex-1 font-medium">
-                        {chan.name.replace(/^🔊\s*/, '').replace(/^#/, '')}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              ))}
-            {(nonJoinedGroups.get(-1) || []).filter(c => filterFn(c.name)).map(chan => (
-              <button
-                key={chan.id}
-                onClick={() => onJoinById?.(chan.id)}
-                onContextMenu={(e) => {
-                  e.preventDefault()
-                  setChMenu({ show: true, x: e.clientX, y: e.clientY, channel: chan })
-                }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm transition-colors text-left text-slate-500 hover:bg-slate-800/60 hover:text-slate-300 border-l-2 border-transparent cursor-pointer select-none [-webkit-touch-callout:none]"
-              >
-                <Hash className="w-4 h-4 flex-shrink-0 text-slate-600" />
-                <span className="truncate flex-1 font-medium">{chan.name.replace(/^#/, '')}</span>
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Other channels (not joined yet) — gone. Every user is in
+            every channel, so this section would always be empty. */}
       </div>
 
       <div className="px-3 py-2 border-t border-slate-800">
@@ -322,8 +258,6 @@ export default function ChannelList({
         state={chMenu}
         onClose={closeChMenu}
         onCopyName={(name) => onCopyName?.(name)}
-        onLeave={(channelId) => onLeave?.(channelId)}
-        onJoin={(channelId) => onJoinById?.(channelId)}
         onManageMembers={onManageMembers}
         onDelete={onDelete}
       />

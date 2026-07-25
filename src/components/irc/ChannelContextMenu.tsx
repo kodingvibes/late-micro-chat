@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useViewportClamp } from '../../hooks/use-viewport-clamp'
-import { Copy, LogOut, LogIn, Users, Trash2 } from '@/components/icons'
+import { Copy, Users, Trash2 } from '@/components/icons'
 
 export interface ChannelContextMenuState {
   show: boolean
@@ -13,14 +13,12 @@ interface ChannelContextMenuProps {
   state: ChannelContextMenuState
   onClose: () => void
   onCopyName: (name: string) => void
-  onLeave?: (channelId: number) => void
-  onJoin?: (channelId: number) => void
   onManageMembers?: (channelId: number) => void
   onDelete?: (channelId: number) => void
 }
 
 export default function ChannelContextMenu({
-  state, onClose, onCopyName, onLeave, onJoin, onManageMembers, onDelete,
+  state, onClose, onCopyName, onManageMembers, onDelete,
 }: ChannelContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
@@ -85,26 +83,9 @@ export default function ChannelContextMenu({
           Administrar miembros
         </button>
       )}
-      {channel.id !== undefined && !channel.joined && (
-        <button
-          type="button"
-          onClick={() => { onJoin?.(channel.id as number); onClose() }}
-          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-emerald-400 hover:bg-slate-800 transition-colors"
-        >
-          <LogIn className="w-4 h-4 text-emerald-400" />
-          Unirse
-        </button>
-      )}
-      {channel.joined && channel.id !== undefined && (
-        <button
-          type="button"
-          onClick={() => { onLeave?.(channel.id as number); onClose() }}
-          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-rose-400 hover:bg-slate-800 transition-colors"
-        >
-          <LogOut className="w-4 h-4 text-rose-400" />
-          Salir del canal
-        </button>
-      )}
+      {/* ponytail: every user is in every channel, so the Join and
+          Leave entries are gone. There's nothing to opt into or out
+          of. Admin Delete stays so channel owners can still prune. */}
       {channel.id !== undefined && channel.myRole === 'admin' && onDelete && (
         confirmingDelete ? (
           <div className="px-3 py-2.5 border-t border-slate-800 bg-slate-950/60">
