@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.6.0...v1.7.0) (2026-07-25)
+
+
+### Features
+
+* **chat:** mirror the shell's light/dark mode and accent ([c88aa18](https://github.com/kodingvibes/late-micro-chat/commit/c88aa186c78e07d5bcb98a799fc48e181c214ffe))
+
 # [1.6.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.5.0...v1.6.0) (2026-07-25)
 
 
