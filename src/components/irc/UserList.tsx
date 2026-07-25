@@ -30,7 +30,7 @@ export default function UserList({ users, onBuzz, onCopyName }: UserListProps) {
   }, [sorted, query])
 
   return (
-    <div className="flex flex-col h-full bg-slate-900">
+    <div className="flex flex-col h-full bg-slate-900/70">
       {users.length > 3 && (
         <div className="px-3 py-2 border-b border-slate-800">
           <div className="relative">

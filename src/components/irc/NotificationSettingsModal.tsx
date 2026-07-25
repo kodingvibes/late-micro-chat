@@ -30,12 +30,12 @@ export default function NotificationSettingsModal({ prefs, onSave, onClose }: No
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm select-none animate-menu-backdrop" onClick={onClose}>
       <div
-        className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-floating animate-menu-pop"
+        className="bg-slate-900/85 backdrop-blur-md border border-slate-700/60 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-floating animate-menu-pop"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-slate-100">Notificaciones</h2>
-          <button onClick={onClose} className="w-7 h-7 rounded-md text-slate-500 hover:text-slate-200 hover:bg-slate-800 flex items-center justify-center transition-colors">
+          <button onClick={onClose} className="w-7 h-7 rounded-md text-slate-500 hover:text-slate-200 hover:bg-slate-800/50 flex items-center justify-center transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>

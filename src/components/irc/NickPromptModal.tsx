@@ -26,7 +26,7 @@ export default function NickPromptModal({ suggestedNick, onSubmit, onCancel }: N
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 select-none animate-menu-backdrop">
-      <div className="bg-slate-900 rounded-xl p-8 w-full max-w-md mx-4 shadow-floating border border-slate-800 animate-menu-pop">
+      <div className="bg-slate-900/85 backdrop-blur-md rounded-xl p-8 w-full max-w-md mx-4 shadow-floating border border-slate-700/60 animate-menu-pop">
         <h2 className="text-xl font-bold text-slate-100 mb-2">Elige tu nick</h2>
         <p className="text-slate-400 text-sm mb-6">
           Este será tu identidad en el chat del cowork virtual.

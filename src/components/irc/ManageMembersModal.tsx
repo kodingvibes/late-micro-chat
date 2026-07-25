@@ -98,7 +98,7 @@ export default function ManageMembersModal({
       onClick={onClose}
     >
       <div
-        className="bg-slate-900 rounded-2xl p-5 w-full max-w-md mx-4 shadow-floating border border-slate-800 animate-menu-pop flex flex-col max-h-[80vh]"
+        className="bg-slate-900/85 backdrop-blur-md rounded-2xl p-5 w-full max-w-md mx-4 shadow-floating border border-slate-700/60 animate-menu-pop flex flex-col max-h-[80vh]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4 flex-shrink-0">
@@ -226,7 +226,7 @@ export default function ManageMembersModal({
           )}
         </div>
 
-        <div className="flex-shrink-0 pt-3 border-t border-slate-800 mt-3">
+        <div className="flex-shrink-0 pt-3 border-t border-slate-700/60 mt-3">
           <button
             onClick={onClose}
             className="w-full px-4 py-2 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors text-sm font-medium"
