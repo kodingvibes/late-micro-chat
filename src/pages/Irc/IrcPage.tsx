@@ -844,7 +844,7 @@ export function Irc() {
         </aside>
 
         <main
-          className="flex-1 flex flex-col min-w-0 relative bg-chat-main"
+          className="flex-1 flex flex-col min-w-0 relative bg-mf-surface"
           style={{
             backgroundImage: [
               'radial-gradient(at 20% 10%, var(--accent-glow-a, rgba(99,102,241,0.50)) 0px, transparent 50%)',
