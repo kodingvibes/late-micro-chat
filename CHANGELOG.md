@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.8.1...v1.9.0) (2026-07-27)
+
+
+### Features
+
+* **ui:** migrate chat surfaces to .bg-mf-surface / .bg-surface-* scale ([90a3047](https://github.com/kodingvibes/late-micro-chat/commit/90a304752d4b0bfad8d64c70cbb197932dca3b3a))
+
 ## [1.8.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.8.0...v1.8.1) (2026-07-25)
 
 
