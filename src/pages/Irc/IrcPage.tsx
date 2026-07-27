@@ -854,7 +854,7 @@ export function Irc() {
         </aside>
 
         <main
-          className="flex-1 flex flex-col min-w-0 relative z-[1] bg-mf-surface overflow-hidden"
+          className="flex-1 flex flex-col min-w-0 relative z-[1] bg-chat-main overflow-hidden"
         >
           {activeVoiceChannelId !== null ? (() => {
             const vch = channels.get(activeVoiceChannelId)
