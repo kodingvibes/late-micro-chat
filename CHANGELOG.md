@@ -1,3 +1,10 @@
+## [1.11.4](https://github.com/kodingvibes/late-micro-chat/compare/v1.11.3...v1.11.4) (2026-07-27)
+
+
+### Bug Fixes
+
+* **chat:** sidebars collapsed under hidden sm:* Tailwind v4 cascade ([c2a5638](https://github.com/kodingvibes/late-micro-chat/commit/c2a5638b947332bacb670540cdc906b1e0f0b336))
+
 ## [1.11.3](https://github.com/kodingvibes/late-micro-chat/compare/v1.11.2...v1.11.3) (2026-07-27)
 
 
