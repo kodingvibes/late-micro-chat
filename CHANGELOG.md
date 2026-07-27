@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.10.0...v1.10.1) (2026-07-27)
+
+
+### Bug Fixes
+
+* **chat:** doodle wallpaper now uses one SVG sprite tile ([9f607f8](https://github.com/kodingvibes/late-micro-chat/commit/9f607f84092e0c8335495bc00a9862a901e6290a))
+
 # [1.10.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.9.1...v1.10.0) (2026-07-27)
 
 
