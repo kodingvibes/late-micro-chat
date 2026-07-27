@@ -1,3 +1,10 @@
+## [1.11.2](https://github.com/kodingvibes/late-micro-chat/compare/v1.11.1...v1.11.2) (2026-07-27)
+
+
+### Bug Fixes
+
+* **chat:** sidebar blur can finally resolve the doodles ([a29dbac](https://github.com/kodingvibes/late-micro-chat/commit/a29dbac5e6a7397335c6140bfc7c9990f5fa59de))
+
 ## [1.11.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.11.0...v1.11.1) (2026-07-27)
 
 
