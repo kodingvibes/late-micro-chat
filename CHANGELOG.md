@@ -1,3 +1,10 @@
+## [1.12.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.12.0...v1.12.1) (2026-07-27)
+
+
+### Bug Fixes
+
+* **chat:** portal context menus to body so z-[250] escapes sidebar ([a89a957](https://github.com/kodingvibes/late-micro-chat/commit/a89a957b4a40a0c97c616770743745e62521a2f4))
+
 # [1.12.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.11.4...v1.12.0) (2026-07-27)
 
 
