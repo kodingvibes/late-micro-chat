@@ -1,3 +1,10 @@
+## [1.9.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.9.0...v1.9.1) (2026-07-27)
+
+
+### Bug Fixes
+
+* **chat:** strip orphan border-t/b/l/r separators throughout ([978cabc](https://github.com/kodingvibes/late-micro-chat/commit/978cabc7a03e54dfab689dfe0e0675feb644eaaf))
+
 # [1.9.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.8.1...v1.9.0) (2026-07-27)
 
 
