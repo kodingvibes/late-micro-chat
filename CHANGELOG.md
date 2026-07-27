@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.12.1...v1.13.0) (2026-07-27)
+
+
+### Features
+
+* **chat:** rename channel UI (admin only) ([2d6358f](https://github.com/kodingvibes/late-micro-chat/commit/2d6358f44b0e4e26885899717d6ad0ac55089396))
+
 ## [1.12.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.12.0...v1.12.1) (2026-07-27)
 
 
