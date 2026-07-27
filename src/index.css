@@ -3,16 +3,16 @@
 @import "@late/theme/animations.css";
 
 /* ponytail: WhatsApp-style doodle wallpaper for the chat page.
- * One inline SVG sprite (240x160) holding six chat motifs in fixed
- * positions: speech bubble, hashtag, @-mention, envelope, heart,
- * paperclip. Each motif is wrapped in a <g transform="translate(x y)">
- * so its native 64x64 coords are reused. The sprite is one
- * background-image repeated as a 240x160 tile, so motifs never
- * overlap. Inherits positioning / currentColor / repeat from
- * .bg-doodles in tokens.css. */
+ * Six small hand-drawn chat motifs (speech bubble, hashtag,
+ * @-mention, envelope, heart, paperclip) inside a single
+ * 240x160 SVG sprite. Each ~24px, thin stroke (1.4), rounded
+ * caps, a few degrees of rotation so the tile reads as scattered
+ * hand-drawn marks rather than a mechanical grid. Inherits
+ * positioning / currentColor / repeat from .bg-doodles in
+ * tokens.css. */
 .bg-chat-doodles {
   background-image:
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 160'><g fill='none' stroke='currentColor' stroke-width='3.5' stroke-linejoin='round'><g transform='translate(4 4)'><path d='M10 16 q0 -8 8 -8 h28 q8 0 8 8 v18 q0 8 -8 8 h-22 l-8 8 v-8 q-6 0 -6 -8z'/></g><g transform='translate(84 4)'><path d='M26 12 l-6 40 M40 12 l-6 40 M16 22 h36 M14 42 h36'/></g><g transform='translate(168 4)'><circle cx='26' cy='32' r='20'/><path d='M42 26 v6 a8 8 0 0 0 16 0 v-6 a26 26 0 0 0 -52 0'/></g><g transform='translate(4 84)'><rect x='10' y='18' width='44' height='32' rx='3'/><path d='M10 22 l22 16 l22 -16'/></g><g transform='translate(84 84)'><path d='M44 18 l-22 22 a8 8 0 0 0 12 12 l22 -22 a14 14 0 0 0 -20 -20 l-22 22 a20 20 0 0 0 28 28 l18 -18'/></g></g><g fill='currentColor'><g transform='translate(168 84)'><path d='M32 52 c-12 -10 -22 -16 -22 -28 a10 10 0 0 1 22 -2 a10 10 0 0 1 22 2 c0 12 -10 18 -22 28z'/></g></g></svg>");
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 160'><g fill='none' stroke='currentColor' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><g transform='translate(14 14) rotate(-8)'><path d='M2 4 q-2 0 -2 4 v14 q0 4 4 4 h18 l4 6 v-6 q4 0 4 -4 v-14 q0 -4 -4 -4 z'/></g><g transform='translate(78 22) rotate(8)'><path d='M2 -2 l-2 24'/><path d='M16 -2 l-2 24'/><path d='M-2 6 h22'/><path d='M-4 16 h22'/></g><g transform='translate(140 14) rotate(-6)'><path d='M16 8 c-8 0 -14 6 -14 14 c0 8 6 14 14 14'/><path d='M22 14 v4 q0 6 6 6 q6 0 6 -6 v-4 q0 -14 -14 -14 q-14 0 -14 14'/></g><g transform='translate(14 102) rotate(6)'><path d='M2 2 q-2 0 -2 4 v18 q0 4 4 4 h24 q4 0 4 -4 v-18 q0 -4 -2 -4 z'/><path d='M0 6 l12 12 l12 -12'/></g><g transform='translate(80 108) rotate(-10)'><path d='M2 16 c-2 -4 0 -10 6 -10 c4 0 6 4 4 8 c-2 4 -6 6 -8 10 c-2 4 0 10 6 10 c4 0 6 -4 4 -8 c-2 -4 -8 -6 -10 -10'/></g><g transform='translate(170 110) rotate(10)'><path d='M2 0 c4 0 6 4 4 6 l-12 12 c-2 2 -2 6 0 8 c2 2 6 2 8 0 l12 -12 c4 -4 4 -10 0 -14 c-4 -4 -10 -4 -14 0 l-12 12 c-6 6 -6 14 0 20 c6 6 14 6 20 0 l10 -10'/></g></g></svg>");
   background-size: 240px 160px;
   background-repeat: repeat;
 }
