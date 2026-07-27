@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.10.2...v1.11.0) (2026-07-27)
+
+
+### Features
+
+* **chat:** sidebars and drawer use glass blur ([f5d85db](https://github.com/kodingvibes/late-micro-chat/commit/f5d85dbde0d9cdbbd139f373586b3025c18ad628))
+
 ## [1.10.2](https://github.com/kodingvibes/late-micro-chat/compare/v1.10.1...v1.10.2) (2026-07-27)
 
 
