@@ -1,3 +1,10 @@
+## [1.11.3](https://github.com/kodingvibes/late-micro-chat/compare/v1.11.2...v1.11.3) (2026-07-27)
+
+
+### Bug Fixes
+
+* **chat:** message area keeps a clean surface, no doodle bleed-through ([2cf7c4a](https://github.com/kodingvibes/late-micro-chat/commit/2cf7c4a9554244f9670b8ff1fa69ef350d0f132d))
+
 ## [1.11.2](https://github.com/kodingvibes/late-micro-chat/compare/v1.11.1...v1.11.2) (2026-07-27)
 
 
