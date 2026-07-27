@@ -27,7 +27,7 @@ export default function Drawer({ open, onClose, side = 'left', className = '', c
         onClick={onClose}
       />
       <div
-        className={`absolute top-0 bottom-0 ${side === 'left' ? 'left-0' : 'right-0'} w-72 max-w-[85vw] bg-surface-2  ${side === 'left' ? 'border-r' : 'border-l'} shadow-2xl flex flex-col ${side === 'left' ? 'animate-menu-drawer-from-left' : 'animate-menu-drawer-from-right'} ${className}`}
+        className={`absolute top-0 bottom-0 ${side === 'left' ? 'left-0' : 'right-0'} w-72 max-w-[85vw] bg-surface-tint-80 backdrop-blur-md ${side === 'left' ? 'border-r' : 'border-l'} border-white/5 shadow-2xl flex flex-col ${side === 'left' ? 'animate-menu-drawer-from-left' : 'animate-menu-drawer-from-right'} ${className}`}
       >
         {children}
       </div>

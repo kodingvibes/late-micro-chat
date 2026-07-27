@@ -818,7 +818,7 @@ export function Irc() {
       )}
 
       <div className="flex flex-1 overflow-hidden relative">
-        <aside className="w-48 flex-shrink-0 hidden sm:block bg-surface-1 select-none">
+        <aside className="w-48 flex-shrink-0 hidden sm:block bg-surface-tint-60 backdrop-blur-md border-r border-white/5 select-none">
           <ChannelList
             channels={channels}
             categories={categories}
@@ -1001,7 +1001,7 @@ export function Irc() {
         </main>
 
         {showUsersDrawer && currentChannel !== null && (
-          <aside className="hidden sm:flex w-64 flex-shrink-0 flex-col bg-surface-2 select-none">
+          <aside className="hidden sm:flex w-64 flex-shrink-0 flex-col bg-surface-tint-80 backdrop-blur-md border-l border-white/5 select-none">
             {showUsersDrawer && (
               <>
                 <div className="flex items-center justify-between px-3 py-2.5  ">
