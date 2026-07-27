@@ -1,3 +1,10 @@
+## [1.10.2](https://github.com/kodingvibes/late-micro-chat/compare/v1.10.1...v1.10.2) (2026-07-27)
+
+
+### Bug Fixes
+
+* **chat:** redraw doodle motifs as hand-drawn strokes ([19af121](https://github.com/kodingvibes/late-micro-chat/commit/19af121f7ebc2c2a4b93eecf4aab086d8b1ec0ca))
+
 ## [1.10.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.10.0...v1.10.1) (2026-07-27)
 
 
