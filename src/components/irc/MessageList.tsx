@@ -222,7 +222,7 @@ function ReplyBlock({ message }: { message: ChatMessage }) {
             return (
               <div className="flex gap-1 mt-0.5">
                 {thumbs.map((u, i) => (<img key={i} src={u} alt="" className="h-10 w-10 rounded object-cover" loading="lazy" />))}
-                {urls.length > 3 && <div className="h-10 w-10 rounded bg-slate-800 flex items-center justify-center text-[10px] text-slate-400 font-medium">+{urls.length - 3}</div>}
+                {urls.length > 3 && <div className="h-10 w-10 rounded bg-surface-2 flex items-center justify-center text-[10px] text-slate-400 font-medium">+{urls.length - 3}</div>}
               </div>
             )
           }
@@ -441,7 +441,7 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
     : 'rounded-2xl bg-slate-800/70 text-slate-100 shadow-bubble w-full transition-shadow hover:shadow-lg'
   const headerClass = isOwn
     ? 'px-3 pt-1 pb-0.5 text-[11px] font-semibold opacity-80 border-b border-white/10'
-    : 'px-3 pt-1 pb-0.5 text-[11px] font-semibold border-b border-slate-700/50'
+    : 'px-3 pt-1 pb-0.5 text-[11px] font-semibold border-b border-accent/15'
   const headerStyle = isOwn ? undefined : { color: getNickColor(nick) }
   const widthClass =
     'max-w-[75%] sm:max-w-[65%] min-w-0 has-[[data-og-card]]:w-[75%] sm:has-[[data-og-card]]:w-[65%] has-[[data-og-card]]:max-w-[26rem]'

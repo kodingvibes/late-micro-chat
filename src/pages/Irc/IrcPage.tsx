@@ -730,7 +730,7 @@ export function Irc() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-mf-surface flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin" />
           <div className="text-slate-400 text-sm">Conectando al chat...</div>
@@ -818,7 +818,7 @@ export function Irc() {
       )}
 
       <div className="flex flex-1 overflow-hidden relative">
-        <aside className="w-48 flex-shrink-0 border-r border-slate-800 hidden sm:block select-none">
+        <aside className="w-48 flex-shrink-0 border-r border-accent/20 hidden sm:block bg-surface-1 select-none">
           <ChannelList
             channels={channels}
             categories={categories}
@@ -1004,10 +1004,10 @@ export function Irc() {
         </main>
 
         {showUsersDrawer && currentChannel !== null && (
-          <aside className="hidden sm:flex w-64 flex-shrink-0 border-l border-slate-800 flex-col bg-slate-900/70 select-none">
+          <aside className="hidden sm:flex w-64 flex-shrink-0 border-l border-accent/20 flex-col bg-surface-2 select-none">
             {showUsersDrawer && (
               <>
-                <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-800">
+                <div className="flex items-center justify-between px-3 py-2.5 border-b border-accent/20">
                   <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                     Usuarios en línea
                   </h3>
@@ -1110,7 +1110,7 @@ function DebugCopyButton({ label }: { label: string }) {
         }
         setTimeout(() => setState('idle'), 2500)
       }}
-      className="px-3 py-1.5 rounded-md border border-slate-700 hover:border-slate-500 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-mono transition-colors"
+      className="px-3 py-1.5 rounded-md border border-accent/30 hover:border-accent bg-surface-2 hover:bg-surface-3 text-slate-300 text-xs font-mono transition-colors"
     >
       {state === 'copied' ? '¡Copiado!' : state === 'failed' ? 'No se pudo copiar' : label}
     </button>

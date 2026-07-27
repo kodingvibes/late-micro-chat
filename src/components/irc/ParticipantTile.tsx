@@ -73,7 +73,7 @@ export default function ParticipantTile({
       className={`relative flex flex-col items-center gap-2 rounded-xl p-3 transition-all duration-150 ${
         speaking && !locallyMuted
           ? 'bg-emerald-500/10 ring-2 ring-emerald-400/60'
-          : 'bg-slate-800/60 ring-1 ring-slate-700/50'
+          : 'bg-surface-2 ring-1 ring-slate-700/50'
       }`}
     >
       {/* Avatar */}
@@ -139,7 +139,7 @@ export default function ParticipantTile({
             <button
               onClick={onMicToggle}
               className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
-                micOn ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                micOn ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-2'
               }`}
               title={micOn ? 'Silenciar micrófono' : 'Activar micrófono'}
             >
@@ -164,7 +164,7 @@ export default function ParticipantTile({
               onMouseDown={onRecord}
               disabled={recording}
               className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
-                recording ? 'bg-red-500/20 text-red-300 animate-pulse' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                recording ? 'bg-red-500/20 text-red-300 animate-pulse' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-2'
               }`}
               title={recording ? 'Grabando...' : 'Mantener para nota de voz'}
             >
@@ -192,14 +192,14 @@ export default function ParticipantTile({
                 else setShowVolume(!showVolume)
               }}
               className={`flex items-center justify-center w-6 h-6 rounded-md transition-colors ${
-                locallyMuted ? 'text-rose-400 bg-rose-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                locallyMuted ? 'text-rose-400 bg-rose-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-2'
               }`}
               title={locallyMuted ? 'Activar audio' : 'Ajustar volumen'}
             >
               {locallyMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
             </button>
             {showVolume && !locallyMuted && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-slate-900 border border-slate-700 rounded-lg p-2 shadow-xl z-50 flex flex-col items-center gap-1 animate-menu-tooltip">
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-surface-2 border border-accent/20 rounded-lg p-2 shadow-xl z-50 flex flex-col items-center gap-1 animate-menu-tooltip">
                 <span className="text-[8px] text-slate-500">Vol.</span>
                 <input
                   type="range"
@@ -218,7 +218,7 @@ export default function ParticipantTile({
           <button
             onClick={onLocalMuteToggle}
             className={`flex items-center justify-center w-6 h-6 rounded-md transition-colors ${
-              locallyMuted ? 'text-rose-400 bg-rose-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              locallyMuted ? 'text-rose-400 bg-rose-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-2'
             }`}
             title={locallyMuted ? 'Reactivar audio' : 'Silenciar localmente'}
           >

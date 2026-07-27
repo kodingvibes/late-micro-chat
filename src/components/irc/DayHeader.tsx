@@ -29,11 +29,11 @@ export default function DayHeader({ ts }: DayHeaderProps) {
       className="irc-day-header flex items-center gap-3 px-4 py-2"
       style={{ contain: 'layout paint' }}
     >
-      <div className="flex-1 h-px bg-slate-800" />
+      <div className="flex-1 h-px bg-surface-2" />
       <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
         {formatDayLabel(ts)}
       </span>
-      <div className="flex-1 h-px bg-slate-800" />
+      <div className="flex-1 h-px bg-surface-2" />
     </div>
   )
 }

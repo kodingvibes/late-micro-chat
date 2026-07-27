@@ -69,11 +69,11 @@ function ReplyBar({ reply, onClear }: { reply: ChatMessage; onClear: () => void 
     <span className="text-slate-400 truncate">{reply.content.slice(0, 120)}</span>
   )
   return (
-    <div className="px-3 py-1.5 bg-slate-900 border-t border-slate-800 flex items-center gap-2 text-sm">
+    <div className="px-3 py-1.5 bg-surface-2 border-t border-accent/15 flex items-center gap-2 text-sm">
       <MessageSquareQuote className="w-3.5 h-3.5 text-accent shrink-0" />
       <span className="text-accent font-medium truncate shrink-0">{reply.display_name}</span>
       {content}
-      <button onClick={onClear} className="ml-auto shrink-0 w-5 h-5 rounded-full hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-slate-100 transition-colors" aria-label="Cancelar respuesta">
+      <button onClick={onClear} className="ml-auto shrink-0 w-5 h-5 rounded-full hover:bg-surface-2 flex items-center justify-center text-slate-400 hover:text-slate-100 transition-colors" aria-label="Cancelar respuesta">
         <X className="w-3.5 h-3.5" />
       </button>
     </div>
@@ -102,11 +102,11 @@ function InviteModal({
 }) {
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm select-none">
-      <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-sm shadow-2xl bg-slate-900 border-slate-800">
+      <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-sm shadow-2xl bg-surface-2 border-accent/15">
         <h2 className="text-lg font-semibold text-slate-100 mb-2">¿Invitar a {user.display_name}?</h2>
         <p className="text-sm text-slate-400 mb-6">{user.display_name} no está en este canal. ¿Quieres agregarlo?</p>
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors text-sm font-medium">No</button>
+          <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-lg border border-accent/20 text-slate-300 hover:bg-surface-2 transition-colors text-sm font-medium">No</button>
           <button onClick={onConfirm} className="flex-1 px-4 py-2.5 rounded-lg bg-accent hover:bg-accent-soft text-white font-semibold transition-colors text-sm">Sí, invitar</button>
         </div>
       </div>
@@ -704,13 +704,13 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
   return (
     <>
       {recordedUrl ? (
-        <div className="px-3 py-2 border-t border-slate-800 bg-slate-950" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+        <div className="px-3 py-2 border-t border-accent/15 bg-surface-1" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
           <div className="flex items-center gap-3">
             <AudioWaveform src={recordedUrl} filename="audio" />
             <button
               type="button"
               onClick={() => { setRecordedBlob(null); setRecordedUrl(null); setRecordingDuration(0) }}
-              className="w-9 h-9 rounded-full text-slate-400 hover:text-slate-200 hover:bg-slate-800 flex items-center justify-center transition-colors flex-shrink-0"
+              className="w-9 h-9 rounded-full text-slate-400 hover:text-slate-200 hover:bg-surface-2 flex items-center justify-center transition-colors flex-shrink-0"
               aria-label="Descartar audio"
             >
               <Trash2 className="w-4 h-4" />
@@ -719,7 +719,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
               type="button"
               disabled={uploading}
               onClick={sendVoiceNote}
-              className="w-10 h-10 rounded-full bg-accent hover:bg-accent-soft disabled:bg-slate-700 text-white flex items-center justify-center flex-shrink-0 transition-colors"
+              className="w-10 h-10 rounded-full bg-accent hover:bg-accent-soft disabled:bg-surface-2 text-white flex items-center justify-center flex-shrink-0 transition-colors"
               aria-label="Enviar audio"
             >
               <ArrowUp className="w-4 h-4" />
@@ -729,16 +729,16 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
       ) : (
         <>
       {pendingImages.length > 0 && (
-        <div className="px-3 sm:px-4 pt-2 border-t border-slate-800 bg-slate-950">
-          <div className="flex flex-col gap-2 p-2 rounded-lg bg-slate-900 border border-slate-700">
+        <div className="px-3 sm:px-4 pt-2 border-t border-accent/15 bg-surface-1">
+          <div className="flex flex-col gap-2 p-2 rounded-lg bg-surface-2 border border-accent/20">
             <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
               {pendingImages.map((url, i) => (
                 <div key={i} className="relative flex-shrink-0 group">
-                  <img src={url} alt="" className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-md bg-slate-950" />
+                  <img src={url} alt="" className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-md bg-surface-1" />
                   <button
                     type="button"
                     onClick={() => setPendingImages(prev => prev.filter((_, j) => j !== i))}
-                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-slate-800 hover:bg-red-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors opacity-0 group-hover:opacity-100"
+                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-surface-2 hover:bg-red-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors opacity-0 group-hover:opacity-100"
                     aria-label="Quitar imagen"
                   >
                     <X className="w-3 h-3" />
@@ -749,7 +749,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
                 <button
                   type="button"
                   onClick={() => setPendingImages([])}
-                  className="flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-md border border-dashed border-slate-600 hover:border-red-500 text-slate-500 hover:text-red-400 flex items-center justify-center transition-colors text-[10px] font-medium"
+                  className="flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-md border border-dashed border-accent/15 hover:border-red-500 text-slate-500 hover:text-red-400 flex items-center justify-center transition-colors text-[10px] font-medium"
                   aria-label="Quitar todas"
                 >
                   Quitar<br />todas
@@ -761,7 +761,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
         </div>
       )}
       {uploading && (
-        <div className="px-3 py-1.5 text-xs text-slate-500 bg-slate-950 border-t border-slate-800 flex items-center gap-2">
+        <div className="px-3 py-1.5 text-xs text-slate-500 bg-surface-1 border-t border-accent/15 flex items-center gap-2">
           <span className="w-3 h-3 border-2 border-accent border-t-transparent rounded-full animate-spin" />
           Subiendo archivo…
         </div>
@@ -771,7 +771,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
         : replyContext && <ReplyBar reply={replyContext} onClear={onClearReply!} />}
       {isFileDragging && channelId !== null && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-accent/60 backdrop-blur-sm pointer-events-none transition-opacity duration-150">
-          <div className="bg-slate-900/90 border-2 border-dashed border-accent rounded-2xl p-8 sm:p-10 max-w-md mx-4 text-center shadow-2xl">
+          <div className="bg-surface-3 border-2 border-dashed border-accent rounded-2xl p-8 sm:p-10 max-w-md mx-4 text-center shadow-2xl">
             <Upload className="w-10 h-10 text-accent mx-auto mb-3" />
             <p className="text-slate-100 font-semibold text-lg">Suelta archivos para adjuntar</p>
             <p className="text-slate-400 text-sm mt-1">Imágenes, audio, video o documentos</p>
@@ -780,7 +780,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
       )}
       <form
         onSubmit={handleSubmit}
-        className="px-3 py-2 border-t border-slate-800 bg-slate-950 relative"
+        className="px-3 py-2 border-t border-accent/15 bg-surface-1 relative"
         style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
       >
         <div className="flex items-end gap-2 min-w-0">
@@ -823,18 +823,18 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
               type="button"
               onClick={() => setShowMobileMenu(v => !v)}
               disabled={disabled}
-              className="w-10 h-10 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 disabled:opacity-50 flex items-center justify-center flex-shrink-0 transition-colors"
+              className="w-10 h-10 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-surface-2 disabled:opacity-50 flex items-center justify-center flex-shrink-0 transition-colors"
               aria-label="Más opciones"
               title="Más opciones"
             >
               <Plus className="w-5 h-5" />
             </button>
             {showMobileMenu && (
-              <div className="absolute bottom-full mb-1 left-0 z-40 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-1.5 w-44 select-none animate-menu-up" onClick={(e) => e.stopPropagation()}>
+              <div className="absolute bottom-full mb-1 left-0 z-40 bg-surface-2 border border-accent/20 rounded-xl shadow-2xl p-1.5 w-44 select-none animate-menu-up" onClick={(e) => e.stopPropagation()}>
                 <button
                   type="button"
                   onClick={() => { imageInputRef.current?.click(); setShowMobileMenu(false) }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-200 hover:bg-surface-2 rounded-lg transition-colors"
                 >
                   <ImageIcon className="w-4 h-4 text-slate-400" />
                   Imagen
@@ -842,7 +842,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
                 <button
                   type="button"
                   onClick={() => { triggerFileInput('audio'); setShowMobileMenu(false) }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-200 hover:bg-surface-2 rounded-lg transition-colors"
                 >
                   <Music className="w-4 h-4 text-slate-400" />
                   Audio
@@ -850,7 +850,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
                 <button
                   type="button"
                   onClick={() => { triggerFileInput('video'); setShowMobileMenu(false) }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-200 hover:bg-surface-2 rounded-lg transition-colors"
                 >
                   <Video className="w-4 h-4 text-slate-400" />
                   Video
@@ -858,7 +858,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
                 <button
                   type="button"
                   onClick={() => { triggerFileInput('document'); setShowMobileMenu(false) }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-200 hover:bg-surface-2 rounded-lg transition-colors"
                 >
                   <FileText className="w-4 h-4 text-slate-400" />
                   Documento
@@ -866,7 +866,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
                 <button
                   type="button"
                   onClick={() => { setShowEmoji(true); setShowMobileMenu(false) }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-200 hover:bg-surface-2 rounded-lg transition-colors"
                 >
                   <Smile className="w-4 h-4 text-slate-400" />
                   Emoji
@@ -880,14 +880,14 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
               type="button"
               onClick={() => setShowClipMenu(v => !v)}
               disabled={disabled}
-              className="w-10 h-10 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 disabled:opacity-50 flex items-center justify-center flex-shrink-0 transition-colors"
+              className="w-10 h-10 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-surface-2 disabled:opacity-50 flex items-center justify-center flex-shrink-0 transition-colors"
               aria-label="Adjuntar archivo"
               title="Adjuntar archivo"
             >
               <Paperclip className="w-5 h-5" />
             </button>
             {showClipMenu && (
-              <div className="absolute bottom-full mb-1 left-0 z-40 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-1.5 w-44 select-none animate-menu-up" onClick={(e) => e.stopPropagation()}>
+              <div className="absolute bottom-full mb-1 left-0 z-40 bg-surface-2 border border-accent/20 rounded-xl shadow-2xl p-1.5 w-44 select-none animate-menu-up" onClick={(e) => e.stopPropagation()}>
                 {[
                   { kind: 'audio', icon: Music, label: 'Audio' },
                   { kind: 'video', icon: Video, label: 'Video' },
@@ -897,7 +897,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
                     key={item.kind}
                     type="button"
                     onClick={() => triggerFileInput(item.kind)}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-200 hover:bg-surface-2 rounded-lg transition-colors"
                   >
                     <item.icon className="w-4 h-4 text-slate-400" />
                     {item.label}
@@ -910,7 +910,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
             type="button"
             onClick={() => imageInputRef.current?.click()}
             disabled={disabled}
-            className="w-10 h-10 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 disabled:opacity-50 flex items-center justify-center flex-shrink-0 transition-colors"
+            className="w-10 h-10 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-surface-2 disabled:opacity-50 flex items-center justify-center flex-shrink-0 transition-colors"
             aria-label="Adjuntar imagen"
             title="Adjuntar imagen"
           >
@@ -921,7 +921,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
               type="button"
               onClick={() => setShowEmoji(v => !v)}
               disabled={disabled}
-              className="w-10 h-10 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 disabled:opacity-50 flex items-center justify-center flex-shrink-0 transition-colors"
+              className="w-10 h-10 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-surface-2 disabled:opacity-50 flex items-center justify-center flex-shrink-0 transition-colors"
               aria-label="Insertar emoji"
               title="Insertar emoji"
             >
@@ -937,7 +937,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
           </div>
           <div className="flex-1 relative min-w-0">
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute bottom-full left-0 right-0 mb-1 bg-slate-900 border border-slate-700 rounded-lg shadow-xl max-h-48 overflow-y-auto z-40 select-none animate-menu-up">
+              <div className="absolute bottom-full left-0 right-0 mb-1 bg-surface-2 border border-accent/20 rounded-lg shadow-xl max-h-48 overflow-y-auto z-40 select-none animate-menu-up">
                 {suggestions.map((s, i) => (
                   <button
                     key={i}
@@ -945,7 +945,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
                     onMouseDown={(e) => { e.preventDefault(); insertSuggestion(s) }}
                     onMouseEnter={() => setActiveIdx(i)}
                     className={`w-full text-left px-3 py-1.5 text-sm flex items-center gap-2 ${
-                      i === activeIdx ? 'bg-accent/20 text-slate-100' : 'text-slate-300 hover:bg-slate-800'
+                      i === activeIdx ? 'bg-accent/20 text-slate-100' : 'text-slate-300 hover:bg-surface-2'
                     }`}
                   >
                     {trigger === '@' ? (
@@ -977,8 +977,8 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
               enterKeyHint="send"
               className={`w-full px-3 sm:px-4 py-2.5 rounded-xl border text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 transition-all leading-snug resize-none overflow-y-auto max-h-36 break-words ${
                 recording
-                  ? 'bg-slate-950 border-rose-700/50 focus:border-rose-500 focus:ring-rose-500/30'
-                  : 'bg-slate-900 border-slate-700 focus:border-accent focus:ring-accent/30'
+                  ? 'bg-surface-1 border-rose-700/50 focus:border-rose-500 focus:ring-rose-500/30'
+                  : 'bg-surface-2 border-accent/20 focus:border-accent focus:ring-accent/30'
               }`}
               style={{ minHeight: '44px', maxWidth: '100%', fontSize: '16px' }}
             />
@@ -1037,7 +1037,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
                 ? 'bg-rose-500 hover:bg-rose-400 text-white animate-pulse'
                 : canSend
                   ? 'bg-accent hover:bg-accent-soft text-white'
-                  : 'bg-slate-700 text-slate-500'
+                  : 'bg-surface-2 text-slate-500'
             }`}
           >
             {editContext ? (

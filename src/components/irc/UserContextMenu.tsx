@@ -55,7 +55,7 @@ export default function UserContextMenu({
       data-placement={placement}
       data-state={ready ? 'open' : 'measuring'}
       data-irc-context-menu
-      className="irc-context-menu fixed z-[250] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none animate-menu-pop"
+      className="irc-context-menu fixed z-[250] bg-surface-2 border border-accent/20 rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none animate-menu-pop"
       style={style}
       onClick={(e) => e.stopPropagation()}
     >
@@ -65,7 +65,7 @@ export default function UserContextMenu({
           onBuzz(user.id)
           onClose()
         }}
-        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-surface-2 transition-colors"
       >
         <Bell className="w-4 h-4 text-amber-400" />
         Zumbido
@@ -76,7 +76,7 @@ export default function UserContextMenu({
           onCopyName(user.display_name)
           onClose()
         }}
-        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-surface-2 transition-colors"
       >
         <Copy className="w-4 h-4 text-slate-400" />
         Copiar nombre

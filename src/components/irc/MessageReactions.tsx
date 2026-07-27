@@ -71,10 +71,10 @@ function ReactionDetailPopup({
   return createPortal(
     <div
       ref={ref}
-      className="fixed z-[270] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-2 px-3 min-w-[160px] max-w-[220px] overflow-y-auto select-none animate-menu-pop"
+      className="fixed z-[270] bg-surface-2 border border-accent/20 rounded-xl shadow-2xl py-2 px-3 min-w-[160px] max-w-[220px] overflow-y-auto select-none animate-menu-pop"
       style={{ left, top, maxHeight: 200 }}
     >
-      <div className="flex items-center gap-2 pb-1.5 mb-1.5 border-b border-slate-700/50">
+      <div className="flex items-center gap-2 pb-1.5 mb-1.5 border-b border-accent/15">
         <EmojiIcon name={emoji} size={16} />
         <span className="text-xs font-semibold text-slate-300">Reacciones</span>
         <span className="text-[10px] text-slate-500 ml-auto">{reactors.length}</span>
@@ -139,7 +139,7 @@ export default function MessageReactions({
             className={`inline-flex items-center gap-1.5 rounded-full text-sm pl-1.5 pr-2 py-1 border transition-colors ${
               mine
                 ? 'bg-accent/30 border-accent/60 text-accent-soft hover:bg-accent/30'
-                : 'bg-slate-800/60 border-slate-700/50 text-slate-300 hover:bg-slate-800'
+                : 'bg-surface-2 border-accent/15 text-slate-300 hover:bg-surface-2'
             }`}
           >
             <EmojiIcon name={emoji} size={18} />
@@ -217,7 +217,7 @@ export function CompactReactionButton({
       className="relative"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="flex items-center gap-0.5 bg-slate-900/80 backdrop-blur border border-slate-700/60 rounded-full pl-0.5 pr-1 py-0.5 shadow-lg">
+      <div className="flex items-center gap-0.5 bg-surface-3 backdrop-blur border border-accent/20 rounded-full pl-0.5 pr-1 py-0.5 shadow-lg">
         {reactions.slice(0, 3).map(r => {
           return (
             <button
@@ -227,7 +227,7 @@ export function CompactReactionButton({
               className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[11px] transition-colors ${
                 r.mine
                   ? 'bg-accent/30 text-accent-soft hover:bg-accent/30'
-                  : 'text-slate-300 hover:bg-slate-800'
+                  : 'text-slate-300 hover:bg-surface-2'
               }`}
             >
               <EmojiIcon name={r.emoji} size={12} />
@@ -238,7 +238,7 @@ export function CompactReactionButton({
         <button
           type="button"
           onClick={() => setOpen(v => !v)}
-          className="w-5 h-5 rounded-full text-slate-400 hover:text-slate-100 hover:bg-slate-800 flex items-center justify-center text-sm leading-none transition-colors"
+          className="w-5 h-5 rounded-full text-slate-400 hover:text-slate-100 hover:bg-surface-2 flex items-center justify-center text-sm leading-none transition-colors"
           title="Añadir reacción"
           aria-label="Añadir reacción"
         >
@@ -247,7 +247,7 @@ export function CompactReactionButton({
       </div>
       {open && (
         <div
-          className={`absolute top-full mt-1 z-30 grid grid-cols-7 gap-1 bg-slate-900 border border-slate-700 rounded-2xl p-2 shadow-xl w-[230px] animate-menu-drop ${
+          className={`absolute top-full mt-1 z-30 grid grid-cols-7 gap-1 bg-surface-2 border border-accent/20 rounded-2xl p-2 shadow-xl w-[230px] animate-menu-drop ${
             align === 'right' ? 'right-0' : 'left-0'
           }`}
         >
@@ -260,7 +260,7 @@ export function CompactReactionButton({
                   onToggle(name)
                   setOpen(false)
                 }}
-                className="aspect-square rounded-md text-slate-100 hover:bg-slate-800 hover:text-white flex items-center justify-center transition-colors"
+                className="aspect-square rounded-md text-slate-100 hover:bg-surface-2 hover:text-white flex items-center justify-center transition-colors"
                 title={name}
                 aria-label={name}
               >

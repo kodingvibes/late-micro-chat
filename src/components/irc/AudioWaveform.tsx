@@ -313,7 +313,7 @@ export default function AudioWaveform({ src, filename }: AudioWaveformProps) {
 
   return (
     <div
-      className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-slate-700/40 min-w-[260px] shadow-soft transition-all hover:border-accent/30 hover:shadow-card"
+      className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-accent/15 min-w-[260px] shadow-soft transition-all hover:border-accent/30 hover:shadow-card"
       style={{ contain: 'layout paint' }}
     >
       <button
@@ -347,7 +347,7 @@ export default function AudioWaveform({ src, filename }: AudioWaveformProps) {
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
         {isLoading && (
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full h-px bg-slate-700" />
+            <div className="w-full h-px bg-surface-2" />
           </div>
         )}
         {hasError && (
@@ -357,7 +357,7 @@ export default function AudioWaveform({ src, filename }: AudioWaveformProps) {
         )}
         {isPlaying && (
           <div
-            className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white shadow-lg pointer-events-none"
+            className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-surface-tint-60 shadow-lg pointer-events-none"
             style={{ left: `calc(${progress * 100}% - 5px)` }}
           />
         )}

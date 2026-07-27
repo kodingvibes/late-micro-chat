@@ -26,7 +26,7 @@ export default function NickPromptModal({ suggestedNick, onSubmit, onCancel }: N
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 select-none animate-menu-backdrop">
-      <div className="bg-slate-900/85 backdrop-blur-md rounded-xl p-8 w-full max-w-md mx-4 shadow-floating border border-slate-700/60 animate-menu-pop">
+      <div className="bg-slate-900/85 backdrop-blur-md rounded-xl p-8 w-full max-w-md mx-4 shadow-floating border border-accent/20 animate-menu-pop">
         <h2 className="text-xl font-bold text-slate-100 mb-2">Elige tu nick</h2>
         <p className="text-slate-400 text-sm mb-6">
           Este será tu identidad en el chat del cowork virtual.
@@ -36,7 +36,7 @@ export default function NickPromptModal({ suggestedNick, onSubmit, onCancel }: N
             type="text"
             value={nick}
             onChange={(e) => { setNick(e.target.value); setError('') }}
-            className="w-full px-4 py-3 rounded-lg bg-slate-950 border border-slate-700 text-slate-100 text-lg font-mono focus:outline-none focus:border-accent transition-colors"
+            className="w-full px-4 py-3 rounded-lg bg-surface-1 border border-accent/20 text-slate-100 text-lg font-mono focus:outline-none focus:border-accent transition-colors"
             autoFocus
             maxLength={32}
           />
@@ -45,7 +45,7 @@ export default function NickPromptModal({ suggestedNick, onSubmit, onCancel }: N
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 px-4 py-2 rounded-lg border border-slate-700 text-slate-400 hover:bg-slate-800 transition-colors"
+              className="flex-1 px-4 py-2 rounded-lg border border-accent/20 text-slate-400 hover:bg-surface-2 transition-colors"
             >
               Cancelar
             </button>

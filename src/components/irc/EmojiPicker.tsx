@@ -39,7 +39,7 @@ export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
   return (
     <div
       ref={ref}
-      className="absolute bottom-full mb-2 left-0 z-40 w-72 max-w-[calc(100vw-1.5rem)] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2 select-none animate-menu-up"
+      className="absolute bottom-full mb-2 left-0 z-40 w-72 max-w-[calc(100vw-1.5rem)] bg-surface-2 border border-accent/20 rounded-xl shadow-2xl p-2 select-none animate-menu-up"
       role="dialog"
       aria-label="Emojis"
     >
@@ -49,7 +49,7 @@ export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
         placeholder="Buscar emoji…"
         value={filter}
         onChange={e => setFilter(e.target.value)}
-        className="w-full px-2.5 py-1.5 mb-2 rounded-md bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:border-accent"
+        className="w-full px-2.5 py-1.5 mb-2 rounded-md bg-surface-1 border border-accent/20 text-slate-100 text-sm focus:outline-none focus:border-accent"
       />
       <div className="grid grid-cols-6 gap-1 max-h-60 overflow-y-auto">
         {filtered.map(e => (
@@ -57,7 +57,7 @@ export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
             key={e.name}
             type="button"
             onClick={() => onSelect(e.name)}
-            className="aspect-square flex items-center justify-center rounded-md text-slate-100 hover:bg-slate-800 hover:text-white transition-colors"
+            className="aspect-square flex items-center justify-center rounded-md text-slate-100 hover:bg-surface-2 hover:text-white transition-colors"
             title={`:${e.name}:`}
             aria-label={e.name}
           >

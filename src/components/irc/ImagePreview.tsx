@@ -52,14 +52,14 @@ export function ImageContextMenuPortal({
   return createPortal(
     <div
       ref={ref}
-      className="fixed z-[310] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none animate-menu-pop"
+      className="fixed z-[310] bg-surface-2 border border-accent/20 rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none animate-menu-pop"
       style={{ left, top }}
       onClick={(e) => e.stopPropagation()}
     >
       <button
         type="button"
         onClick={handleCopy}
-        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-surface-2 transition-colors"
       >
         <Copy className="w-4 h-4 text-accent" />
         Copiar imagen
@@ -67,7 +67,7 @@ export function ImageContextMenuPortal({
       <button
         type="button"
         onClick={handleDownload}
-        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-surface-2 transition-colors"
       >
         <Download className="w-4 h-4 text-accent" />
         Descargar imagen
@@ -106,7 +106,7 @@ export default function ImagePreview({ dataUrl, onOpen, width, height }: ImagePr
   return (
     <button
       onClick={() => onOpen(dataUrl)}
-      className="block rounded-lg overflow-hidden border border-slate-700/60 hover:border-accent transition-colors"
+      className="block rounded-lg overflow-hidden border border-accent/20 hover:border-accent transition-colors"
       aria-label="Abrir imagen"
       style={{ contain: 'layout paint' }}
     >
@@ -116,7 +116,7 @@ export default function ImagePreview({ dataUrl, onOpen, width, height }: ImagePr
           alt="imagen pegada"
           width={dims.w}
           height={dims.h}
-          className="block max-w-full object-contain bg-slate-950"
+          className="block max-w-full object-contain bg-surface-1"
           style={{ height: dims.h, width: dims.w }}
           loading="lazy"
           draggable={false}
@@ -125,7 +125,7 @@ export default function ImagePreview({ dataUrl, onOpen, width, height }: ImagePr
         <img
           src={dataUrl}
           alt="imagen pegada"
-          className="block max-w-full max-h-72 object-contain bg-slate-950"
+          className="block max-w-full max-h-72 object-contain bg-surface-1"
           loading="lazy"
           draggable={false}
         />
@@ -145,14 +145,14 @@ export function ImageGallery({ images, onOpen }: ImageGalleryProps) {
     return (
       <button
         onClick={() => onOpen(0)}
-        className="block rounded-lg overflow-hidden border border-slate-700/60 hover:border-accent transition-colors"
+        className="block rounded-lg overflow-hidden border border-accent/20 hover:border-accent transition-colors"
         aria-label="Abrir galería"
         style={{ contain: 'layout paint' }}
       >
         <img
           src={images[0]}
           alt=""
-          className="block max-w-full max-h-72 object-contain bg-slate-950"
+          className="block max-w-full max-h-72 object-contain bg-surface-1"
           loading="lazy"
           draggable={false}
         />
@@ -172,13 +172,13 @@ export function ImageGallery({ images, onOpen }: ImageGalleryProps) {
             <button
               key={i}
               onClick={() => onOpen(i)}
-              className="flex-shrink-0 rounded-md overflow-hidden border border-slate-700/60 hover:border-accent transition-colors relative"
+              className="flex-shrink-0 rounded-md overflow-hidden border border-accent/20 hover:border-accent transition-colors relative"
               aria-label={`Ir a imagen ${i + 1}`}
             >
               <img
                 src={url}
                 alt=""
-                className="block w-20 h-20 sm:w-24 sm:h-24 object-cover bg-slate-950"
+                className="block w-20 h-20 sm:w-24 sm:h-24 object-cover bg-surface-1"
                 loading="lazy"
                 draggable={false}
               />
@@ -294,7 +294,7 @@ export function ImageLightbox({ images, index, onIndexChange, onClose }: ImageLi
     >
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 w-10 h-10 rounded-full bg-slate-800/80 hover:bg-slate-700 text-white flex items-center justify-center text-xl z-10"
+        className="absolute top-4 right-4 w-10 h-10 rounded-full bg-slate-800/80 hover:bg-surface-2 text-white flex items-center justify-center text-xl z-10"
         aria-label="Cerrar"
       >
         <X className="w-5 h-5" />
@@ -309,7 +309,7 @@ export function ImageLightbox({ images, index, onIndexChange, onClose }: ImageLi
       {hasPrev && (
         <button
           onClick={(e) => { e.stopPropagation(); prev() }}
-          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-slate-800/80 hover:bg-slate-700 text-white flex items-center justify-center transition-colors z-10"
+          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-slate-800/80 hover:bg-surface-2 text-white flex items-center justify-center transition-colors z-10"
           aria-label="Anterior"
         >
           <ChevronLeft className="w-6 h-6" />
@@ -319,7 +319,7 @@ export function ImageLightbox({ images, index, onIndexChange, onClose }: ImageLi
       {hasNext && (
         <button
           onClick={(e) => { e.stopPropagation(); next() }}
-          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-slate-800/80 hover:bg-slate-700 text-white flex items-center justify-center transition-colors z-10"
+          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-slate-800/80 hover:bg-surface-2 text-white flex items-center justify-center transition-colors z-10"
           aria-label="Siguiente"
         >
           <ChevronRight className="w-6 h-6" />

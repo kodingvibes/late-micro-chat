@@ -98,7 +98,7 @@ export default function ManageMembersModal({
       onClick={onClose}
     >
       <div
-        className="bg-slate-900/85 backdrop-blur-md rounded-2xl p-5 w-full max-w-md mx-4 shadow-floating border border-slate-700/60 animate-menu-pop flex flex-col max-h-[80vh]"
+        className="bg-slate-900/85 backdrop-blur-md rounded-2xl p-5 w-full max-w-md mx-4 shadow-floating border border-accent/20 animate-menu-pop flex flex-col max-h-[80vh]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4 flex-shrink-0">
@@ -136,12 +136,12 @@ export default function ManageMembersModal({
                 return (
                   <div
                     key={m.id}
-                    className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-800/40 transition-colors"
+                    className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-surface-1 transition-colors"
                   >
                     <div className="relative flex-shrink-0">
                       <Avatar nick={m.display_name} size="sm" />
                       {m.active && (
-                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-900" />
+                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-accent/20" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -153,7 +153,7 @@ export default function ManageMembersModal({
                           {m.display_name}
                         </span>
                         {isSelf && (
-                          <span className="text-[10px] text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded font-medium">
+                          <span className="text-[10px] text-slate-500 bg-surface-2 px-1.5 py-0.5 rounded font-medium">
                             tú
                           </span>
                         )}
@@ -180,7 +180,7 @@ export default function ManageMembersModal({
                               className={`p-1.5 rounded-lg transition-colors ${
                                 m.muted
                                   ? 'text-rose-400 hover:bg-rose-900/30'
-                                  : 'text-slate-500 hover:text-slate-300 hover:bg-slate-700/50'
+                                  : 'text-slate-500 hover:text-slate-300 hover:bg-surface-2/50'
                               }`}
                               title={m.muted ? 'Quitar silencio' : 'Silenciar'}
                             >
@@ -190,7 +190,7 @@ export default function ManageMembersModal({
                           {canPromoteToAdmin(m) && (
                             <button
                               onClick={() => changeRole(m.id, 'admin')}
-                              className="p-1.5 rounded-lg text-slate-500 hover:text-amber-400 hover:bg-slate-700/50 transition-colors"
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-amber-400 hover:bg-surface-2/50 transition-colors"
                               title="Promover a admin"
                             >
                               <Shield className="w-4 h-4" />
@@ -199,7 +199,7 @@ export default function ManageMembersModal({
                           {canPromoteToMod(m) && (
                             <button
                               onClick={() => changeRole(m.id, 'mod')}
-                              className="p-1.5 rounded-lg text-slate-500 hover:text-cyan-400 hover:bg-slate-700/50 transition-colors"
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-cyan-400 hover:bg-surface-2/50 transition-colors"
                               title="Promover a moderador"
                             >
                               <ShieldCheck className="w-4 h-4" />
@@ -208,7 +208,7 @@ export default function ManageMembersModal({
                           {canRemoveRole(m) && (
                             <button
                               onClick={() => changeRole(m.id, null)}
-                              className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-slate-700/50 transition-colors"
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-surface-2/50 transition-colors"
                               title="Quitar rol"
                             >
                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -226,10 +226,10 @@ export default function ManageMembersModal({
           )}
         </div>
 
-        <div className="flex-shrink-0 pt-3 border-t border-slate-700/60 mt-3">
+        <div className="flex-shrink-0 pt-3 border-t border-accent/20 mt-3">
           <button
             onClick={onClose}
-            className="w-full px-4 py-2 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors text-sm font-medium"
+            className="w-full px-4 py-2 rounded-lg border border-accent/20 text-slate-300 hover:bg-surface-2 transition-colors text-sm font-medium"
           >
             Cerrar
           </button>

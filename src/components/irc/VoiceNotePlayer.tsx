@@ -31,7 +31,7 @@ export default function VoiceNotePlayer({ noteId }: VoiceNotePlayerProps) {
   if (error) {
     return (
       <div
-        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/50 text-slate-500 text-xs"
+        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-2 text-slate-500 text-xs"
         style={{ contain: 'layout paint' }}
       >
         {error}
@@ -42,7 +42,7 @@ export default function VoiceNotePlayer({ noteId }: VoiceNotePlayerProps) {
   if (!note) {
     return (
       <div
-        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/50 text-slate-500 text-xs"
+        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-2 text-slate-500 text-xs"
         style={{ contain: 'layout paint' }}
       >
         <div className="w-4 h-4 border border-slate-500 border-t-transparent rounded-full animate-spin" />

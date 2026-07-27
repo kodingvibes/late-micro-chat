@@ -115,7 +115,7 @@ export default function MessageContextMenu({
       data-placement={placement}
       data-state={ready ? 'open' : 'measuring'}
       data-irc-context-menu
-      className="irc-context-menu fixed z-[250] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none animate-menu-pop"
+      className="irc-context-menu fixed z-[250] bg-surface-2 border border-accent/20 rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none animate-menu-pop"
       style={style}
       onClick={(e) => e.stopPropagation()}
     >
@@ -125,14 +125,14 @@ export default function MessageContextMenu({
         onClick={() => {
           setShowEmojiPicker(v => !v)
         }}
-        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-surface-2 transition-colors"
       >
         <SmilePlus className="w-4 h-4 text-accent" />
         Reaccionar
         <span className="ml-auto text-[10px] text-slate-500">{showEmojiPicker ? '▲' : '▼'}</span>
       </button>
       {showEmojiPicker && (
-        <div ref={emojiRef} className="grid grid-cols-5 gap-1.5 px-3 py-2 bg-slate-950 border-t border-slate-800">
+        <div ref={emojiRef} className="grid grid-cols-5 gap-1.5 px-3 py-2 bg-surface-1 border-t border-accent/15">
           {quickEmojis.map(name => (
             <button
               key={name}
@@ -142,7 +142,7 @@ export default function MessageContextMenu({
                 onReact(message.id, name)
                 onClose()
               }}
-              className="aspect-square min-w-[44px] rounded-lg hover:bg-slate-800 flex items-center justify-center transition-colors active:scale-95"
+              className="aspect-square min-w-[44px] rounded-lg hover:bg-surface-2 flex items-center justify-center transition-colors active:scale-95"
               title={name}
             >
               <EmojiIcon name={name} size={22} />
@@ -158,7 +158,7 @@ export default function MessageContextMenu({
             onEdit?.(message)
             onClose()
           }}
-          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-surface-2 transition-colors"
         >
           <Pencil className="w-4 h-4 text-amber-400" />
           Editar
@@ -171,7 +171,7 @@ export default function MessageContextMenu({
           onReply(message)
           onClose()
         }}
-        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-surface-2 transition-colors"
       >
         <MessageSquareReply className="w-4 h-4 text-cyan-400" />
         Responder
@@ -183,7 +183,7 @@ export default function MessageContextMenu({
           onForward(message)
           onClose()
         }}
-        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-surface-2 transition-colors"
       >
         <CornerUpRight className="w-4 h-4 text-cyan-400" />
         Reenviar
@@ -196,7 +196,7 @@ export default function MessageContextMenu({
             onBuzz(message.user_id)
             onClose()
           }}
-          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-surface-2 transition-colors"
         >
           <Bell className="w-4 h-4 text-amber-400" />
           Zumbido
@@ -204,7 +204,7 @@ export default function MessageContextMenu({
       )}
       {isAdmin && (
         <>
-          <div className="h-px bg-slate-800 my-1" />
+          <div className="h-px bg-surface-2 my-1" />
           <button
             type="button"
             onMouseDown={(e) => e.stopPropagation()}
@@ -212,7 +212,7 @@ export default function MessageContextMenu({
               navigator.clipboard.writeText(String(message.id)).catch(() => {})
               onClose()
             }}
-            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-surface-2 transition-colors"
           >
             <Hash className="w-4 h-4 text-slate-400" />
             Copiar ID
@@ -224,7 +224,7 @@ export default function MessageContextMenu({
               onHide?.(message.id)
               onClose()
             }}
-            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-surface-2 transition-colors"
           >
             <EyeOff className="w-4 h-4 text-amber-400" />
             Ocultar
@@ -236,7 +236,7 @@ export default function MessageContextMenu({
               onDelete?.(message.id)
               onClose()
             }}
-            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-400 hover:bg-slate-800 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-400 hover:bg-surface-2 transition-colors"
           >
             <Trash2 className="w-4 h-4 text-red-400" />
             Eliminar
@@ -250,7 +250,7 @@ export default function MessageContextMenu({
           onCopyText(message.content)
           onClose()
         }}
-        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-surface-2 transition-colors"
       >
         <Copy className="w-4 h-4 text-slate-400" />
         Copiar texto
@@ -263,7 +263,7 @@ export default function MessageContextMenu({
             onCopyImage(message)
             onClose()
           }}
-          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-surface-2 transition-colors"
         >
           <ImageDown className="w-4 h-4 text-slate-400" />
           Copiar imagen
@@ -277,7 +277,7 @@ export default function MessageContextMenu({
             onDownloadImage(message)
             onClose()
           }}
-          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-surface-2 transition-colors"
         >
           <Download className="w-4 h-4 text-slate-400" />
           Descargar imagen
@@ -291,7 +291,7 @@ export default function MessageContextMenu({
             onDownloadAttachment(message)
             onClose()
           }}
-          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-surface-2 transition-colors"
         >
           <FileDown className="w-4 h-4 text-slate-400" />
           Descargar archivo
@@ -305,7 +305,7 @@ export default function MessageContextMenu({
             onCopyLink(message)
             onClose()
           }}
-          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-surface-2 transition-colors"
         >
           <LinkIcon className="w-4 h-4 text-slate-400" />
           Copiar enlace

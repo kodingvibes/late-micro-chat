@@ -100,7 +100,7 @@ export default function AttachmentCard({
 
   if (!meta) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-xs text-slate-500">
+      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-2 border border-accent/15 text-xs text-slate-500">
         <span className="w-3 h-3 border-2 border-slate-500 border-t-transparent rounded-full animate-spin" />
         Cargando archivo…
       </div>
@@ -116,7 +116,7 @@ export default function AttachmentCard({
         <img
           src={imgUrl}
           alt={meta.filename}
-          className="block max-w-full max-h-72 object-contain rounded-lg border border-slate-700/60 bg-slate-950"
+          className="block max-w-full max-h-72 object-contain rounded-lg border border-accent/20 bg-surface-1"
           loading="lazy"
           onContextMenu={swallowContextMenu}
         />
@@ -148,7 +148,7 @@ export default function AttachmentCard({
     return (
       <div className="group relative">
         {isFloating ? (
-          <div className="rounded-lg border border-dashed border-slate-700/40 bg-slate-900/40 px-3 py-2 text-[11px] text-slate-500 text-center">
+          <div className="rounded-lg border border-dashed border-accent/15 bg-surface-2 px-3 py-2 text-[11px] text-slate-500 text-center">
             Video flotando
           </div>
         ) : (
@@ -156,7 +156,7 @@ export default function AttachmentCard({
             ref={el => { if (el !== null) onVideoRef?.(attachmentId, el) }}
             src={`/api/chat/attachments/${attachmentId}`}
             controls
-            className="max-w-full max-h-72 rounded-lg border border-slate-700/60 bg-slate-950"
+            className="max-w-full max-h-72 rounded-lg border border-accent/20 bg-surface-1"
             preload="metadata"
             onPlay={() => onVideoPlay?.(attachmentId)}
             onContextMenu={swallowContextMenu}
@@ -188,9 +188,9 @@ export default function AttachmentCard({
       target="_blank"
       rel="noopener noreferrer"
       onContextMenu={swallowContextMenu}
-      className="flex items-center gap-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:bg-slate-700/50 transition-colors group min-w-[220px]"
+      className="flex items-center gap-3 p-3 rounded-lg bg-surface-2 border border-accent/15 hover:bg-surface-2/50 transition-colors group min-w-[220px]"
     >
-      <div className="w-10 h-10 rounded-lg bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-300 flex-shrink-0">
+      <div className="w-10 h-10 rounded-lg bg-surface-2 flex items-center justify-center text-[10px] font-bold text-slate-300 flex-shrink-0">
         {ext || '?'}
       </div>
       <div className="flex-1 min-w-0">

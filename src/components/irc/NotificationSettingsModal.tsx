@@ -30,12 +30,12 @@ export default function NotificationSettingsModal({ prefs, onSave, onClose }: No
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm select-none animate-menu-backdrop" onClick={onClose}>
       <div
-        className="bg-slate-900/85 backdrop-blur-md border border-slate-700/60 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-floating animate-menu-pop"
+        className="bg-slate-900/85 backdrop-blur-md border border-accent/20 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-floating animate-menu-pop"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-slate-100">Notificaciones</h2>
-          <button onClick={onClose} className="w-7 h-7 rounded-md text-slate-500 hover:text-slate-200 hover:bg-slate-800/50 flex items-center justify-center transition-colors">
+          <button onClick={onClose} className="w-7 h-7 rounded-md text-slate-500 hover:text-slate-200 hover:bg-surface-2 flex items-center justify-center transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -56,11 +56,11 @@ export default function NotificationSettingsModal({ prefs, onSave, onClose }: No
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
                   mode === opt.value
                     ? 'bg-accent/20 border border-accent/40'
-                    : 'bg-slate-800/50 border border-transparent hover:bg-slate-800'
+                    : 'bg-surface-2 border border-transparent hover:bg-surface-2'
                 }`}
               >
                 <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                  mode === opt.value ? 'border-accent' : 'border-slate-600'
+                  mode === opt.value ? 'border-accent' : 'border-accent/15'
                 }`}>
                   {mode === opt.value && <div className="w-2 h-2 rounded-full bg-accent" />}
                 </div>
@@ -106,10 +106,10 @@ export default function NotificationSettingsModal({ prefs, onSave, onClose }: No
                 aria-checked={t.value}
                 onClick={() => t.set(!t.value)}
                 className={`relative w-10 h-5 rounded-full transition-colors ${
-                  t.value ? 'bg-accent' : 'bg-slate-700'
+                  t.value ? 'bg-accent' : 'bg-surface-2'
                 }`}
               >
-                <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-surface-tint-60 transition-transform ${
                   t.value ? 'translate-x-5' : 'translate-x-0'
                 }`} />
               </button>

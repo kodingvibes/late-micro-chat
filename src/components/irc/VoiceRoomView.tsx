@@ -205,9 +205,9 @@ export default function VoiceRoomView({
   }, [channel.id, onSendMessage])
 
   return (
-    <div className="flex flex-col h-full bg-slate-950/50">
+    <div className="flex flex-col h-full bg-surface-2">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-800">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-accent/15">
         <div className="flex items-center gap-2">
           <span className="text-base">🔊</span>
           <span className="text-sm font-semibold text-slate-100">
@@ -223,7 +223,7 @@ export default function VoiceRoomView({
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               showInput
                 ? 'bg-accent/15 text-accent'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-surface-2'
             }`}
           >
             <MessageSquare className="w-3.5 h-3.5" />
@@ -310,7 +310,7 @@ export default function VoiceRoomView({
                   className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all select-none ${
                     pttActive
                       ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 scale-105'
-                      : 'bg-slate-700 hover:bg-slate-600 text-slate-100 active:scale-95'
+                      : 'bg-surface-2 hover:bg-slate-600 text-slate-100 active:scale-95'
                   }`}
                   title="Mantené presionado o Space para hablar"
                 >
@@ -338,7 +338,7 @@ export default function VoiceRoomView({
                         onChange={e => setVadThreshold(Number(e.target.value) / 200)}
                         className="w-32 h-1 accent-accent"
                       />
-                      <div className="w-16 h-1 bg-slate-800 rounded-full overflow-hidden">
+                      <div className="w-16 h-1 bg-surface-2 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-accent transition-[width] duration-75"
                           style={{ width: `${Math.min(100, level * 400)}%` }}
@@ -351,7 +351,7 @@ export default function VoiceRoomView({
                   )}
                 </div>
                 <p className="text-[10px] text-slate-500">
-                  Tip: mantené <kbd className="px-1 py-0.5 bg-slate-800 rounded text-slate-300">Space</kbd> para hablar sin click.
+                  Tip: mantené <kbd className="px-1 py-0.5 bg-surface-2 rounded text-slate-300">Space</kbd> para hablar sin click.
                 </p>
               </>
             )}
@@ -372,7 +372,7 @@ export default function VoiceRoomView({
             3 × w-10 attach buttons + 44px textarea crowd out the
             320px panel. */}
         {showInput && (
-          <div className="w-72 flex-shrink-0 border-l border-slate-800 flex flex-col bg-slate-950">
+          <div className="w-72 flex-shrink-0 border-l border-accent/15 flex flex-col bg-surface-1">
             <div className="flex-1 overflow-y-auto min-h-0">
               <MessageList
                 messages={channel.messages}
@@ -449,7 +449,7 @@ function VoiceChatInput({
   return (
     <form
       onSubmit={(e) => { e.preventDefault(); submit() }}
-      className="px-2 py-1.5 border-t border-slate-800 bg-slate-950"
+      className="px-2 py-1.5 border-t border-accent/15 bg-surface-1"
     >
       {replyContext && (
         <div className="flex items-center gap-1.5 mb-1 text-[11px] text-slate-400">
@@ -477,13 +477,13 @@ function VoiceChatInput({
           <button
             type="button"
             onClick={() => setShowMenu(v => !v)}
-            className="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 flex items-center justify-center flex-shrink-0 transition-colors"
+            className="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-surface-2 flex items-center justify-center flex-shrink-0 transition-colors"
             aria-label="Más opciones"
           >
             <Plus className="w-4 h-4" />
           </button>
           {showMenu && (
-            <div className="absolute bottom-full mb-1 left-0 z-40 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-1 w-36 animate-menu-up">
+            <div className="absolute bottom-full mb-1 left-0 z-40 bg-surface-2 border border-accent/20 rounded-xl shadow-2xl p-1 w-36 animate-menu-up">
               {[
                 { kind: 'image', icon: ImageIcon, label: 'Imagen' },
                 { kind: 'audio', icon: Music, label: 'Audio' },
@@ -503,7 +503,7 @@ function VoiceChatInput({
                     }
                     setShowMenu(false)
                   }}
-                  className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-surface-2 rounded-lg transition-colors"
                 >
                   <item.icon className="w-3.5 h-3.5 text-slate-400" />
                   {item.label}
@@ -523,13 +523,13 @@ function VoiceChatInput({
           }}
           placeholder={placeholder || 'Escribe un mensaje...'}
           rows={1}
-          className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border bg-slate-900 border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 resize-none text-sm leading-snug"
+          className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border bg-surface-2 border-accent/20 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 resize-none text-sm leading-snug"
           style={{ minHeight: '32px', maxHeight: '120px' }}
         />
         <button
           type="submit"
           disabled={text.trim().length === 0}
-          className="w-7 h-7 rounded-full bg-accent hover:bg-accent-soft disabled:bg-slate-700 disabled:text-slate-500 text-white flex items-center justify-center flex-shrink-0 transition-colors self-end flex-none"
+          className="w-7 h-7 rounded-full bg-accent hover:bg-accent-soft disabled:bg-surface-2 disabled:text-slate-500 text-white flex items-center justify-center flex-shrink-0 transition-colors self-end flex-none"
           aria-label="Enviar"
         >
           <ArrowUp className="w-3.5 h-3.5" />

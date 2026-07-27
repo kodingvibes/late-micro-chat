@@ -30,9 +30,9 @@ export default function UserList({ users, onBuzz, onCopyName }: UserListProps) {
   }, [sorted, query])
 
   return (
-    <div className="flex flex-col h-full bg-slate-900/70">
+    <div className="flex flex-col h-full bg-surface-3">
       {users.length > 3 && (
-        <div className="px-3 py-2 border-b border-slate-800">
+        <div className="px-3 py-2 border-b border-accent/15">
           <div className="relative">
             <svg
               className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500"
@@ -46,7 +46,7 @@ export default function UserList({ users, onBuzz, onCopyName }: UserListProps) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar..."
-              className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-xs placeholder-slate-500 focus:outline-none focus:border-accent transition-colors"
+              className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-surface-1 border border-accent/15 text-slate-200 text-xs placeholder-slate-500 focus:outline-none focus:border-accent transition-colors"
             />
           </div>
         </div>
@@ -114,12 +114,12 @@ function UserRow({ user: u, onContextMenu }: UserRowProps) {
       onTouchMove={lpTouchMove}
       onTouchEnd={lpTouchEnd}
       onTouchCancel={lpTouchCancel}
-      className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-slate-800/60 transition-colors cursor-context-menu select-none [-webkit-touch-callout:none]"
+      className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-surface-2 transition-colors cursor-context-menu select-none [-webkit-touch-callout:none]"
     >
       <div className="relative">
         <Avatar nick={u.display_name} size="sm" />
         {u.active && (
-          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-900 animate-dot-pulse" />
+          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-accent/20 animate-dot-pulse" />
         )}
       </div>
       <span
