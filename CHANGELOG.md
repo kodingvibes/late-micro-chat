@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.9.1...v1.10.0) (2026-07-27)
+
+
+### Features
+
+* **chat:** WhatsApp-style doodle wallpaper with chat motifs ([fb28be3](https://github.com/kodingvibes/late-micro-chat/commit/fb28be3e41783ccf1c7bd4edaa4c9c8b8d6a7d06))
+
 ## [1.9.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.9.0...v1.9.1) (2026-07-27)
 
 
