@@ -30,7 +30,7 @@ export default function UserList({ users, onBuzz, onCopyName }: UserListProps) {
   }, [sorted, query])
 
   return (
-    <div className="flex flex-col h-full bg-surface-3">
+    <div className="flex flex-col h-full bg-transparent">
       {users.length > 3 && (
         <div className="px-3 py-2  ">
           <div className="relative">
@@ -46,7 +46,7 @@ export default function UserList({ users, onBuzz, onCopyName }: UserListProps) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar..."
-              className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-surface-1  text-slate-200 text-xs placeholder-slate-500 focus:outline-none focus: transition-colors"
+              className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-surface-tint-60  text-slate-200 text-xs placeholder-slate-500 focus:outline-none focus: transition-colors"
             />
           </div>
         </div>

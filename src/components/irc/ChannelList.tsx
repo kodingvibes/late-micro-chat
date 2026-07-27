@@ -79,7 +79,7 @@ export default function ChannelList({
   }
 
   return (
-    <div className="flex flex-col h-full bg-surface-2">
+    <div className="flex flex-col h-full bg-transparent">
       <div className="flex items-center justify-between px-3 py-2.5  ">
         <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
           Canales
@@ -111,7 +111,7 @@ export default function ChannelList({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar canal..."
-            className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-surface-1  text-slate-200 text-xs placeholder-slate-500 focus:outline-none focus: transition-colors"
+            className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-surface-tint-60  text-slate-200 text-xs placeholder-slate-500 focus:outline-none focus: transition-colors"
           />
         </div>
       </div>
