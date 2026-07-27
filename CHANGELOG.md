@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.11.4...v1.12.0) (2026-07-27)
+
+
+### Features
+
+* **chat:** doodle wallpaper behind the message scroll container ([dae95b4](https://github.com/kodingvibes/late-micro-chat/commit/dae95b4319cad5d1cfd4fe8490958e20c2fdaf91))
+
 ## [1.11.4](https://github.com/kodingvibes/late-micro-chat/compare/v1.11.3...v1.11.4) (2026-07-27)
 
 
