@@ -32,3 +32,42 @@
   background-repeat: repeat;
 }
 
+/* ponytail: chat sidebars. The `hidden sm:block` / `hidden sm:flex`
+ * patterns collapse under this Tailwind v4 build's @layer utilities
+ * cascade — .hidden lands after .sm\:block and wins on equal
+ * specificity, so the sidebars stay hidden on every viewport. These
+ * classes carry the media query explicitly so they have the cascade
+ * priority we want regardless of where Tailwind places its utilities. */
+.late-chat-aside-left {
+  display: none;
+}
+@media (min-width: 640px) {
+  .late-chat-aside-left {
+    display: block;
+  }
+}
+.late-chat-aside-right {
+  display: none;
+}
+@media (min-width: 640px) {
+  .late-chat-aside-right {
+    display: flex;
+  }
+}
+.late-chat-status-text {
+  display: none;
+}
+@media (min-width: 640px) {
+  .late-chat-status-text {
+    display: inline;
+  }
+}
+.late-chat-input-contents {
+  display: none;
+}
+@media (min-width: 640px) {
+  .late-chat-input-contents {
+    display: contents;
+  }
+}
+

@@ -874,7 +874,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
               </div>
             )}
           </div>
-          <div className="hidden sm:contents">
+          <div className="late-chat-input-contents">
           <div className="relative">
             <button
               type="button"
