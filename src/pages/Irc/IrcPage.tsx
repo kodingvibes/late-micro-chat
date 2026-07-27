@@ -844,19 +844,16 @@ export function Irc() {
         </aside>
 
         <main
-          className="flex-1 flex flex-col min-w-0 relative bg-mf-surface"
-          style={{
-            backgroundImage: [
-              'radial-gradient(at 20% 10%, var(--accent-glow-a, rgba(99,102,241,0.50)) 0px, transparent 50%)',
-              'radial-gradient(at 80% 0%, var(--accent-glow-b, rgba(99,102,241,0.30)) 0px, transparent 50%)',
-              'radial-gradient(at 90% 90%, var(--accent-glow-b, rgba(99,102,241,0.30)) 0px, transparent 50%)',
-              'radial-gradient(at 10% 100%, var(--accent-glow-a, rgba(99,102,241,0.50)) 0px, transparent 50%)',
-              "url(/bg.svg)",
-            ].join(', '),
-            backgroundAttachment: 'fixed, fixed, fixed, fixed, fixed',
-            backgroundSize: 'auto, auto, auto, auto, 180px 180px',
-          }}
+          className="flex-1 flex flex-col min-w-0 relative bg-mf-surface overflow-hidden"
         >
+          {/* ponytail: doodle wallpaper (chat motifs) under everything.
+           * .bg-doodles supplies positioning/color/opacity; .bg-chat-doodles
+           * in index.css adds the chat-specific motifs. -z-10 stacks
+           * under the page content. */}
+          <div
+            className="bg-doodles bg-chat-doodles"
+            aria-hidden="true"
+          />
           {activeVoiceChannelId !== null ? (() => {
             const vch = channels.get(activeVoiceChannelId)
             if (!vch) return null

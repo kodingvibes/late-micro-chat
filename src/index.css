@@ -1,3 +1,31 @@
 @import "tailwindcss";
 @import "@late/theme/tokens.css";
 @import "@late/theme/animations.css";
+
+/* ponytail: WhatsApp-style doodle wallpaper for the chat page.
+ * Six chat-themed motifs (speech bubbles, hash, mention, envelope,
+ * heart-reply, paperclip) repeat in a 240x240 tile. Inherits
+ * positioning / opacity / color from .bg-doodles in tokens.css. */
+.bg-chat-doodles {
+  background-image:
+    /* speech bubble */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><g fill='none' stroke='currentColor' stroke-width='2.5' stroke-linejoin='round'><path d='M10 16 q0 -8 8 -8 h28 q8 0 8 8 v18 q0 8 -8 8 h-22 l-8 8 v-8 q-6 0 -6 -8z'/></g></svg>"),
+    /* hashtag */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><g fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round'><path d='M26 12 l-6 40 M40 12 l-6 40 M16 22 h36 M14 42 h36'/></g></svg>"),
+    /* @-mention */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><g fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round'><circle cx='32' cy='32' r='20'/><path d='M42 26 v6 a8 8 0 0 0 16 0 v-6 a26 26 0 0 0 -52 0'/></g></svg>"),
+    /* envelope */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><g fill='none' stroke='currentColor' stroke-width='2.5' stroke-linejoin='round'><rect x='10' y='18' width='44' height='32' rx='3'/><path d='M10 22 l22 16 l22 -16'/></g></svg>"),
+    /* heart (small reply-like) */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M32 52 c-12 -10 -22 -16 -22 -28 a10 10 0 0 1 22 -2 a10 10 0 0 1 22 2 c0 12 -10 18 -22 28z' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linejoin='round'/></svg>"),
+    /* paperclip */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><g fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round'><path d='M44 18 l-22 22 a8 8 0 0 0 12 12 l22 -22 a14 14 0 0 0 -20 -20 l-22 22 a20 20 0 0 0 28 28 l18 -18'/></g></svg>");
+  background-position:
+    0 0,
+    80px 60px,
+    160px 20px,
+    40px 140px,
+    120px 180px,
+    200px 100px;
+}
+
