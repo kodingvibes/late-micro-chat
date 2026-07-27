@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useViewportClamp } from '../../hooks/use-viewport-clamp'
 import { Copy, Users, Trash2, Pencil } from '@/components/icons'
 
@@ -59,7 +60,7 @@ export default function ChannelContextMenu({
 
   const { channel } = state
 
-  return (
+  const menu = (
     <div
       ref={ref}
       data-placement={placement}
@@ -142,6 +143,17 @@ export default function ChannelContextMenu({
       )}
     </div>
   )
+
+  // ponytail: render via portal so the menu escapes the parent
+  // sidebar's stacking context (the sidebar has z-[1] and
+  // backdrop-blur, which creates a stacking context that traps
+  // any descendant's z-index relative to its own scope, no matter
+  // how high). Portaling to document.body puts the menu in the
+  // root stacking context where z-[250] is honored page-wide.
+  if (typeof document !== 'undefined') {
+    return createPortal(menu, document.body)
+  }
+  return menu
 }
 
 export function useChannelContextMenuState() {

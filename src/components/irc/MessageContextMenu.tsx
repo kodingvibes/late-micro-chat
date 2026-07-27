@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import type { ChatMessage } from '../../lib/chat/domain/types'
 import { getEmoji } from '../../lib/emoji'
 import { hasImageMarker, getAttachmentMarker } from '../../lib/chat/domain/parsers'
@@ -109,7 +110,7 @@ export default function MessageContextMenu({
   const { message, isOwn, isTargetOnline } = state
   const canEdit = !!onEdit && canEditMessage(message, isOwn, editWindowSeconds)
 
-  return (
+  const menu = (
     <div
       ref={ref}
       data-placement={placement}
@@ -313,6 +314,15 @@ export default function MessageContextMenu({
       )}
     </div>
   )
+
+  // ponytail: portal to body so the menu escapes any ancestor's
+  // stacking context. The message list and channel/user sidebars
+  // all have z-[1] or relative positioning that would otherwise
+  // trap the fixed menu's z-[250] inside their own scope.
+  if (typeof document !== 'undefined') {
+    return createPortal(menu, document.body)
+  }
+  return menu
 }
 
 export function useContextMenuState() {

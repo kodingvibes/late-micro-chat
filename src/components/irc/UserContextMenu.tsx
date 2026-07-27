@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import type { ChannelMember } from '../../lib/chat/domain/types'
 import { useViewportClamp } from '../../hooks/use-viewport-clamp'
 import { Bell, Copy } from '@/components/icons'
@@ -49,7 +50,7 @@ export default function UserContextMenu({
 
   const { user } = state
 
-  return (
+  const menu = (
     <div
       ref={ref}
       data-placement={placement}
@@ -83,6 +84,13 @@ export default function UserContextMenu({
       </button>
     </div>
   )
+
+  // ponytail: portal to body so the menu escapes the sidebar's
+  // stacking context (see ChannelContextMenu for the full story).
+  if (typeof document !== 'undefined') {
+    return createPortal(menu, document.body)
+  }
+  return menu
 }
 
 export function useUserContextMenuState() {
