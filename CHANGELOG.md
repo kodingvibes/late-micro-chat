@@ -1,3 +1,10 @@
+## [1.11.1](https://github.com/kodingvibes/late-micro-chat/compare/v1.11.0...v1.11.1) (2026-07-27)
+
+
+### Bug Fixes
+
+* **chat:** make channel + user lists transparent so sidebar blur reads ([5da4157](https://github.com/kodingvibes/late-micro-chat/commit/5da4157e1854fbe73799337288c2380a5cbf19b1))
+
 # [1.11.0](https://github.com/kodingvibes/late-micro-chat/compare/v1.10.2...v1.11.0) (2026-07-27)
 
 
