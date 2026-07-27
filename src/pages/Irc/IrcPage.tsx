@@ -818,7 +818,17 @@ export function Irc() {
       )}
 
       <div className="flex flex-1 overflow-hidden relative">
-        <aside className="w-48 flex-shrink-0 hidden sm:block bg-surface-tint-60 backdrop-blur-md border-r border-white/5 select-none">
+        {/* ponytail: chat doodle wallpaper, painted as a sibling of
+         * the asides + main so it spans the full width and lives
+         * in the same stacking context. The sidebar backdrop-blur
+         * can then resolve the motifs behind it (which it could
+         * not when the layer sat at body level via position:fixed
+         * and was hidden by overflow-hidden stacking contexts). */}
+        <div
+          className="bg-doodles-static bg-chat-doodles"
+          aria-hidden="true"
+        />
+        <aside className="w-48 flex-shrink-0 hidden sm:block bg-surface-tint-60 backdrop-blur-md border-r border-white/5 select-none relative z-[1]">
           <ChannelList
             channels={channels}
             categories={categories}
@@ -844,16 +854,8 @@ export function Irc() {
         </aside>
 
         <main
-          className="flex-1 flex flex-col min-w-0 relative bg-mf-surface overflow-hidden"
+          className="flex-1 flex flex-col min-w-0 relative z-[1] bg-mf-surface overflow-hidden"
         >
-          {/* ponytail: doodle wallpaper (chat motifs) under everything.
-           * .bg-doodles supplies positioning/color/opacity; .bg-chat-doodles
-           * in index.css adds the chat-specific motifs. -z-10 stacks
-           * under the page content. */}
-          <div
-            className="bg-doodles bg-chat-doodles"
-            aria-hidden="true"
-          />
           {activeVoiceChannelId !== null ? (() => {
             const vch = channels.get(activeVoiceChannelId)
             if (!vch) return null
@@ -1001,7 +1003,7 @@ export function Irc() {
         </main>
 
         {showUsersDrawer && currentChannel !== null && (
-          <aside className="hidden sm:flex w-64 flex-shrink-0 flex-col bg-surface-tint-80 backdrop-blur-md border-l border-white/5 select-none">
+          <aside className="hidden sm:flex w-64 flex-shrink-0 flex-col bg-surface-tint-80 backdrop-blur-md border-l border-white/5 select-none relative z-[1]">
             {showUsersDrawer && (
               <>
                 <div className="flex items-center justify-between px-3 py-2.5  ">

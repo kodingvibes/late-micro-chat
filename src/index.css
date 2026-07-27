@@ -2,6 +2,21 @@
 @import "@late/theme/tokens.css";
 @import "@late/theme/animations.css";
 
+/* ponytail: in the chat the doodle layer is mounted inside the
+ * flex row that holds the channel list / main / user list, not at
+ * body level. That keeps it in the same stacking context as the
+ * glass sidebars so their backdrop-filter can resolve the motifs
+ * behind them (a fixed layer at body level is invisible to the
+ * sidebar blur when the parent container is overflow:hidden). */
+.bg-doodles-static {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-repeat: repeat;
+  color: var(--doodle-color, #f8fafc);
+}
+
 /* ponytail: WhatsApp-style doodle wallpaper for the chat page.
  * Six small hand-drawn chat motifs (speech bubble, hashtag,
  * @-mention, envelope, heart, paperclip) inside a single
