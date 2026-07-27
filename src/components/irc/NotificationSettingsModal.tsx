@@ -30,7 +30,7 @@ export default function NotificationSettingsModal({ prefs, onSave, onClose }: No
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm select-none animate-menu-backdrop" onClick={onClose}>
       <div
-        className="bg-slate-900/85 backdrop-blur-md border border-accent/20 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-floating animate-menu-pop"
+        className="bg-slate-900/85 backdrop-blur-md  rounded-2xl p-6 w-full max-w-sm mx-4 shadow-floating animate-menu-pop"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
@@ -55,12 +55,12 @@ export default function NotificationSettingsModal({ prefs, onSave, onClose }: No
                 onClick={() => setMode(opt.value)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
                   mode === opt.value
-                    ? 'bg-accent/20 border border-accent/40'
-                    : 'bg-surface-2 border border-transparent hover:bg-surface-2'
+                    ? 'bg-accent/20 '
+                    : 'bg-surface-2  hover:bg-surface-2'
                 }`}
               >
                 <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                  mode === opt.value ? 'border-accent' : 'border-accent/15'
+                  mode === opt.value ? '' : ''
                 }`}>
                   {mode === opt.value && <div className="w-2 h-2 rounded-full bg-accent" />}
                 </div>

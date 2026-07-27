@@ -207,7 +207,7 @@ export default function VoiceRoomView({
   return (
     <div className="flex flex-col h-full bg-surface-2">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-accent/15">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b ">
         <div className="flex items-center gap-2">
           <span className="text-base">🔊</span>
           <span className="text-sm font-semibold text-slate-100">
@@ -372,7 +372,7 @@ export default function VoiceRoomView({
             3 × w-10 attach buttons + 44px textarea crowd out the
             320px panel. */}
         {showInput && (
-          <div className="w-72 flex-shrink-0 border-l border-accent/15 flex flex-col bg-surface-1">
+          <div className="w-72 flex-shrink-0 border-l  flex flex-col bg-surface-1">
             <div className="flex-1 overflow-y-auto min-h-0">
               <MessageList
                 messages={channel.messages}
@@ -449,7 +449,7 @@ function VoiceChatInput({
   return (
     <form
       onSubmit={(e) => { e.preventDefault(); submit() }}
-      className="px-2 py-1.5 border-t border-accent/15 bg-surface-1"
+      className="px-2 py-1.5 border-t  bg-surface-1"
     >
       {replyContext && (
         <div className="flex items-center gap-1.5 mb-1 text-[11px] text-slate-400">
@@ -483,7 +483,7 @@ function VoiceChatInput({
             <Plus className="w-4 h-4" />
           </button>
           {showMenu && (
-            <div className="absolute bottom-full mb-1 left-0 z-40 bg-surface-2 border border-accent/20 rounded-xl shadow-2xl p-1 w-36 animate-menu-up">
+            <div className="absolute bottom-full mb-1 left-0 z-40 bg-surface-2  rounded-xl shadow-2xl p-1 w-36 animate-menu-up">
               {[
                 { kind: 'image', icon: ImageIcon, label: 'Imagen' },
                 { kind: 'audio', icon: Music, label: 'Audio' },
@@ -523,7 +523,7 @@ function VoiceChatInput({
           }}
           placeholder={placeholder || 'Escribe un mensaje...'}
           rows={1}
-          className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border bg-surface-2 border-accent/20 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 resize-none text-sm leading-snug"
+          className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-surface-2  text-slate-100 placeholder-slate-500 focus:outline-none focus: focus:ring-1 focus:ring-accent/30 resize-none text-sm leading-snug"
           style={{ minHeight: '32px', maxHeight: '120px' }}
         />
         <button

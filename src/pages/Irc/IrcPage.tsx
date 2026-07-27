@@ -732,7 +732,7 @@ export function Irc() {
     return (
       <div className="min-h-screen bg-mf-surface flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-2  border-t-transparent rounded-full animate-spin" />
           <div className="text-slate-400 text-sm">Conectando al chat...</div>
         </div>
       </div>
@@ -818,7 +818,7 @@ export function Irc() {
       )}
 
       <div className="flex flex-1 overflow-hidden relative">
-        <aside className="w-48 flex-shrink-0 border-r border-accent/20 hidden sm:block bg-surface-1 select-none">
+        <aside className="w-48 flex-shrink-0 border-r  hidden sm:block bg-surface-1 select-none">
           <ChannelList
             channels={channels}
             categories={categories}
@@ -1004,10 +1004,10 @@ export function Irc() {
         </main>
 
         {showUsersDrawer && currentChannel !== null && (
-          <aside className="hidden sm:flex w-64 flex-shrink-0 border-l border-accent/20 flex-col bg-surface-2 select-none">
+          <aside className="hidden sm:flex w-64 flex-shrink-0 border-l  flex-col bg-surface-2 select-none">
             {showUsersDrawer && (
               <>
-                <div className="flex items-center justify-between px-3 py-2.5 border-b border-accent/20">
+                <div className="flex items-center justify-between px-3 py-2.5 border-b ">
                   <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                     Usuarios en línea
                   </h3>
@@ -1069,7 +1069,7 @@ export function Irc() {
         onClose={() => setShowUsersDrawer(false)}
         side="right"
       >
-        <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-800">
+        <div className="flex items-center justify-between px-3 py-2.5 border-b ">
           <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
             Usuarios en línea
           </h3>
@@ -1110,7 +1110,7 @@ function DebugCopyButton({ label }: { label: string }) {
         }
         setTimeout(() => setState('idle'), 2500)
       }}
-      className="px-3 py-1.5 rounded-md border border-accent/30 hover:border-accent bg-surface-2 hover:bg-surface-3 text-slate-300 text-xs font-mono transition-colors"
+      className="px-3 py-1.5 rounded-md  hover: bg-surface-2 hover:bg-surface-3 text-slate-300 text-xs font-mono transition-colors"
     >
       {state === 'copied' ? '¡Copiado!' : state === 'failed' ? 'No se pudo copiar' : label}
     </button>
@@ -1125,16 +1125,16 @@ function ToastStack({ toasts, onDismiss }: { toasts: { id: string; text: string;
           key={t.id}
           onClick={t.sticky ? undefined : () => onDismiss(t.id)}
           role={t.sticky ? 'alert' : 'status'}
-          className={`flex items-start gap-3 px-5 py-3 rounded-xl text-sm font-medium shadow-floating border backdrop-blur-sm transition-all animate-menu-toast ${
+          className={`flex items-start gap-3 px-5 py-3 rounded-xl text-sm font-medium shadow-floating backdrop-blur-sm transition-all animate-menu-toast ${
             t.sticky
               ? 'cursor-default'
               : 'cursor-pointer hover:scale-[1.02] hover:-translate-x-0.5'
           } ${
             t.type === 'mention'
-              ? 'bg-accent/15 border-accent/40 text-accent-soft hover:border-accent/70'
+              ? 'bg-accent/15  text-accent-soft hover:'
               : t.type === 'join'
-              ? 'bg-emerald-900/95 border-emerald-500/30 text-emerald-200 hover:border-emerald-400/70'
-              : 'bg-rose-900/95 border-rose-500/30 text-rose-200 hover:border-rose-400/70'
+              ? 'bg-emerald-900/95  text-emerald-200 hover:'
+              : 'bg-rose-900/95  text-rose-200 hover:'
           }`}
         >
           <span className="flex-1 break-words leading-snug">{t.text}</span>

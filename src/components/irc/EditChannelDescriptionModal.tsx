@@ -70,10 +70,10 @@ export default function EditChannelDescriptionModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-2xl border border-accent/20 bg-surface-2 shadow-2xl overflow-hidden animate-menu-pop"
+        className="w-full max-w-sm rounded-2xl  bg-surface-2 shadow-2xl overflow-hidden animate-menu-pop"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-3 border-b border-accent/20">
+        <div className="flex items-center justify-between px-5 py-3 border-b ">
           <h2 className="text-base font-semibold flex items-center gap-2">
             <Pencil className="w-4 h-4" />
             Editar descripción del canal
@@ -98,7 +98,7 @@ export default function EditChannelDescriptionModal({
             onChange={(e) => setValue(e.target.value)}
             rows={3}
             maxLength={280}
-            className="w-full px-3 py-2 rounded-lg border border-accent/20 bg-surface-1 text-slate-200 text-sm focus:outline-none focus:border-accent"
+            className="w-full px-3 py-2 rounded-lg  bg-surface-1 text-slate-200 text-sm focus:outline-none focus:"
             placeholder="Descripción o topic del canal…"
           />
           <div className="text-[10px] text-slate-500 text-right tabular-nums">
@@ -106,7 +106,7 @@ export default function EditChannelDescriptionModal({
           </div>
           {error && <p className="text-rose-400 text-xs">{error}</p>}
         </div>
-        <div className="flex justify-end gap-2 px-5 py-3 border-t border-accent/20 bg-surface-2">
+        <div className="flex justify-end gap-2 px-5 py-3 border-t  bg-surface-2">
           <button
             type="button"
             onClick={onClose}

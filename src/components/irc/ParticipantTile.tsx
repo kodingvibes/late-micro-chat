@@ -73,7 +73,7 @@ export default function ParticipantTile({
       className={`relative flex flex-col items-center gap-2 rounded-xl p-3 transition-all duration-150 ${
         speaking && !locallyMuted
           ? 'bg-emerald-500/10 ring-2 ring-emerald-400/60'
-          : 'bg-surface-2 ring-1 ring-slate-700/50'
+          : 'bg-surface-2 ring-1 '
       }`}
     >
       {/* Avatar */}
@@ -199,7 +199,7 @@ export default function ParticipantTile({
               {locallyMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
             </button>
             {showVolume && !locallyMuted && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-surface-2 border border-accent/20 rounded-lg p-2 shadow-xl z-50 flex flex-col items-center gap-1 animate-menu-tooltip">
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-surface-2  rounded-lg p-2 shadow-xl z-50 flex flex-col items-center gap-1 animate-menu-tooltip">
                 <span className="text-[8px] text-slate-500">Vol.</span>
                 <input
                   type="range"

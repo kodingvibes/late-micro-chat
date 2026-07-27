@@ -29,7 +29,7 @@ export default function JoinChannelModal({ onSubmit, onCancel }: JoinChannelModa
       onClick={onCancel}
     >
       <div
-        className="bg-slate-900/85 backdrop-blur-md rounded-2xl p-6 w-full max-w-sm mx-4 shadow-floating border border-accent/20 animate-menu-pop"
+        className="bg-slate-900/85 backdrop-blur-md rounded-2xl p-6 w-full max-w-sm mx-4 shadow-floating  animate-menu-pop"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-lg font-bold text-slate-100 mb-1">Crear canal</h2>
@@ -45,7 +45,7 @@ export default function JoinChannelModal({ onSubmit, onCancel }: JoinChannelModa
               type="text"
               value={name}
               onChange={(e) => { setName(e.target.value); setError('') }}
-              className="w-full pl-8 pr-3 py-2.5 rounded-lg bg-surface-1 border border-accent/20 text-slate-100 text-base font-mono focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+              className="w-full pl-8 pr-3 py-2.5 rounded-lg bg-surface-1  text-slate-100 text-base font-mono focus:outline-none focus: focus:ring-1 focus:ring-accent/30 transition-all"
               autoFocus
               placeholder="mi-canal"
               maxLength={40}
@@ -56,7 +56,7 @@ export default function JoinChannelModal({ onSubmit, onCancel }: JoinChannelModa
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 px-4 py-2 rounded-lg border border-accent/20 text-slate-300 hover:bg-surface-2 transition-colors text-sm font-medium"
+              className="flex-1 px-4 py-2 rounded-lg  text-slate-300 hover:bg-surface-2 transition-colors text-sm font-medium"
             >
               Cancelar
             </button>

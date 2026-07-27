@@ -66,13 +66,13 @@ const FloatingVideoContainer = forwardRef<HTMLDivElement, FloatingVideoContainer
     return (
       <div
         ref={syncRef}
-        className={`fixed z-50 w-72 sm:w-80 rounded-xl border border-accent/20 bg-slate-950/95 backdrop-blur-sm shadow-2xl overflow-hidden select-none animate-menu-pop ${visible ? '' : 'hidden'}`}
+        className={`fixed z-50 w-72 sm:w-80 rounded-xl  bg-slate-950/95 backdrop-blur-sm shadow-2xl overflow-hidden select-none animate-menu-pop ${visible ? '' : 'hidden'}`}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
-        <div className="h-7 bg-surface-3 border-b border-accent/15 flex items-center px-2 cursor-grab active:cursor-grabbing touch-none">
+        <div className="h-7 bg-surface-3 border-b  flex items-center px-2 cursor-grab active:cursor-grabbing touch-none">
           <span className="text-[10px] text-slate-500">Video flotante</span>
           <button
             type="button"

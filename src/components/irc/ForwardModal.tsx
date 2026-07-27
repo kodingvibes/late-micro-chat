@@ -52,11 +52,11 @@ export default function ForwardModal({
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm select-none animate-menu-backdrop" onClick={onClose}>
       <div
-        className="bg-slate-900/85 backdrop-blur-md border border-accent/20 rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[85vh] animate-menu-pop"
+        className="bg-slate-900/85 backdrop-blur-md  rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[85vh] animate-menu-pop"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-accent/15">
+        <div className="flex items-center justify-between px-5 py-4 border-b ">
           <div className="flex items-center gap-2">
             <CornerUpRight className="w-5 h-5 text-cyan-400" />
             <h2 className="text-lg font-semibold text-slate-100">Reenviar mensaje</h2>
@@ -72,7 +72,7 @@ export default function ForwardModal({
         </div>
 
         {/* Preview */}
-        <div className="px-5 py-3 bg-surface-1 border-b border-accent/20">
+        <div className="px-5 py-3 bg-surface-1 border-b ">
           <div className="flex items-start gap-2.5">
             <span className="text-xs font-semibold text-accent/80 shrink-0 mt-0.5">{message.display_name}</span>
             <span className="text-sm text-slate-400 line-clamp-2 break-words">{preview}</span>
@@ -86,7 +86,7 @@ export default function ForwardModal({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar canal..."
-            className="w-full px-3 py-2 rounded-lg bg-surface-1 border border-accent/20 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all"
+            className="w-full px-3 py-2 rounded-lg bg-surface-1  text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus: focus:ring-1 focus:ring-accent/20 transition-all"
           />
         </div>
 
@@ -107,8 +107,8 @@ export default function ForwardModal({
                 onClick={() => setSelectedId(ch.id)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
                   isSelected
-                    ? 'bg-accent/15 border border-accent/30'
-                    : 'border border-transparent hover:bg-surface-2'
+                    ? 'bg-accent/15 '
+                    : 'border  hover:bg-surface-2'
                 }`}
               >
                 <Hash className={`w-4 h-4 shrink-0 ${isSelected ? 'text-accent' : 'text-slate-500'}`} />
@@ -134,7 +134,7 @@ export default function ForwardModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-accent/15">
+        <div className="flex items-center justify-end gap-3 px-5 py-4 border-t ">
           <button
             type="button"
             onClick={onClose}
@@ -150,7 +150,7 @@ export default function ForwardModal({
           >
             {sending ? (
               <>
-                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span className="w-4 h-4 border-2  border-t-transparent rounded-full animate-spin" />
                 Reenviando…
               </>
             ) : (

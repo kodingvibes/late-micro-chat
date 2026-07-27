@@ -98,7 +98,7 @@ export default function ManageMembersModal({
       onClick={onClose}
     >
       <div
-        className="bg-slate-900/85 backdrop-blur-md rounded-2xl p-5 w-full max-w-md mx-4 shadow-floating border border-accent/20 animate-menu-pop flex flex-col max-h-[80vh]"
+        className="bg-slate-900/85 backdrop-blur-md rounded-2xl p-5 w-full max-w-md mx-4 shadow-floating  animate-menu-pop flex flex-col max-h-[80vh]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4 flex-shrink-0">
@@ -117,7 +117,7 @@ export default function ManageMembersModal({
         </div>
 
         {error && (
-          <div className="mb-3 px-3 py-2 rounded-lg bg-rose-900/40 border border-rose-500/30 text-rose-200 text-xs">
+          <div className="mb-3 px-3 py-2 rounded-lg bg-rose-900/40  text-rose-200 text-xs">
             {error}
           </div>
         )}
@@ -125,7 +125,7 @@ export default function ManageMembersModal({
         <div className="flex-1 overflow-y-auto -mx-1 px-1">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2  border-t-transparent rounded-full animate-spin" />
             </div>
           ) : members.length === 0 ? (
             <div className="text-slate-500 text-sm text-center py-8">No hay miembros</div>
@@ -141,7 +141,7 @@ export default function ManageMembersModal({
                     <div className="relative flex-shrink-0">
                       <Avatar nick={m.display_name} size="sm" />
                       {m.active && (
-                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-accent/20" />
+                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 " />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -171,7 +171,7 @@ export default function ManageMembersModal({
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
                       {actionLoading === m.id ? (
-                        <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                        <div className="w-5 h-5 border-2  border-t-transparent rounded-full animate-spin" />
                       ) : (
                         <>
                           {canMute(m) && (
@@ -226,10 +226,10 @@ export default function ManageMembersModal({
           )}
         </div>
 
-        <div className="flex-shrink-0 pt-3 border-t border-accent/20 mt-3">
+        <div className="flex-shrink-0 pt-3 border-t  mt-3">
           <button
             onClick={onClose}
-            className="w-full px-4 py-2 rounded-lg border border-accent/20 text-slate-300 hover:bg-surface-2 transition-colors text-sm font-medium"
+            className="w-full px-4 py-2 rounded-lg  text-slate-300 hover:bg-surface-2 transition-colors text-sm font-medium"
           >
             Cerrar
           </button>

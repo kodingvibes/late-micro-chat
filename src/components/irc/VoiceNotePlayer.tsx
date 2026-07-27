@@ -45,7 +45,7 @@ export default function VoiceNotePlayer({ noteId }: VoiceNotePlayerProps) {
         className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-2 text-slate-500 text-xs"
         style={{ contain: 'layout paint' }}
       >
-        <div className="w-4 h-4 border border-slate-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-4 h-4  border-t-transparent rounded-full animate-spin" />
         Loading...
       </div>
     )

@@ -65,12 +65,12 @@ export default function ChannelContextMenu({
       data-placement={placement}
       data-state={ready ? 'open' : 'measuring'}
       data-irc-context-menu
-      className="irc-context-menu fixed z-[250] bg-surface-2 border border-accent/20 rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none animate-menu-pop"
+      className="irc-context-menu fixed z-[250] bg-surface-2  rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none animate-menu-pop"
       style={style}
       onClick={(e) => e.stopPropagation()}
     >
       {channel.description && (
-        <div className="px-3 py-2 text-xs text-slate-400 border-b border-accent/15 max-w-[220px]">
+        <div className="px-3 py-2 text-xs text-slate-400 border-b  max-w-[220px]">
           <span className="text-slate-500 font-semibold text-[10px] uppercase tracking-wider block mb-0.5">Descripción</span>
           <p className="break-words leading-snug">{channel.description}</p>
         </div>
@@ -108,7 +108,7 @@ export default function ChannelContextMenu({
           of. Admin Delete stays so channel owners can still prune. */}
       {channel.id !== undefined && channel.myRole === 'admin' && onDelete && (
         confirmingDelete ? (
-          <div className="px-3 py-2.5 border-t border-accent/15 bg-surface-2">
+          <div className="px-3 py-2.5 border-t  bg-surface-2">
             <div className="text-xs text-slate-300 mb-2">
               ¿Eliminar <span className="font-semibold">#{channel.name.replace(/^#/, '')}</span>? Esta acción no se puede deshacer.
             </div>
@@ -123,7 +123,7 @@ export default function ChannelContextMenu({
               <button
                 type="button"
                 onClick={() => setConfirmingDelete(false)}
-                className="flex-1 px-2 py-1.5 rounded-lg border border-accent/20 text-slate-300 hover:bg-surface-2 text-xs font-medium transition-colors"
+                className="flex-1 px-2 py-1.5 rounded-lg  text-slate-300 hover:bg-surface-2 text-xs font-medium transition-colors"
               >
                 Cancelar
               </button>
@@ -133,7 +133,7 @@ export default function ChannelContextMenu({
           <button
             type="button"
             onClick={() => setConfirmingDelete(true)}
-            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-rose-400 hover:bg-surface-2 transition-colors border-t border-accent/15"
+            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-rose-400 hover:bg-surface-2 transition-colors border-t "
           >
             <Trash2 className="w-4 h-4 text-rose-400" />
             Eliminar canal

@@ -210,7 +210,7 @@ function ReplyBlock({ message }: { message: ChatMessage }) {
   const att = !isImageReply ? getAttachmentMarker(raw) : null
   const caption = isImageReply ? (extractImagesCaption(raw) || extractImageCaption(raw)) : null
   return (
-    <div className="flex items-start gap-2 pl-2 py-0.5 mb-1 border-l-2 border-accent/40">
+    <div className="flex items-start gap-2 pl-2 py-0.5 mb-1 border-l-2 ">
       <div className="flex-1 min-w-0">
         <span className="text-[11px] font-semibold text-accent/80">{m.reply_to_author}</span>
         {caption && <p className="text-[12px] text-slate-400 truncate">{caption}</p>}
@@ -440,8 +440,8 @@ function BubbleMessage({ m, nick, isOwn, showHeader, isNew, members, nickByUserI
     ? 'rounded-2xl bg-accent text-slate-50 shadow-bubble-own w-full transition-shadow hover:shadow-lg'
     : 'rounded-2xl bg-slate-800/70 text-slate-100 shadow-bubble w-full transition-shadow hover:shadow-lg'
   const headerClass = isOwn
-    ? 'px-3 pt-1 pb-0.5 text-[11px] font-semibold opacity-80 border-b border-white/10'
-    : 'px-3 pt-1 pb-0.5 text-[11px] font-semibold border-b border-accent/15'
+    ? 'px-3 pt-1 pb-0.5 text-[11px] font-semibold opacity-80 border-b '
+    : 'px-3 pt-1 pb-0.5 text-[11px] font-semibold border-b '
   const headerStyle = isOwn ? undefined : { color: getNickColor(nick) }
   const widthClass =
     'max-w-[75%] sm:max-w-[65%] min-w-0 has-[[data-og-card]]:w-[75%] sm:has-[[data-og-card]]:w-[65%] has-[[data-og-card]]:max-w-[26rem]'
@@ -917,7 +917,7 @@ export default function MessageList({
           <div className="irc-loader flex justify-center py-2 text-xs text-slate-500 min-h-[2.25rem]">
             {loadingMore && (
               <span className="inline-flex items-center gap-2">
-                <span className="w-3 h-3 border-2 border-slate-500 border-t-transparent rounded-full animate-spin" />
+                <span className="w-3 h-3 border-2  border-t-transparent rounded-full animate-spin" />
                 cargando mensajes anteriores…
               </span>
             )}

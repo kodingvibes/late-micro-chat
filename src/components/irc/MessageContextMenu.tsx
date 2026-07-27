@@ -115,7 +115,7 @@ export default function MessageContextMenu({
       data-placement={placement}
       data-state={ready ? 'open' : 'measuring'}
       data-irc-context-menu
-      className="irc-context-menu fixed z-[250] bg-surface-2 border border-accent/20 rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none animate-menu-pop"
+      className="irc-context-menu fixed z-[250] bg-surface-2  rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none animate-menu-pop"
       style={style}
       onClick={(e) => e.stopPropagation()}
     >
@@ -132,7 +132,7 @@ export default function MessageContextMenu({
         <span className="ml-auto text-[10px] text-slate-500">{showEmojiPicker ? '▲' : '▼'}</span>
       </button>
       {showEmojiPicker && (
-        <div ref={emojiRef} className="grid grid-cols-5 gap-1.5 px-3 py-2 bg-surface-1 border-t border-accent/15">
+        <div ref={emojiRef} className="grid grid-cols-5 gap-1.5 px-3 py-2 bg-surface-1 border-t ">
           {quickEmojis.map(name => (
             <button
               key={name}

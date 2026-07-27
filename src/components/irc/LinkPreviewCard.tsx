@@ -32,7 +32,7 @@ export default function LinkPreviewCard({ og, onOpen }: LinkPreviewCardProps) {
       type="button"
       onClick={() => onOpen(og.url)}
       data-og-card
-      className="block w-full h-full text-left rounded-lg border-l-4 border-accent border border-accent/20 bg-surface-2 hover:bg-surface-2 transition-colors overflow-hidden"
+      className="block w-full h-full text-left rounded-lg border-l-4   bg-surface-2 hover:bg-surface-2 transition-colors overflow-hidden"
       aria-label={`Abrir ${title}`}
     >
       {hasImage && (

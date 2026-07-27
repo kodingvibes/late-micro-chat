@@ -32,7 +32,7 @@ export default function UserList({ users, onBuzz, onCopyName }: UserListProps) {
   return (
     <div className="flex flex-col h-full bg-surface-3">
       {users.length > 3 && (
-        <div className="px-3 py-2 border-b border-accent/15">
+        <div className="px-3 py-2 border-b ">
           <div className="relative">
             <svg
               className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500"
@@ -46,7 +46,7 @@ export default function UserList({ users, onBuzz, onCopyName }: UserListProps) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar..."
-              className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-surface-1 border border-accent/15 text-slate-200 text-xs placeholder-slate-500 focus:outline-none focus:border-accent transition-colors"
+              className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-surface-1  text-slate-200 text-xs placeholder-slate-500 focus:outline-none focus: transition-colors"
             />
           </div>
         </div>
@@ -119,7 +119,7 @@ function UserRow({ user: u, onContextMenu }: UserRowProps) {
       <div className="relative">
         <Avatar nick={u.display_name} size="sm" />
         {u.active && (
-          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-accent/20 animate-dot-pulse" />
+          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2  animate-dot-pulse" />
         )}
       </div>
       <span

@@ -55,7 +55,7 @@ export default function UserContextMenu({
       data-placement={placement}
       data-state={ready ? 'open' : 'measuring'}
       data-irc-context-menu
-      className="irc-context-menu fixed z-[250] bg-surface-2 border border-accent/20 rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none animate-menu-pop"
+      className="irc-context-menu fixed z-[250] bg-surface-2  rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none animate-menu-pop"
       style={style}
       onClick={(e) => e.stopPropagation()}
     >

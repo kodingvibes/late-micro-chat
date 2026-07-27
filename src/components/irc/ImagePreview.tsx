@@ -52,7 +52,7 @@ export function ImageContextMenuPortal({
   return createPortal(
     <div
       ref={ref}
-      className="fixed z-[310] bg-surface-2 border border-accent/20 rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none animate-menu-pop"
+      className="fixed z-[310] bg-surface-2  rounded-xl shadow-2xl py-1 min-w-[180px] overflow-hidden select-none animate-menu-pop"
       style={{ left, top }}
       onClick={(e) => e.stopPropagation()}
     >
@@ -106,7 +106,7 @@ export default function ImagePreview({ dataUrl, onOpen, width, height }: ImagePr
   return (
     <button
       onClick={() => onOpen(dataUrl)}
-      className="block rounded-lg overflow-hidden border border-accent/20 hover:border-accent transition-colors"
+      className="block rounded-lg overflow-hidden  hover: transition-colors"
       aria-label="Abrir imagen"
       style={{ contain: 'layout paint' }}
     >
@@ -145,7 +145,7 @@ export function ImageGallery({ images, onOpen }: ImageGalleryProps) {
     return (
       <button
         onClick={() => onOpen(0)}
-        className="block rounded-lg overflow-hidden border border-accent/20 hover:border-accent transition-colors"
+        className="block rounded-lg overflow-hidden  hover: transition-colors"
         aria-label="Abrir galería"
         style={{ contain: 'layout paint' }}
       >
@@ -172,7 +172,7 @@ export function ImageGallery({ images, onOpen }: ImageGalleryProps) {
             <button
               key={i}
               onClick={() => onOpen(i)}
-              className="flex-shrink-0 rounded-md overflow-hidden border border-accent/20 hover:border-accent transition-colors relative"
+              className="flex-shrink-0 rounded-md overflow-hidden  hover: transition-colors relative"
               aria-label={`Ir a imagen ${i + 1}`}
             >
               <img

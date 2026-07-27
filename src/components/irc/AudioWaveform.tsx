@@ -313,7 +313,7 @@ export default function AudioWaveform({ src, filename }: AudioWaveformProps) {
 
   return (
     <div
-      className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-accent/15 min-w-[260px] shadow-soft transition-all hover:border-accent/30 hover:shadow-card"
+      className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-slate-800/60 to-slate-900/60  min-w-[260px] shadow-soft transition-all hover: hover:shadow-card"
       style={{ contain: 'layout paint' }}
     >
       <button
@@ -324,7 +324,7 @@ export default function AudioWaveform({ src, filename }: AudioWaveformProps) {
         aria-label={isPlaying ? 'Pausar' : 'Reproducir'}
       >
         {isLoading ? (
-          <span className="w-4 h-4 border-2 border-white/80 border-t-transparent rounded-full animate-spin" />
+          <span className="w-4 h-4 border-2  border-t-transparent rounded-full animate-spin" />
         ) : hasError ? (
           <Music className="w-4 h-4 opacity-60" />
         ) : isPlaying ? (
