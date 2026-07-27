@@ -11,6 +11,7 @@ import TypingIndicator from "@/components/irc/TypingIndicator";
 import JoinChannelModal from "@/components/irc/JoinChannelModal";
 import NickPromptModal from "@/components/irc/NickPromptModal";
 import EditChannelDescriptionModal from "@/components/irc/EditChannelDescriptionModal";
+import RenameChannelModal from "@/components/irc/RenameChannelModal";
 import NotificationSettingsModal from "@/components/irc/NotificationSettingsModal";
 import ManageMembersModal from "@/components/irc/ManageMembersModal";
 import ForwardModal from "@/components/irc/ForwardModal";
@@ -59,6 +60,7 @@ export function Irc() {
   const [showChannelsDrawer, setShowChannelsDrawer] = useState(false);
   const [showUsersDrawer, setShowUsersDrawer] = useState(false);
   const [showEditTopic, setShowEditTopic] = useState(false);
+  const [renamingChannelId, setRenamingChannelId] = useState<number | null>(null);
   const [buzzShake, setBuzzShake] = useState(false);
   const [connected, setConnected] = useState(false);
   const [tokenInvalid, setTokenInvalid] = useState(false);
@@ -436,6 +438,33 @@ export function Irc() {
       pushToast(`No se pudo guardar: ${(e as Error).message}`, "error")
     }
   }, [currentChannel, pushToast])
+
+  // ponytail: rename follows the same pattern as topic edits — the
+  // menu asks for a new name, the modal POSTs it, we update the
+  // local channels Map so the sidebar / topbar reflect the change
+  // immediately and tell the server to push to every other tab.
+  const handleRename = useCallback(async (channelId: number, newName: string) => {
+    try {
+      const client = clientRef.current
+      if (!client) return
+      const res = await mfApi<{ ok: boolean }>(
+        `/api/chat/channels/${channelId}`,
+        { method: "PATCH", body: JSON.stringify({ name: newName }) },
+      )
+      if (!res?.ok) throw new Error("El servidor rechazó el cambio")
+      setChannels(prev => {
+        const ch = prev.get(channelId)
+        if (!ch) return prev
+        const next = new Map(prev)
+        next.set(channelId, { ...ch, name: newName })
+        return next
+      })
+      pushToast(`Canal renombrado a ${newName}`, "join")
+      client.refreshChannels().catch(() => {})
+    } catch (e) {
+      pushToast(`No se pudo renombrar: ${(e as Error).message}`, "error")
+    }
+  }, [pushToast])
 
   const handleLoadMore = useCallback(async () => {
     if (currentChannel === null) return
@@ -817,6 +846,21 @@ export function Irc() {
         />
       )}
 
+      {renamingChannelId !== null && (() => {
+        const ch = channels.get(renamingChannelId)
+        if (!ch) return null
+        return (
+          <RenameChannelModal
+            open={renamingChannelId !== null}
+            channelId={renamingChannelId}
+            channelType={(ch.channelType ?? 'text') as 'text' | 'voice'}
+            currentName={ch.name}
+            onClose={() => setRenamingChannelId(null)}
+            onSaved={(newName) => handleRename(renamingChannelId, newName)}
+          />
+        )
+      })()}
+
       <div className="flex flex-1 overflow-hidden relative">
         {/* ponytail: chat doodle wallpaper, painted as a sibling of
          * the asides + main so it spans the full width and lives
@@ -848,6 +892,9 @@ export function Irc() {
               if (!ch) return
               setCurrentChannel(id)
               setShowEditTopic(true)
+            }}
+            onRename={(id) => {
+              setRenamingChannelId(id)
             }}
             onDelete={handleChannelDelete}
           />
@@ -1059,6 +1106,9 @@ export function Irc() {
               if (!ch) return
               setCurrentChannel(id)
               setShowEditTopic(true);
+            }}
+            onRename={(id) => {
+              setRenamingChannelId(id);
             }}
             onDelete={handleChannelDelete}
           />

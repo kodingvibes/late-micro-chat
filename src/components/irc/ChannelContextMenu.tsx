@@ -7,7 +7,7 @@ export interface ChannelContextMenuState {
   show: boolean
   x: number
   y: number
-  channel: { id?: number; name: string; description?: string | null; joined?: boolean; myRole?: string | null } | null
+  channel: { id?: number; name: string; description?: string | null; joined?: boolean; myRole?: string | null; channelType?: 'text' | 'voice' } | null
 }
 
 interface ChannelContextMenuProps {
@@ -17,10 +17,11 @@ interface ChannelContextMenuProps {
   onManageMembers?: (channelId: number) => void
   onDelete?: (channelId: number) => void
   onEditTopic?: (channelId: number) => void
+  onRename?: (channelId: number) => void
 }
 
 export default function ChannelContextMenu({
-  state, onClose, onCopyName, onManageMembers, onDelete, onEditTopic,
+  state, onClose, onCopyName, onManageMembers, onDelete, onEditTopic, onRename,
 }: ChannelContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
@@ -84,6 +85,16 @@ export default function ChannelContextMenu({
         <Copy className="w-4 h-4 text-slate-400" />
         Copiar nombre
       </button>
+      {channel.id !== undefined && channel.joined && channel.myRole === 'admin' && onRename && channel.channelType !== 'voice' && (
+        <button
+          type="button"
+          onClick={() => { onRename(channel.id as number); onClose() }}
+          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-200 hover:bg-surface-2 transition-colors"
+        >
+          <Pencil className="w-4 h-4 text-accent" />
+          Renombrar
+        </button>
+      )}
       {channel.id !== undefined && channel.joined && channel.myRole && ['admin', 'mod'].includes(channel.myRole) && (
         <button
           type="button"
