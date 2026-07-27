@@ -222,5 +222,20 @@
 /* Prevent iOS long-press context menu on chat elements */
 .select-none {
   -webkit-touch-callout: none;
+  -webkit-touch-callout: default;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* ponytail: doodle wallpaper inside the message scroll container.
+ * Inset:0 + z-index:-1 keeps it behind every message bubble. The
+ * container is `position:absolute` (.irc-chat-scroll via flex
+ * inset-0), so a relative child with inset:0 fills the viewport
+ * and the background-image repeats across the visible scroll area.
+ * pointer-events:none so taps/clicks fall through to messages. */
+.irc-doodles {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.6;
 }

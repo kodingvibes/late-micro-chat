@@ -825,6 +825,18 @@ export default function MessageList({
         className="absolute inset-0 overflow-y-auto irc-chat-scroll"
         style={{ overflowAnchor: 'none', display: 'flex', flexDirection: 'column-reverse' }}
       >
+        {/* ponytail: doodle wallpaper inside the scroll container
+            so the motifs scroll with the messages instead of
+            staying pinned to the viewport (a fixed layer behind
+            the bubbles looked like dead wallpaper). The layer
+            sits above the column-reverse messages in DOM order
+            but behind them in stacking because of z-index, so
+            the message bubbles stay readable while the motifs
+            peek through behind them. */}
+        <div
+          className="bg-doodles-static bg-chat-doodles irc-doodles"
+          aria-hidden="true"
+        />
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-slate-500 text-sm gap-2">
             <span className="text-3xl opacity-30">💬</span>
