@@ -22,7 +22,7 @@ export function Topbar({
   canEditTopic,
 }: TopbarProps) {
   return (
-    <div className="flex-shrink-0 bg-slate-900/60 border-b  px-3 sm:px-4 h-10 flex items-center justify-between z-20">
+    <div className="flex-shrink-0 bg-slate-900/60 px-3 sm:px-4 h-10 flex items-center justify-between z-20">
       {/* ponytail: hamburger toggles the channels drawer on mobile.
           On desktop the drawer is unnecessary (the channels list
           already lives in the left rail), so the button is hidden

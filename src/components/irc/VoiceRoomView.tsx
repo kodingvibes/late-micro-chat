@@ -207,7 +207,7 @@ export default function VoiceRoomView({
   return (
     <div className="flex flex-col h-full bg-surface-2">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b ">
+      <div className="flex items-center justify-between px-4 py-2.5  ">
         <div className="flex items-center gap-2">
           <span className="text-base">🔊</span>
           <span className="text-sm font-semibold text-slate-100">
@@ -372,7 +372,7 @@ export default function VoiceRoomView({
             3 × w-10 attach buttons + 44px textarea crowd out the
             320px panel. */}
         {showInput && (
-          <div className="w-72 flex-shrink-0 border-l  flex flex-col bg-surface-1">
+          <div className="w-72 flex-shrink-0 flex flex-col bg-surface-1">
             <div className="flex-1 overflow-y-auto min-h-0">
               <MessageList
                 messages={channel.messages}
@@ -449,7 +449,7 @@ function VoiceChatInput({
   return (
     <form
       onSubmit={(e) => { e.preventDefault(); submit() }}
-      className="px-2 py-1.5 border-t  bg-surface-1"
+      className="px-2 py-1.5 bg-surface-1"
     >
       {replyContext && (
         <div className="flex items-center gap-1.5 mb-1 text-[11px] text-slate-400">

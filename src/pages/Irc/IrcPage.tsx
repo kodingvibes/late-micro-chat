@@ -732,7 +732,7 @@ export function Irc() {
     return (
       <div className="min-h-screen bg-mf-surface flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-2  border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10   -transparent rounded-full animate-spin" />
           <div className="text-slate-400 text-sm">Conectando al chat...</div>
         </div>
       </div>
@@ -818,7 +818,7 @@ export function Irc() {
       )}
 
       <div className="flex flex-1 overflow-hidden relative">
-        <aside className="w-48 flex-shrink-0 border-r  hidden sm:block bg-surface-1 select-none">
+        <aside className="w-48 flex-shrink-0 hidden sm:block bg-surface-1 select-none">
           <ChannelList
             channels={channels}
             categories={categories}
@@ -1004,10 +1004,10 @@ export function Irc() {
         </main>
 
         {showUsersDrawer && currentChannel !== null && (
-          <aside className="hidden sm:flex w-64 flex-shrink-0 border-l  flex-col bg-surface-2 select-none">
+          <aside className="hidden sm:flex w-64 flex-shrink-0 flex-col bg-surface-2 select-none">
             {showUsersDrawer && (
               <>
-                <div className="flex items-center justify-between px-3 py-2.5 border-b ">
+                <div className="flex items-center justify-between px-3 py-2.5  ">
                   <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                     Usuarios en línea
                   </h3>
@@ -1069,7 +1069,7 @@ export function Irc() {
         onClose={() => setShowUsersDrawer(false)}
         side="right"
       >
-        <div className="flex items-center justify-between px-3 py-2.5 border-b ">
+        <div className="flex items-center justify-between px-3 py-2.5  ">
           <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
             Usuarios en línea
           </h3>

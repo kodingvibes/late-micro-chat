@@ -80,7 +80,7 @@ export default function ChannelList({
 
   return (
     <div className="flex flex-col h-full bg-surface-2">
-      <div className="flex items-center justify-between px-3 py-2.5 border-b ">
+      <div className="flex items-center justify-between px-3 py-2.5  ">
         <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
           Canales
         </h3>
@@ -97,7 +97,7 @@ export default function ChannelList({
         )}
       </div>
 
-      <div className="px-3 py-2 border-b ">
+      <div className="px-3 py-2  ">
         <div className="relative">
           <svg
             className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500"
@@ -178,7 +178,7 @@ export default function ChannelList({
               <button
                 key={chan.id}
                 onClick={() => onSelect(chan.name)}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm transition-colors text-left text-slate-400 hover:bg-surface-2 hover:text-slate-200 border-l-2 "
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm transition-colors text-left text-slate-400 hover:bg-surface-2 hover:text-slate-200 -2 "
               >
                 <Hash className="w-4 h-4 flex-shrink-0 text-slate-500" />
                 <span className="truncate flex-1 font-medium">{chan.name.replace(/^#/, '')}</span>
@@ -191,7 +191,7 @@ export default function ChannelList({
             every channel, so this section would always be empty. */}
       </div>
 
-      <div className="px-3 py-2 border-t ">
+      <div className="px-3 py-2  ">
         <button
           onClick={onCreateRequest}
           className="w-full flex items-center gap-2 text-xs text-slate-500 hover:text-accent transition-colors py-1"
@@ -268,9 +268,9 @@ function ChannelRow({ chan, isActive, onSelect, onContextMenu }: ChannelRowProps
       className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm transition-all text-left cursor-pointer select-none [-webkit-touch-callout:none] ${
         isActive
           ? isVoice
-            ? 'bg-emerald-500/15 text-emerald-200 border-l-2 '
-            : 'bg-accent/15 text-slate-100 border-l-2 '
-          : 'text-slate-400 hover:bg-surface-2 hover:text-slate-200 border-l-2 '
+            ? 'bg-emerald-500/15 text-emerald-200 -2 '
+            : 'bg-accent/15 text-slate-100 -2 '
+          : 'text-slate-400 hover:bg-surface-2 hover:text-slate-200 -2 '
       }`}
     >
       {isVoice ? (

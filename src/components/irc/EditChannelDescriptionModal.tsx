@@ -73,7 +73,7 @@ export default function EditChannelDescriptionModal({
         className="w-full max-w-sm rounded-2xl  bg-surface-2 shadow-2xl overflow-hidden animate-menu-pop"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-3 border-b ">
+        <div className="flex items-center justify-between px-5 py-3  ">
           <h2 className="text-base font-semibold flex items-center gap-2">
             <Pencil className="w-4 h-4" />
             Editar descripción del canal
@@ -106,7 +106,7 @@ export default function EditChannelDescriptionModal({
           </div>
           {error && <p className="text-rose-400 text-xs">{error}</p>}
         </div>
-        <div className="flex justify-end gap-2 px-5 py-3 border-t  bg-surface-2">
+        <div className="flex justify-end gap-2 px-5 py-3 bg-surface-2">
           <button
             type="button"
             onClick={onClose}

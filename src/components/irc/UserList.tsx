@@ -32,7 +32,7 @@ export default function UserList({ users, onBuzz, onCopyName }: UserListProps) {
   return (
     <div className="flex flex-col h-full bg-surface-3">
       {users.length > 3 && (
-        <div className="px-3 py-2 border-b ">
+        <div className="px-3 py-2  ">
           <div className="relative">
             <svg
               className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500"
@@ -119,7 +119,7 @@ function UserRow({ user: u, onContextMenu }: UserRowProps) {
       <div className="relative">
         <Avatar nick={u.display_name} size="sm" />
         {u.active && (
-          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2  animate-dot-pulse" />
+          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400   animate-dot-pulse" />
         )}
       </div>
       <span

@@ -132,7 +132,7 @@ export default function MessageContextMenu({
         <span className="ml-auto text-[10px] text-slate-500">{showEmojiPicker ? '▲' : '▼'}</span>
       </button>
       {showEmojiPicker && (
-        <div ref={emojiRef} className="grid grid-cols-5 gap-1.5 px-3 py-2 bg-surface-1 border-t ">
+        <div ref={emojiRef} className="grid grid-cols-5 gap-1.5 px-3 py-2 bg-surface-1  ">
           {quickEmojis.map(name => (
             <button
               key={name}

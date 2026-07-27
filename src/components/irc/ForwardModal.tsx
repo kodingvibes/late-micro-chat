@@ -56,7 +56,7 @@ export default function ForwardModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b ">
+        <div className="flex items-center justify-between px-5 py-4  ">
           <div className="flex items-center gap-2">
             <CornerUpRight className="w-5 h-5 text-cyan-400" />
             <h2 className="text-lg font-semibold text-slate-100">Reenviar mensaje</h2>
@@ -72,7 +72,7 @@ export default function ForwardModal({
         </div>
 
         {/* Preview */}
-        <div className="px-5 py-3 bg-surface-1 border-b ">
+        <div className="px-5 py-3 bg-surface-1  ">
           <div className="flex items-start gap-2.5">
             <span className="text-xs font-semibold text-accent/80 shrink-0 mt-0.5">{message.display_name}</span>
             <span className="text-sm text-slate-400 line-clamp-2 break-words">{preview}</span>
@@ -134,7 +134,7 @@ export default function ForwardModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-5 py-4 border-t ">
+        <div className="flex items-center justify-end gap-3 px-5 py-4  ">
           <button
             type="button"
             onClick={onClose}
@@ -150,7 +150,7 @@ export default function ForwardModal({
           >
             {sending ? (
               <>
-                <span className="w-4 h-4 border-2  border-t-transparent rounded-full animate-spin" />
+                <span className="w-4 h-4   -transparent rounded-full animate-spin" />
                 Reenviando…
               </>
             ) : (

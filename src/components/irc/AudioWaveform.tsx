@@ -324,7 +324,7 @@ export default function AudioWaveform({ src, filename }: AudioWaveformProps) {
         aria-label={isPlaying ? 'Pausar' : 'Reproducir'}
       >
         {isLoading ? (
-          <span className="w-4 h-4 border-2  border-t-transparent rounded-full animate-spin" />
+          <span className="w-4 h-4   -transparent rounded-full animate-spin" />
         ) : hasError ? (
           <Music className="w-4 h-4 opacity-60" />
         ) : isPlaying ? (

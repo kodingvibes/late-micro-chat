@@ -70,7 +70,7 @@ export default function ChannelContextMenu({
       onClick={(e) => e.stopPropagation()}
     >
       {channel.description && (
-        <div className="px-3 py-2 text-xs text-slate-400 border-b  max-w-[220px]">
+        <div className="px-3 py-2 text-xs text-slate-400 max-w-[220px]">
           <span className="text-slate-500 font-semibold text-[10px] uppercase tracking-wider block mb-0.5">Descripción</span>
           <p className="break-words leading-snug">{channel.description}</p>
         </div>
@@ -108,7 +108,7 @@ export default function ChannelContextMenu({
           of. Admin Delete stays so channel owners can still prune. */}
       {channel.id !== undefined && channel.myRole === 'admin' && onDelete && (
         confirmingDelete ? (
-          <div className="px-3 py-2.5 border-t  bg-surface-2">
+          <div className="px-3 py-2.5 bg-surface-2">
             <div className="text-xs text-slate-300 mb-2">
               ¿Eliminar <span className="font-semibold">#{channel.name.replace(/^#/, '')}</span>? Esta acción no se puede deshacer.
             </div>
@@ -133,7 +133,7 @@ export default function ChannelContextMenu({
           <button
             type="button"
             onClick={() => setConfirmingDelete(true)}
-            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-rose-400 hover:bg-surface-2 transition-colors border-t "
+            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-rose-400 hover:bg-surface-2 transition-colors  "
           >
             <Trash2 className="w-4 h-4 text-rose-400" />
             Eliminar canal

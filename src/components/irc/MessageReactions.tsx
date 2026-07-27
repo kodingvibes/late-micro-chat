@@ -74,7 +74,7 @@ function ReactionDetailPopup({
       className="fixed z-[270] bg-surface-2  rounded-xl shadow-2xl py-2 px-3 min-w-[160px] max-w-[220px] overflow-y-auto select-none animate-menu-pop"
       style={{ left, top, maxHeight: 200 }}
     >
-      <div className="flex items-center gap-2 pb-1.5 mb-1.5 border-b ">
+      <div className="flex items-center gap-2 pb-1.5 mb-1.5  ">
         <EmojiIcon name={emoji} size={16} />
         <span className="text-xs font-semibold text-slate-300">Reacciones</span>
         <span className="text-[10px] text-slate-500 ml-auto">{reactors.length}</span>

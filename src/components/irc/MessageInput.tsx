@@ -69,7 +69,7 @@ function ReplyBar({ reply, onClear }: { reply: ChatMessage; onClear: () => void 
     <span className="text-slate-400 truncate">{reply.content.slice(0, 120)}</span>
   )
   return (
-    <div className="px-3 py-1.5 bg-surface-2 border-t  flex items-center gap-2 text-sm">
+    <div className="px-3 py-1.5 bg-surface-2 flex items-center gap-2 text-sm">
       <MessageSquareQuote className="w-3.5 h-3.5 text-accent shrink-0" />
       <span className="text-accent font-medium truncate shrink-0">{reply.display_name}</span>
       {content}
@@ -82,7 +82,7 @@ function ReplyBar({ reply, onClear }: { reply: ChatMessage; onClear: () => void 
 
 function EditBar({ onClear }: { onClear: () => void }) {
   return (
-    <div className="px-3 py-1.5 bg-amber-950/40 border-t border-amber-900/60 flex items-center gap-2 text-sm">
+    <div className="px-3 py-1.5 bg-amber-950/40 border-amber-900/60 flex items-center gap-2 text-sm">
       <Pencil className="w-3.5 h-3.5 text-amber-400 shrink-0" />
       <span className="text-amber-300 font-medium shrink-0">Editando mensaje</span>
       <span className="text-amber-500/70 text-xs truncate">Esc para cancelar</span>
@@ -102,7 +102,7 @@ function InviteModal({
 }) {
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm select-none">
-      <div className="bg-card border-border rounded-2xl p-6 w-full max-w-sm shadow-2xl bg-surface-2 ">
+      <div className="bg-card  rounded-2xl p-6 w-full max-w-sm shadow-2xl bg-surface-2 ">
         <h2 className="text-lg font-semibold text-slate-100 mb-2">¿Invitar a {user.display_name}?</h2>
         <p className="text-sm text-slate-400 mb-6">{user.display_name} no está en este canal. ¿Quieres agregarlo?</p>
         <div className="flex gap-3">
@@ -704,7 +704,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
   return (
     <>
       {recordedUrl ? (
-        <div className="px-3 py-2 border-t  bg-surface-1" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+        <div className="px-3 py-2 bg-surface-1" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
           <div className="flex items-center gap-3">
             <AudioWaveform src={recordedUrl} filename="audio" />
             <button
@@ -729,7 +729,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
       ) : (
         <>
       {pendingImages.length > 0 && (
-        <div className="px-3 sm:px-4 pt-2 border-t  bg-surface-1">
+        <div className="px-3 sm:px-4 pt-2 bg-surface-1">
           <div className="flex flex-col gap-2 p-2 rounded-lg bg-surface-2 ">
             <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
               {pendingImages.map((url, i) => (
@@ -749,7 +749,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
                 <button
                   type="button"
                   onClick={() => setPendingImages([])}
-                  className="flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-md border-dashed  hover:border-red-500 text-slate-500 hover:text-red-400 flex items-center justify-center transition-colors text-[10px] font-medium"
+                  className="flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-md   hover:border-red-500 text-slate-500 hover:text-red-400 flex items-center justify-center transition-colors text-[10px] font-medium"
                   aria-label="Quitar todas"
                 >
                   Quitar<br />todas
@@ -761,8 +761,8 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
         </div>
       )}
       {uploading && (
-        <div className="px-3 py-1.5 text-xs text-slate-500 bg-surface-1 border-t  flex items-center gap-2">
-          <span className="w-3 h-3 border-2  border-t-transparent rounded-full animate-spin" />
+        <div className="px-3 py-1.5 text-xs text-slate-500 bg-surface-1 flex items-center gap-2">
+          <span className="w-3 h-3   -transparent rounded-full animate-spin" />
           Subiendo archivo…
         </div>
       )}
@@ -771,7 +771,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
         : replyContext && <ReplyBar reply={replyContext} onClear={onClearReply!} />}
       {isFileDragging && channelId !== null && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-accent/60 backdrop-blur-sm pointer-events-none transition-opacity duration-150">
-          <div className="bg-surface-3 border-2 border-dashed  rounded-2xl p-8 sm:p-10 max-w-md mx-4 text-center shadow-2xl">
+          <div className="bg-surface-3    rounded-2xl p-8 sm:p-10 max-w-md mx-4 text-center shadow-2xl">
             <Upload className="w-10 h-10 text-accent mx-auto mb-3" />
             <p className="text-slate-100 font-semibold text-lg">Suelta archivos para adjuntar</p>
             <p className="text-slate-400 text-sm mt-1">Imágenes, audio, video o documentos</p>
@@ -780,7 +780,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function 
       )}
       <form
         onSubmit={handleSubmit}
-        className="px-3 py-2 border-t  bg-surface-1 relative"
+        className="px-3 py-2 bg-surface-1 relative"
         style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
       >
         <div className="flex items-end gap-2 min-w-0">

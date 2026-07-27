@@ -59,7 +59,7 @@ export default function NotificationSettingsModal({ prefs, onSave, onClose }: No
                     : 'bg-surface-2  hover:bg-surface-2'
                 }`}
               >
-                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-4 h-4 rounded-full  flex items-center justify-center flex-shrink-0 ${
                   mode === opt.value ? '' : ''
                 }`}>
                   {mode === opt.value && <div className="w-2 h-2 rounded-full bg-accent" />}

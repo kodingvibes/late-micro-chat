@@ -72,7 +72,7 @@ const FloatingVideoContainer = forwardRef<HTMLDivElement, FloatingVideoContainer
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
-        <div className="h-7 bg-surface-3 border-b  flex items-center px-2 cursor-grab active:cursor-grabbing touch-none">
+        <div className="h-7 bg-surface-3 flex items-center px-2 cursor-grab active:cursor-grabbing touch-none">
           <span className="text-[10px] text-slate-500">Video flotante</span>
           <button
             type="button"
