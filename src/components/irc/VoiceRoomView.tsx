@@ -246,7 +246,6 @@ export default function VoiceRoomView({
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {/* Self tile */}
             <ParticipantTile
-              userId={myUserId ?? 0}
               displayName={nick}
               stream={localStream}
               isSelf
@@ -265,7 +264,6 @@ export default function VoiceRoomView({
               return (
                 <ParticipantTile
                   key={p.id}
-                  userId={p.id}
                   displayName={nickMap.get(p.id) ?? p.displayName}
                   stream={p.stream}
                   isSelf={false}

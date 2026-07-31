@@ -1,10 +1,10 @@
 import { useRef, useEffect, useState } from 'react'
 import { Mic, MicOff, Volume2, VolumeX, ShieldX } from '@/components/icons'
 import { useAudioLevel } from '../../hooks/useAudioLevel'
+import { getNickColor } from '../../lib/irc/colors'
 import SpectrumAnalyzer from './SpectrumAnalyzer'
 
 interface ParticipantTileProps {
-  userId: number
   displayName: string
   stream: MediaStream | null
   isSelf: boolean
@@ -24,7 +24,7 @@ interface ParticipantTileProps {
 }
 
 export default function ParticipantTile({
-  userId, displayName, stream, isSelf,
+  displayName, stream, isSelf,
   micOn, speaking, isAdmin,
   volume, locallyMuted,
   onVolumeChange, onLocalMuteToggle, onKick,
@@ -33,7 +33,6 @@ export default function ParticipantTile({
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [showVolume, setShowVolume] = useState(false)
   const level = useAudioLevel(isSelf ? (micOn ? stream : null) : (speaking ? stream : null))
-  const [imgError, setImgError] = useState(false)
 
   useEffect(() => {
     if (!stream || isSelf) {
@@ -65,8 +64,27 @@ export default function ParticipantTile({
     }
   }, [volume, locallyMuted])
 
-  const initial = displayName.charAt(0).toUpperCase()
-  const hue = (userId * 37) % 360
+  // ponytail: the tile used to fetch initials from ui-avatars.com. That
+  // service's renderer is currently failing: any request that misses the
+  // CDN cache comes back as a PHP fatal error with `content-type:
+  // image/png` and an HTML body, so the <img> can't decode it. Only names
+  // already warm in Cloudflare still resolve, which is worse than a clean
+  // outage - some participants got an avatar and the rest fell through to
+  // the fallback, and which is which depends on a third party's cache.
+  // Measured, not assumed: every cache MISS failed regardless of params
+  // (`background` is not the trigger); HITs returned a valid SVG.
+  //
+  // The fallback also double-rendered: `{imgError ? initial : <img>}`
+  // followed by `{imgError && <span>{initial}</span>}` painted the letter
+  // twice, which is the "VV" / "RR" people were seeing. Drawing the
+  // initial ourselves drops the third party, the leak of every
+  // participant's display name to it, and that bug in one go.
+  //
+  // Colour comes from the shared getNickColor so a user is the same
+  // colour here as in the user list, the message list and the member
+  // modal. The old `hsl(userId * 37)` gave the same person a different
+  // colour in voice than everywhere else.
+  const initial = displayName.charAt(0).toUpperCase() || '?'
 
   return (
     <div
@@ -82,17 +100,10 @@ export default function ParticipantTile({
           className={`w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold text-white select-none transition-shadow ${
             speaking && !locallyMuted ? 'shadow-lg shadow-emerald-400/20' : ''
           }`}
-          style={{ backgroundColor: `hsl(${hue}, 55%, 45%)` }}
+          style={{ backgroundColor: getNickColor(displayName) }}
+          title={displayName}
         >
-          {imgError ? initial : (
-            <img
-              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=transparent&color=fff&size=56&bold=true`}
-              alt=""
-              className="w-full h-full rounded-full object-cover"
-              onError={() => setImgError(true)}
-            />
-          )}
-          {imgError && <span>{initial}</span>}
+          {initial}
         </div>
         {/* Speaking indicator */}
         {!locallyMuted && (
