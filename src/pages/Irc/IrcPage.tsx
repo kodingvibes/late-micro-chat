@@ -774,9 +774,16 @@ export function Irc() {
     )
   }
 
+  // ponytail: the layout already reserved pb-14 for the radio MiniPlayer.
+  // The docked voice bar sits on that same surface and is the same 56px
+  // tall, so it reuses the reservation. Joining voice stops the radio, so
+  // radioCurrent goes null exactly as our bar appears - without this the
+  // padding vanished with it and the bar covered the message input.
+  const voiceDocked = activeVoiceChannelId !== null && currentChannel !== activeVoiceChannelId
+
   return (
     <div
-      className={`flex flex-col overflow-hidden bg-accent/5 ${radioCurrent ? 'pb-14' : 'pb-0'} ${buzzShake ? 'shake-buzz' : ''}`}
+      className={`flex flex-col overflow-hidden bg-accent/5 ${radioCurrent || voiceDocked ? 'pb-14' : 'pb-0'} ${buzzShake ? 'shake-buzz' : ''}`}
       style={{ height: `calc(${vh}px * 100 - ${headerHeight}px)` }}
     >
       {showJoinModal && (
@@ -925,7 +932,7 @@ export function Irc() {
               <VoiceRoomView
                 channel={vch}
                 wsConnected={connected}
-                collapsed={currentChannel !== activeVoiceChannelId}
+                collapsed={voiceDocked}
                 onExpand={() => setCurrentChannel(activeVoiceChannelId)}
                 myUserId={myUserId}
                 myRole={vch.myRole}

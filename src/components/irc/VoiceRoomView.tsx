@@ -246,7 +246,7 @@ export default function VoiceRoomView({
   if (collapsed) {
     return createPortal(
       <div
-        className="fixed bottom-0 left-0 right-0 z-50 bg-surface-3 backdrop-blur shadow-2xl flex items-center gap-3 px-3 sm:px-4 py-2 animate-slide-in-from-bottom"
+        className="fixed bottom-0 left-0 right-0 z-50 h-14 bg-surface-3 backdrop-blur shadow-2xl flex items-center gap-2 sm:gap-3 px-2 sm:px-4 animate-slide-in-from-bottom"
         role="region"
         aria-label="Llamada de voz en curso"
       >
