@@ -1,10 +1,10 @@
 import { useRef, useEffect, useState } from 'react'
 import { Mic, MicOff, Volume2, VolumeX, ShieldX } from '@/components/icons'
 import { useAudioLevel } from '../../hooks/useAudioLevel'
+import { getNickColor } from '../../lib/irc/colors'
 import SpectrumAnalyzer from './SpectrumAnalyzer'
 
 interface ParticipantTileProps {
-  userId: number
   displayName: string
   stream: MediaStream | null
   isSelf: boolean
@@ -24,7 +24,7 @@ interface ParticipantTileProps {
 }
 
 export default function ParticipantTile({
-  userId, displayName, stream, isSelf,
+  displayName, stream, isSelf,
   micOn, speaking, isAdmin,
   volume, locallyMuted,
   onVolumeChange, onLocalMuteToggle, onKick,
@@ -33,7 +33,6 @@ export default function ParticipantTile({
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [showVolume, setShowVolume] = useState(false)
   const level = useAudioLevel(isSelf ? (micOn ? stream : null) : (speaking ? stream : null))
-  const [imgError, setImgError] = useState(false)
 
   useEffect(() => {
     if (!stream || isSelf) {
@@ -65,8 +64,18 @@ export default function ParticipantTile({
     }
   }, [volume, locallyMuted])
 
-  const initial = displayName.charAt(0).toUpperCase()
-  const hue = (userId * 37) % 360
+  // ponytail: the tile used to fetch initials from ui-avatars.com, which
+  // returns an HTML fatal error (not an image) for our URL because its
+  // image lib can't parse `background=transparent`. Every tile fell back
+  // to the local initial anyway, so the request only ever cost a failed
+  // round-trip and leaked every participant's display name to a third
+  // party. Drawing the initial ourselves is what was rendering already.
+  //
+  // Colour comes from the shared getNickColor so a user is the same
+  // colour here as in the user list, the message list and the member
+  // modal. The old `hsl(userId * 37)` gave the same person a different
+  // colour in voice than everywhere else.
+  const initial = displayName.charAt(0).toUpperCase() || '?'
 
   return (
     <div
@@ -82,17 +91,10 @@ export default function ParticipantTile({
           className={`w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold text-white select-none transition-shadow ${
             speaking && !locallyMuted ? 'shadow-lg shadow-emerald-400/20' : ''
           }`}
-          style={{ backgroundColor: `hsl(${hue}, 55%, 45%)` }}
+          style={{ backgroundColor: getNickColor(displayName) }}
+          title={displayName}
         >
-          {imgError ? initial : (
-            <img
-              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=transparent&color=fff&size=56&bold=true`}
-              alt=""
-              className="w-full h-full rounded-full object-cover"
-              onError={() => setImgError(true)}
-            />
-          )}
-          {imgError && <span>{initial}</span>}
+          {initial}
         </div>
         {/* Speaking indicator */}
         {!locallyMuted && (

@@ -162,7 +162,7 @@ export function useVoiceRoom(
     unsubscribes.push(
       signaling.on('peer_joined', (data: { user_id: number; display_name: string }) => {
         vdRecord('signaling.peer_joined', data)
-        addPeer(data.user_id, data.display_name, true)
+        addPeer(data.user_id, data.display_name || `User ${data.user_id}`, true)
       }),
     )
 
@@ -183,7 +183,12 @@ export function useVoiceRoom(
       signaling.on('offer', async (data: { from: number; from_display_name: string; sdp: string }) => {
         vdRecord('signaling.offer.in', { from: data.from })
         if (!peersRef.current.has(data.from)) {
-          addPeer(data.from, data.from_display_name, false)
+          // ponytail: same `|| User <id>` guard the `peers` handler
+          // already had. The backend resolves roster names against a
+          // users table that no longer exists in the chat DB, so an
+          // empty display_name is the normal case, not the edge one,
+          // and an unguarded one renders as a bare "?" avatar.
+          addPeer(data.from, data.from_display_name || `User ${data.from}`, false)
         }
         const peer = peersRef.current.get(data.from)
         if (peer) {
