@@ -129,9 +129,15 @@ export default function VoiceRoomView({
       cancelled = true
       micStreamRef.current?.getTracks().forEach(t => t.stop())
       micStreamRef.current = null
+      // Disconnect our nodes but do NOT close the context: it is the
+      // module-level singleton from audioContext.ts, shared with every
+      // later join and with the spectrum analysers. Closing it here
+      // made the second join of a page session throw InvalidStateError
+      // out of createMediaStreamSource, before micStreamRef was set,
+      // so that join's mic tracks leaked too. A closed AudioContext
+      // cannot be reopened.
       if (gateRef.current) {
-        const ctx = gateRef.current.context as AudioContext
-        ctx.close?.().catch(() => {})
+        gateRef.current.disconnect()
         gateRef.current = null
       }
       vadStream?.getTracks().forEach(t => t.stop())

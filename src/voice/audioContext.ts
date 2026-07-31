@@ -7,7 +7,11 @@
 let ctx: AudioContext | null = null
 
 export function getOrCreateAudioContext(): AudioContext {
-  if (ctx) return ctx
+  // A closed context can never be reopened, and every node built on it
+  // throws InvalidStateError. Nothing should be closing this one any
+  // more, but returning a dead singleton forever is a bad failure mode
+  // for a shared lazy getter, so replace it instead.
+  if (ctx && ctx.state !== 'closed') return ctx
   const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
   if (!Ctor) throw new Error('Web Audio API not supported')
   ctx = new Ctor()
