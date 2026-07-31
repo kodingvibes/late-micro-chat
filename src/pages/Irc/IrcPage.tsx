@@ -650,6 +650,12 @@ export function Irc() {
       getOrCreateAudioContext()
       resumeAudioContext().catch(() => {})
     } catch { /* unsupported, getUserMedia will fail next */ }
+    // ponytail: a voice call takes the bottom bar over from the radio,
+    // so stop the stream rather than letting music play under people
+    // talking. stop() nulls RadioState.current, which is what makes the
+    // shell's MiniPlayer unmount itself, freeing the surface for our own
+    // bar. Optional chained: the radio micro may not be loaded.
+    try { window.RadioEngine?.stop() } catch { /* radio not loaded */ }
     setActiveVoiceChannelId(channelId)
     setShowChannelsDrawer(false)
     // ponytail: load the text-chat history for this voice channel.
@@ -903,12 +909,24 @@ export function Irc() {
         <main
           className="flex-1 flex flex-col min-w-0 relative z-[1] bg-chat-main overflow-hidden"
         >
-          {activeVoiceChannelId !== null ? (() => {
+          {/* ponytail: while a call is up, VoiceRoomView must stay MOUNTED
+              whatever channel you are reading — its effect cleanup calls
+              leaveRoom, so unmounting it hangs up. Selecting a text channel
+              therefore collapses it into a bottom bar (rendered by the
+              component itself into a portal) instead of swapping it out,
+              and the message list takes the main pane back.
+
+              Before this, VoiceRoomView was rendered *instead of*
+              MessageList, so being in a call made every channel unreadable. */}
+          {activeVoiceChannelId !== null && (() => {
             const vch = channels.get(activeVoiceChannelId)
             if (!vch) return null
             return (
               <VoiceRoomView
                 channel={vch}
+                wsConnected={connected}
+                collapsed={currentChannel !== activeVoiceChannelId}
+                onExpand={() => setCurrentChannel(activeVoiceChannelId)}
                 myUserId={myUserId}
                 myRole={vch.myRole}
                 nick={nick}
@@ -919,7 +937,8 @@ export function Irc() {
                 onLeave={() => handleVoiceLeave(activeVoiceChannelId!)}
               />
             )
-          })() : (
+          })()}
+          {(activeVoiceChannelId === null || currentChannel !== activeVoiceChannelId) && (
             <>
               <MessageList
                 key={currentChannel ?? "none"}
