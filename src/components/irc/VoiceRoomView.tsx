@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { MessageSquare, Mic, MicOff, Activity, Plus, ImageIcon, Smile, Music, Video, FileText, ArrowUp, X, PhoneOff } from '@/components/icons'
 import ParticipantTile from './ParticipantTile'
+import Avatar from './Avatar'
 import MessageList from './MessageList'
 import TypingIndicator from './TypingIndicator'
 import { useVoiceRoom } from '../../voice/useVoiceRoom'
@@ -264,21 +265,14 @@ export default function VoiceRoomView({
               {channel.name.replace(/^🔊\s*/, '')}
             </span>
           </span>
+          {/* Same Avatar + overflow stack ChannelList uses on voice rows, so
+              a person is the same colour here as everywhere else. */}
           <span className="flex items-center -space-x-2 flex-shrink-0 ml-1">
-            {[{ id: myUserId ?? -1, displayName: nick, self: true }, ...peers.map(p => ({ id: p.id, displayName: nickMap.get(p.id) ?? p.displayName, self: false }))]
+            {[nick, ...peers.map(p => nickMap.get(p.id) ?? p.displayName)]
               .slice(0, 4)
-              .map(p => (
-                <span
-                  key={p.id}
-                  title={p.displayName}
-                  className="w-7 h-7 rounded-full  -surface-3 flex items-center justify-center text-[11px] font-bold text-white select-none"
-                  style={{ backgroundColor: `hsl(${(p.id * 37) % 360}, 55%, 45%)` }}
-                >
-                  {(p.displayName || '?').charAt(0).toUpperCase()}
-                </span>
-              ))}
+              .map((name, i) => <Avatar key={i} nick={name} size="sm" />)}
             {totalConnected > 4 && (
-              <span className="w-7 h-7 rounded-full  -surface-3 bg-surface-2 flex items-center justify-center text-[10px] font-semibold text-slate-300">
+              <span className="w-7 h-7 rounded-lg bg-surface-2 flex items-center justify-center text-[10px] font-semibold text-slate-300 flex-shrink-0">
                 +{totalConnected - 4}
               </span>
             )}

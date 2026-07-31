@@ -945,7 +945,7 @@ export function Irc() {
               />
             )
           })()}
-          {(activeVoiceChannelId === null || currentChannel !== activeVoiceChannelId) && (
+          {(activeVoiceChannelId === null || voiceDocked) && (
             <>
               <MessageList
                 key={currentChannel ?? "none"}
