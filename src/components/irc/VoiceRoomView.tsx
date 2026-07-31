@@ -54,11 +54,24 @@ export default function VoiceRoomView({
   const peerVolumes = useRef<Map<number, number>>(new Map())
   const peerMuted = useRef<Map<number, boolean>>(new Map())
 
+  // ponytail: do not announce ourselves until the mic has resolved.
+  //
+  // joinRoom used to fire on mount, in the effect above getUserMedia's,
+  // so the roster came back first and every peer was built with zero
+  // tracks. When the mic finally landed, addLocalStream had to
+  // re-negotiate from `stable`, which cannot produce an answer, and the
+  // rejection was swallowed by a debug recorder that is a no-op without
+  // ?voiceDebug=1 — so everyone already in the room heard nothing from
+  // the joiner, silently, forever.
+  //
+  // micError still joins: no microphone is a valid way to sit in a call
+  // and listen.
   useEffect(() => {
+    if (!micReady && !micError) return
     voiceRoom.joinRoom(String(channel.id))
     return () => voiceRoom.leaveRoom(String(channel.id))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channel.id])
+  }, [channel.id, micReady, micError])
 
   useEffect(() => {
     let cancelled = false

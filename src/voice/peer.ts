@@ -98,19 +98,24 @@ export class VoicePeer {
         this.pc.addTrack(track, stream)
       }
     }
-    // If we already have a remote description, re-negotiate.
-    if (this.pc.remoteDescription) {
+    // Branch on signalingState, not on which descriptions exist.
+    // `remoteDescription` is still set once a negotiation completes, so
+    // the old check sent us down createAnswer() while in `stable` —
+    // which the spec requires to reject, making the whole late-mic path
+    // unable to ever succeed. createAnswer is only legal with a pending
+    // remote offer; renegotiating from `stable` means making an offer.
+    if (this.pc.signalingState === 'have-remote-offer') {
       const answer = await this.pc.createAnswer()
       await this.pc.setLocalDescription(answer)
       return { kind: 'answer', sdp: JSON.stringify(answer) }
     }
-    if (this.pc.localDescription) {
-      // We're the initiator, already sent an offer without audio.
-      // Re-offer with audio now.
+    if (this.pc.signalingState === 'stable' && (this.pc.localDescription || this.pc.remoteDescription)) {
       const offer = await this.pc.createOffer({ iceRestart: false })
       await this.pc.setLocalDescription(offer)
       return { kind: 'offer', sdp: JSON.stringify(offer) }
     }
+    // Nothing negotiated yet, or an offer is already in flight: the
+    // tracks we just added ride along on that negotiation.
     return null
   }
 
