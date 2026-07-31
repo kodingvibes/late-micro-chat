@@ -64,12 +64,21 @@ export default function ParticipantTile({
     }
   }, [volume, locallyMuted])
 
-  // ponytail: the tile used to fetch initials from ui-avatars.com, which
-  // returns an HTML fatal error (not an image) for our URL because its
-  // image lib can't parse `background=transparent`. Every tile fell back
-  // to the local initial anyway, so the request only ever cost a failed
-  // round-trip and leaked every participant's display name to a third
-  // party. Drawing the initial ourselves is what was rendering already.
+  // ponytail: the tile used to fetch initials from ui-avatars.com. That
+  // service's renderer is currently failing: any request that misses the
+  // CDN cache comes back as a PHP fatal error with `content-type:
+  // image/png` and an HTML body, so the <img> can't decode it. Only names
+  // already warm in Cloudflare still resolve, which is worse than a clean
+  // outage - some participants got an avatar and the rest fell through to
+  // the fallback, and which is which depends on a third party's cache.
+  // Measured, not assumed: every cache MISS failed regardless of params
+  // (`background` is not the trigger); HITs returned a valid SVG.
+  //
+  // The fallback also double-rendered: `{imgError ? initial : <img>}`
+  // followed by `{imgError && <span>{initial}</span>}` painted the letter
+  // twice, which is the "VV" / "RR" people were seeing. Drawing the
+  // initial ourselves drops the third party, the leak of every
+  // participant's display name to it, and that bug in one go.
   //
   // Colour comes from the shared getNickColor so a user is the same
   // colour here as in the user list, the message list and the member
