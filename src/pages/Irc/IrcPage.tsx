@@ -58,7 +58,7 @@ export function Irc() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [showNickModal, setShowNickModal] = useState(false);
   const [showChannelsDrawer, setShowChannelsDrawer] = useState(false);
-  const [showUsersDrawer, setShowUsersDrawer] = useState(false);
+  const [showUsersDrawer, setShowUsersDrawer] = useState(true);
   const [showEditTopic, setShowEditTopic] = useState(false);
   const [renamingChannelId, setRenamingChannelId] = useState<number | null>(null);
   const [buzzShake, setBuzzShake] = useState(false);
