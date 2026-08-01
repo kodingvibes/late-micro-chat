@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { createVoiceSignaling, type VoiceSignaling } from './signaling'
 import { VoicePeer } from './peer'
+import { voiceError } from './log'
 
 interface PeerState {
   id: number
@@ -77,6 +78,14 @@ export function useVoiceRoom(
 
     const unsubscribes: (() => void)[] = []
 
+    const dropPeer = (id: number) => {
+      const p = peersRef.current.get(id)
+      if (p) p.close()          // release the RTCPeerConnection, don't just forget it
+      peersRef.current.delete(id)
+      peerStreams.current.delete(id)
+      setPeers(prev => prev.filter(x => x.id !== id))
+    }
+
     const addPeer = (id: number, displayName: string, initiator: boolean) => {
       const streamNow = localStreamRef.current
       vdRecord('addPeer', { id, displayName, initiator, hasLocalStream: !!streamNow })
@@ -110,14 +119,20 @@ export function useVoiceRoom(
           onConnectionState: (state) => {
             vdRecord('peer.connectionState', { id, state })
             if (state === 'disconnected' || state === 'failed') {
-              peerStreams.current.delete(id)
-              peersRef.current.delete(id)
-              setPeers(prev => prev.filter(p => p.id !== id))
-              if (initiator) {
-                peer.restartIce()
-                  .then(sdp => { if (sdp) signaling.sendOffer(id, sdp) })
-                  .catch(err => vdRecord('ice.restart.err', { id, msg: String(err) }))
-              }
+              // Keep the peer in the map while we try to recover: the
+              // answer to our ICE-restart offer is routed by looking the
+              // id up in peersRef, so deleting first made the restart
+              // structurally unable to complete. Only tear down on
+              // 'failed', and only once the restart has been ruled out.
+              peer.restartIce()
+                .then(sdp => {
+                  if (sdp) { signaling.sendOffer(id, sdp); return }
+                  if (state === 'failed') dropPeer(id)
+                })
+                .catch(err => {
+                  voiceError('ICE restart failed', { id, err })
+                  if (state === 'failed') dropPeer(id)
+                })
             }
           },
         },
@@ -134,13 +149,13 @@ export function useVoiceRoom(
             if (result.kind === 'offer') signaling.sendOffer(id, result.sdp)
             else signaling.sendAnswer(id, result.sdp)
           })
-          .catch(err => vdRecord('renegotiate.err', { id, msg: String(err) }))
+          .catch(err => voiceError('renegotiate failed', { id, err }))
       }
 
       if (initiator) {
         peer.createOffer()
           .then(sdp => { signaling.sendOffer(id, sdp) })
-          .catch(err => vdRecord('offer.create.err', { to: id, msg: String(err) }))
+          .catch(err => voiceError('createOffer failed', { to: id, err }))
       }
     }
 
@@ -169,13 +184,7 @@ export function useVoiceRoom(
     unsubscribes.push(
       signaling.on('peer_left', (data: { user_id: number }) => {
         vdRecord('signaling.peer_left', data)
-        const peer = peersRef.current.get(data.user_id)
-        if (peer) {
-          peer.close()
-          peersRef.current.delete(data.user_id)
-          peerStreams.current.delete(data.user_id)
-          setPeers(prev => prev.filter(p => p.id !== data.user_id))
-        }
+        dropPeer(data.user_id)
       }),
     )
 
@@ -219,13 +228,7 @@ export function useVoiceRoom(
 
     unsubscribes.push(
       signaling.on('hangup', (data: { user_id: number }) => {
-        const peer = peersRef.current.get(data.user_id)
-        if (peer) {
-          peer.close()
-          peersRef.current.delete(data.user_id)
-          peerStreams.current.delete(data.user_id)
-          setPeers(prev => prev.filter(p => p.id !== data.user_id))
-        }
+        dropPeer(data.user_id)
       }),
     )
 
