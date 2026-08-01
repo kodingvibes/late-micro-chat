@@ -351,7 +351,7 @@ export default function VoiceRoomView({
         onExpand={() => onExpand?.()}
         onLeave={onLeave}
       />
-    <div className="flex flex-col h-full bg-surface-2">
+    <div className="flex flex-col h-full bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950">
       {peerAudio}
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5  ">
