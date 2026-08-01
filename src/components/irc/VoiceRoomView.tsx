@@ -426,15 +426,6 @@ export default function VoiceRoomView({
           {/* Controls live in the bottom bar, not here. */}
         </div>
 
-        {/* PTT hint */}
-        {!micError && micReady && (
-          <div className="text-center pb-2">
-            <span className="text-[10px] text-slate-500">
-              <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-slate-300 font-mono text-[10px]">ESPACIO</kbd> para hablar (Push to Talk)
-            </span>
-          </div>
-        )}
-
         {/* Right column: text chat (only when toggled on).
             Forced "compact" mode so the icon row collapses into a
             single + menu and the textarea gets the smaller
@@ -474,6 +465,14 @@ export default function VoiceRoomView({
           </div>
         )}
       </div>
+      {/* PTT hint at the bottom of the voice room */}
+      {!micError && micReady && (
+        <div className="text-center py-2 border-t border-white/5">
+          <span className="text-[10px] text-slate-500">
+            <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-slate-300 font-mono text-[10px]">ESPACIO</kbd> para hablar (Push to Talk)
+          </span>
+        </div>
+      )}
     </div>
     </>
   )
