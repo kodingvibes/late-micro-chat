@@ -36,7 +36,7 @@ interface VoiceRoomViewProps {
   onLeave: () => void
 }
 
-const VAD_THRESHOLD_DEFAULT = 0.05
+const VAD_THRESHOLD_DEFAULT = 0.025
 
 export default function VoiceRoomView({
   channel, wsConnected = true, collapsed = false, onExpand, myUserId, myRole, nick, nickMap,
