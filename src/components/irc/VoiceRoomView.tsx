@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { MessageSquare, Mic, MicOff, Activity, Plus, ImageIcon, Smile, Music, Video, FileText, ArrowUp, X, PhoneOff } from '@/components/icons'
 import ParticipantTile from './ParticipantTile'
+import PeerAudio from './PeerAudio'
 import Avatar from './Avatar'
 import MessageList from './MessageList'
 import TypingIndicator from './TypingIndicator'
@@ -59,8 +60,11 @@ export default function VoiceRoomView({
 
   const voiceRoom = useVoiceRoom(sendViaWs, localStream, onVoiceMessage)
 
-  const peerVolumes = useRef<Map<number, number>>(new Map())
-  const peerMuted = useRef<Map<number, boolean>>(new Map())
+  // State, not refs: PeerAudio renders from these, so a change has to
+  // re-render. They were refs when only ParticipantTile read them
+  // imperatively.
+  const [peerVolumes, setPeerVolumes] = useState<Map<number, number>>(new Map())
+  const [peerMuted, setPeerMuted] = useState<Map<number, boolean>>(new Map())
 
   // ponytail: do not announce ourselves until the mic has resolved.
   //
@@ -244,8 +248,22 @@ export default function VoiceRoomView({
   // render a compact bar into a portal on <body> instead. Fixed to the
   // bottom, taking the surface the radio's MiniPlayer would occupy;
   // handleVoiceJoin stops the radio so the two never fight over it.
+  // Audio sinks for every peer. Rendered in both the expanded and the
+  // collapsed branch, because playback must not depend on the tiles.
+  const peerAudio = peers.map(p => (
+    <PeerAudio
+      key={p.id}
+      stream={p.stream}
+      volume={peerVolumes.get(p.id) ?? 100}
+      muted={peerMuted.get(p.id) ?? false}
+    />
+  ))
+
   if (collapsed) {
-    return createPortal(
+    return (
+      <>
+      {peerAudio}
+      {createPortal(
       <div
         className="fixed bottom-0 left-0 right-0 z-50 h-14 bg-surface-3 backdrop-blur shadow-2xl flex items-center gap-2 sm:gap-3 px-2 sm:px-4 animate-slide-in-from-bottom"
         role="region"
@@ -301,11 +319,14 @@ export default function VoiceRoomView({
         </button>
       </div>,
       document.body,
+    )}
+      </>
     )
   }
 
   return (
     <div className="flex flex-col h-full bg-surface-2">
+      {peerAudio}
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5  ">
         <div className="flex items-center gap-2">
@@ -359,8 +380,8 @@ export default function VoiceRoomView({
             />
             {/* Peer tiles */}
             {peers.map(p => {
-              const vol = peerVolumes.current.get(p.id) ?? 100
-              const muted = peerMuted.current.get(p.id) ?? false
+              const vol = peerVolumes.get(p.id) ?? 100
+              const muted = peerMuted.get(p.id) ?? false
               return (
                 <ParticipantTile
                   key={p.id}
@@ -373,12 +394,12 @@ export default function VoiceRoomView({
                   volume={vol}
                   locallyMuted={muted}
                   onVolumeChange={(v) => {
-                    peerVolumes.current.set(p.id, v)
+                    setPeerVolumes(prev => new Map(prev).set(p.id, v))
                     sendViaWs({ type: 'voice.peer_volume', to: p.id, volume: v })
                   }}
                   onLocalMuteToggle={() => {
-                    const next = !peerMuted.current.get(p.id)
-                    peerMuted.current.set(p.id, next)
+                    const next = !peerMuted.get(p.id)
+                    setPeerMuted(prev => new Map(prev).set(p.id, next))
                     sendViaWs({ type: 'voice.peer_local_mute', to: p.id, muted: next })
                   }}
                   onKick={isAdmin ? () => handleKick(p.id) : undefined}

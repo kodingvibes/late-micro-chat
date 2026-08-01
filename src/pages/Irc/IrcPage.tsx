@@ -657,6 +657,12 @@ export function Irc() {
     // bar. Optional chained: the radio micro may not be loaded.
     try { window.RadioEngine?.stop() } catch { /* radio not loaded */ }
     setActiveVoiceChannelId(channelId)
+    // Show the room you just joined. Without this the view is collapsed
+    // from the first frame -- voiceDocked compares against
+    // currentChannel, which is still whatever text channel you were
+    // reading -- so clicking a voice channel dropped you straight to the
+    // bottom bar and the tiles, PTT and mic errors were unreachable.
+    setCurrentChannel(channelId)
     setShowChannelsDrawer(false)
     // ponytail: load the text-chat history for this voice channel.
     // The /channels list call returns metadata only, never per-channel

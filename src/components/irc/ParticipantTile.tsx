@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Mic, MicOff, Volume2, VolumeX, ShieldX } from '@/components/icons'
 import { useAudioLevel } from '../../hooks/useAudioLevel'
 import { getNickColor } from '../../lib/irc/colors'
@@ -30,39 +30,14 @@ export default function ParticipantTile({
   onVolumeChange, onLocalMuteToggle, onKick,
   onMicToggle, onAmountChange, amount, onRecord, recording,
 }: ParticipantTileProps) {
-  const audioRef = useRef<HTMLAudioElement | null>(null)
   const [showVolume, setShowVolume] = useState(false)
   const level = useAudioLevel(isSelf ? (micOn ? stream : null) : (speaking ? stream : null))
 
-  useEffect(() => {
-    if (!stream || isSelf) {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current.srcObject = null
-        audioRef.current = null
-      }
-      return
-    }
-    if (!audioRef.current) {
-      const audio = new Audio()
-      audio.autoplay = true
-      audioRef.current = audio
-    }
-    audioRef.current.srcObject = stream
-    audioRef.current.play().catch(() => {})
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current.srcObject = null
-      }
-    }
-  }, [stream, isSelf])
-
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = locallyMuted ? 0 : (volume / 100)
-    }
-  }, [volume, locallyMuted])
+  // ponytail: playback moved to PeerAudio, rendered by VoiceRoomView.
+  // It used to live here, which tied hearing someone to their tile being
+  // on screen -- so collapsing the call into the bottom bar unmounted the
+  // tiles and silenced everyone while the connection stayed up. This
+  // component now only draws the participant.
 
   // ponytail: the tile used to fetch initials from ui-avatars.com. That
   // service's renderer is currently failing: any request that misses the
