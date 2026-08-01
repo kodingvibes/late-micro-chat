@@ -15,10 +15,35 @@ export function getOrCreateAudioContext(): AudioContext {
   const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
   if (!Ctor) throw new Error('Web Audio API not supported')
   ctx = new Ctor()
+  ctx.addEventListener('statechange', () => { void resumeAudioContext() })
   return ctx
 }
 
 export function resumeAudioContext(): Promise<void> {
   if (!ctx) return Promise.resolve()
-  return ctx.state === 'suspended' ? ctx.resume() : Promise.resolve()
+  // Was `state === 'suspended'`, which is the one state iOS does NOT
+  // use here. Locking the screen, switching apps, switching tabs or
+  // taking a phone call moves the context to 'interrupted' (MDN,
+  // BaseAudioContext.state), and only 'closed' can never be resumed.
+  // Because resume() was skipped for 'interrupted' and this getter
+  // hands the same instance back forever, the mic's
+  // MediaStreamAudioDestinationNode emitted silence for the rest of
+  // the page session: the call stayed "connected", RTP kept flowing,
+  // and nobody heard you again until a full page reload. Rejoining
+  // could not fix it either — join calls exactly these two functions.
+  if (ctx.state === 'running' || ctx.state === 'closed') return Promise.resolve()
+  return ctx.resume().catch(() => {})
+}
+
+// Bring the context back by itself after an interruption. Nothing else
+// in the app listened for this: resumeAudioContext() ran only at join
+// time, so recovery depended on the user guessing they had to reload.
+// Returning to the tab is the moment iOS allows the resume, and the
+// 'statechange' listener above covers interruptions that end while the
+// page is still in front (a phone call, Siri, another app grabbing the
+// audio hardware).
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) void resumeAudioContext()
+  })
 }

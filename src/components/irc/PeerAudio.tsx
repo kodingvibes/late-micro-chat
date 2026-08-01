@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react'
-import { getOrCreateAudioContext } from '../../voice/audioContext'
 
 /**
  * Plays one peer's remote audio.
@@ -12,63 +11,73 @@ import { getOrCreateAudioContext } from '../../voice/audioContext'
  * has to outlive the view that draws the participant, so it renders
  * from VoiceRoomView in both the expanded and collapsed states.
  *
- * The element is deliberately never attached to the document: it is a
- * sink, not UI, and appending it would let page CSS and layout touch
- * something that must keep playing while unmounted.
+ * ONE playback path, deliberately. This used to render every peer
+ * twice at once: the element below AND a parallel
+ * createMediaStreamSource -> GainNode -> ctx.destination graph. Both
+ * reached the speaker, so the same voice was summed with itself at two
+ * different latencies (doubled level, comb filtering), `muted` did
+ * nothing because it only zeroed the gain while the element stayed at
+ * volume 1, and the volume slider could at best halve the level.
  *
- * Uses the shared AudioContext singleton so we don't create N contexts
- * for N peers (which hits browser limits and causes "URI no válida"
- * errors on some platforms).
+ * The element is the half that was kept, not the Web Audio one:
+ *   - `.muted` is honoured on every platform; `.volume` is ignored on
+ *     iOS, but Web Audio buys us nothing there either (see below).
+ *   - Element output is part of the platform's echo-cancellation
+ *     reference. Web Audio output is not, so routing peers through
+ *     ctx.destination of the very context that captures our mic meant
+ *     every remote participant could hear themselves back.
+ *   - Playback no longer depends on the AudioContext being awake. iOS
+ *     interrupts that context on screen lock and app switch, which
+ *     would otherwise take the whole room silent with it.
+ *
+ * ponytail: the element is now appended to <body>. The old code kept
+ * it detached to stop page CSS reaching it, but WebKit has
+ * historically refused to play media elements outside the document,
+ * and a controls-less <audio> is already display:none in the UA
+ * stylesheet, so there is no box for CSS to reach.
+ * Ceiling: per-peer volume is a no-op on iOS (hardware volume only) --
+ * hence `muted` below, which every platform honours. If per-peer level
+ * really is needed on iOS, the upgrade is a GainNode fed from a MUTED
+ * element, never a second live output.
  */
 export default function PeerAudio({
-  stream, volume, muted,
+  stream, volume,
 }: {
   stream: MediaStream | null
-  /** 0-200, per-peer local volume. 100 = normal, 200 = 2x. */
+  /** 0-100, per-peer local volume. 0 mutes. */
   volume: number
-  /** Local mute -- does not affect what the peer is sending. */
-  muted: boolean
 }) {
   const ref = useRef<HTMLAudioElement | null>(null)
-  const gainRef = useRef<GainNode | null>(null)
-  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null)
 
   useEffect(() => {
     if (!stream) return
-    const audio = ref.current ?? new Audio()
-    ref.current = audio
+    const audio = new Audio()
     audio.autoplay = true
-    audio.volume = 1 // We control volume via GainNode
+    audio.setAttribute('playsinline', '')
     audio.srcObject = stream
+    document.body.appendChild(audio)
+    ref.current = audio
     audio.play().catch(() => {
       // Autoplay can be refused until the page has a user gesture;
       // joining a call is one, so this is rare and self-correcting.
     })
 
-    // Use the shared AudioContext singleton
-    const ctx = getOrCreateAudioContext()
-    const source = ctx.createMediaStreamSource(stream)
-    const gain = ctx.createGain()
-    gain.gain.value = muted ? 0 : volume / 100
-    source.connect(gain)
-    gain.connect(ctx.destination)
-    gainRef.current = gain
-    sourceRef.current = source
-
     return () => {
       audio.pause()
       audio.srcObject = null
-      source.disconnect()
-      gain.disconnect()
-      // Do NOT close the context — it is the shared singleton
+      audio.remove()
+      ref.current = null
     }
   }, [stream])
 
   useEffect(() => {
-    if (gainRef.current) {
-      gainRef.current.gain.value = muted ? 0 : volume / 100
-    }
-  }, [volume, muted])
+    const audio = ref.current
+    if (!audio) return
+    // iOS ignores .volume entirely, so dragging the slider to 0 has to
+    // mute the element to actually silence the peer there.
+    audio.muted = volume === 0
+    audio.volume = Math.min(1, Math.max(0, volume / 100))
+  }, [volume, stream])
 
   return null
 }

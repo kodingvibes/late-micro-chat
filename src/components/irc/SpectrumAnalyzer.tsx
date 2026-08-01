@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react'
+import { getOrCreateAudioContext } from '../../voice/audioContext'
 
 interface SpectrumAnalyzerProps {
   stream: MediaStream | null
@@ -11,7 +12,6 @@ export default function SpectrumAnalyzer({
   stream, active, barCount = 16, className = '',
 }: SpectrumAnalyzerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const ctxRef = useRef<AudioContext | null>(null)
   const rafRef = useRef<number>(0)
 
   useEffect(() => {
@@ -29,8 +29,11 @@ export default function SpectrumAnalyzer({
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const ctx = new AudioContext()
-    ctxRef.current = ctx
+    // ponytail: shared singleton, not a per-tile `new AudioContext()`.
+    // See useAudioLevel for why: one context per tile blew past the
+    // browser limit and, being built outside the join gesture, started
+    // suspended on iOS and never rendered a frame.
+    const ctx = getOrCreateAudioContext()
     const source = ctx.createMediaStreamSource(stream)
     const analyser = ctx.createAnalyser()
     analyser.fftSize = 64
@@ -73,7 +76,8 @@ export default function SpectrumAnalyzer({
     return () => {
       cancelAnimationFrame(rafRef.current)
       source.disconnect()
-      ctx.close()
+      // Never close the shared context: it is the singleton the mic
+      // graph and every other tile are still using.
     }
   }, [stream, active, barCount])
 
