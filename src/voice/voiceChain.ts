@@ -12,7 +12,7 @@ export function createVoiceChain(
 ): VoiceChain {
   const ctx = new AudioContext()
   const source = ctx.createMediaStreamSource(inputStream)
-  const ratio = 1 + (amount / 100) * 19
+  const ratio = 1 + (amount / 100) * (RADIO_AM_PRESET.ratio - 1)
 
   const highpass = ctx.createBiquadFilter()
   highpass.type = 'highpass'
@@ -63,6 +63,8 @@ export function createVoiceChain(
   }
   makeup.connect(destination)
 
+  let gateOpen = false
+
   const gateTimer = setInterval(() => {
     const data = new Uint8Array(gateAnalyser.frequencyBinCount)
     gateAnalyser.getByteTimeDomainData(data)
@@ -72,8 +74,17 @@ export function createVoiceChain(
       sum += v * v
     }
     const rmsDb = 20 * Math.log10(Math.sqrt(sum / data.length) || 1e-10)
-    const target = rmsDb > RADIO_AM_PRESET.gateThreshold ? 1 : 0
-    gateGain.gain.setTargetAtTime(target, ctx.currentTime, 0.05)
+
+    // Histéresis: umbral de apertura más alto que el de cierre
+    if (!gateOpen && rmsDb > RADIO_AM_PRESET.gateThresholdOpen) {
+      gateOpen = true
+    } else if (gateOpen && rmsDb < RADIO_AM_PRESET.gateThresholdClose) {
+      gateOpen = false
+    }
+
+    const target = gateOpen ? 1 : 0
+    const rampTime = gateOpen ? RADIO_AM_PRESET.gateAttack : RADIO_AM_PRESET.gateRelease
+    gateGain.gain.setTargetAtTime(target, ctx.currentTime, rampTime)
   }, 50)
 
   return {

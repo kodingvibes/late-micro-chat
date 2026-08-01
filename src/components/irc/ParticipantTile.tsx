@@ -12,9 +12,7 @@ interface ParticipantTileProps {
   speaking: boolean
   isAdmin: boolean
   volume: number
-  locallyMuted: boolean
   onVolumeChange: (vol: number) => void
-  onLocalMuteToggle: () => void
   onKick?: () => void
   onMicToggle?: () => void
   onAmountChange?: (amount: number) => void
@@ -26,8 +24,8 @@ interface ParticipantTileProps {
 export default function ParticipantTile({
   displayName, stream, isSelf,
   micOn, speaking, isAdmin,
-  volume, locallyMuted,
-  onVolumeChange, onLocalMuteToggle, onKick,
+  volume,
+  onVolumeChange, onKick,
   onMicToggle, onAmountChange, amount, onRecord, recording,
 }: ParticipantTileProps) {
   const [showVolume, setShowVolume] = useState(false)
@@ -64,7 +62,7 @@ export default function ParticipantTile({
   return (
     <div
       className={`relative flex flex-col items-center gap-2 rounded-xl p-3 transition-all duration-150 ${
-        speaking && !locallyMuted
+        speaking
           ? 'bg-emerald-500/10 ring-2 ring-emerald-400/60'
           : 'bg-surface-2 ring-1 '
       }`}
@@ -73,7 +71,7 @@ export default function ParticipantTile({
       <div className="relative">
         <div
           className={`w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold text-white select-none transition-shadow ${
-            speaking && !locallyMuted ? 'shadow-lg shadow-emerald-400/20' : ''
+            speaking ? 'shadow-lg shadow-emerald-400/20' : ''
           }`}
           style={{ backgroundColor: getNickColor(displayName) }}
           title={displayName}
@@ -81,8 +79,7 @@ export default function ParticipantTile({
           {initial}
         </div>
         {/* Speaking indicator */}
-        {!locallyMuted && (
-          <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 flex items-center gap-0.5">
+        <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 flex items-center gap-0.5">
             {micOn && speaking && Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
@@ -94,13 +91,7 @@ export default function ParticipantTile({
               />
             ))}
           </div>
-        )}
-        {/* Mute badge */}
-        {locallyMuted && (
-          <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-rose-500 flex items-center justify-center">
-            <VolumeX className="w-3 h-3 text-white" />
-          </div>
-        )}
+
       </div>
 
       {/* Spectrum analyzer */}
@@ -167,49 +158,37 @@ export default function ParticipantTile({
       {!isSelf && (
         <div className="flex items-center gap-1 mt-1">
           {/* Volume control */}
-          <div
-            className="relative"
-            onMouseEnter={() => setShowVolume(true)}
-            onMouseLeave={() => setShowVolume(false)}
-          >
+          <div className="relative">
             <button
-              onClick={() => {
-                if (locallyMuted) onLocalMuteToggle()
-                else setShowVolume(!showVolume)
+              onClick={() => setShowVolume(true)}
+              onMouseEnter={() => setShowVolume(true)}
+              onMouseLeave={() => {
+                // Don't close here — the popup's onMouseLeave handles it
               }}
-              className={`flex items-center justify-center w-6 h-6 rounded-md transition-colors ${
-                locallyMuted ? 'text-rose-400 bg-rose-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-2'
-              }`}
-              title={locallyMuted ? 'Activar audio' : 'Ajustar volumen'}
+              className="flex items-center justify-center w-6 h-6 rounded-md text-slate-400 hover:text-slate-200 hover:bg-surface-2 transition-colors"
+              title="Ajustar volumen"
             >
-              {locallyMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
+              <Volume2 className="w-3 h-3" />
             </button>
-            {showVolume && !locallyMuted && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-surface-2  rounded-lg p-2 shadow-xl z-50 flex flex-col items-center gap-1 animate-menu-tooltip">
+            {showVolume && (
+              <div
+                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-surface-2 rounded-lg p-2 shadow-xl z-50 flex flex-col items-center gap-1 animate-menu-tooltip"
+                onMouseEnter={() => setShowVolume(true)}
+                onMouseLeave={() => setShowVolume(false)}
+              >
                 <span className="text-[8px] text-slate-500">Vol.</span>
                 <input
                   type="range"
-                  min="0" max="100"
+                  min="0" max="200"
                   value={volume}
                   onChange={e => onVolumeChange(Number(e.target.value))}
                   className="w-16 h-1 accent-accent rotate-0"
                   style={{ writingMode: 'horizontal-tb' }}
                 />
-                <span className="text-[9px] text-slate-500 tabular-nums">{volume}</span>
+                <span className="text-[9px] text-slate-500 tabular-nums">{volume}%</span>
               </div>
             )}
           </div>
-
-          {/* Local mute toggle */}
-          <button
-            onClick={onLocalMuteToggle}
-            className={`flex items-center justify-center w-6 h-6 rounded-md transition-colors ${
-              locallyMuted ? 'text-rose-400 bg-rose-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-2'
-            }`}
-            title={locallyMuted ? 'Reactivar audio' : 'Silenciar localmente'}
-          >
-            {locallyMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
-          </button>
 
           {/* Kick (admin only) */}
           {isAdmin && onKick && (
