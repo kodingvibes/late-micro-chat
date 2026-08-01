@@ -12,9 +12,7 @@ interface ParticipantTileProps {
   speaking: boolean
   isAdmin: boolean
   volume: number
-  locallyMuted: boolean
   onVolumeChange: (vol: number) => void
-  onLocalMuteToggle: () => void
   onKick?: () => void
   onMicToggle?: () => void
   onAmountChange?: (amount: number) => void
@@ -26,8 +24,8 @@ interface ParticipantTileProps {
 export default function ParticipantTile({
   displayName, stream, isSelf,
   micOn, speaking, isAdmin,
-  volume, locallyMuted,
-  onVolumeChange, onLocalMuteToggle, onKick,
+  volume,
+  onVolumeChange, onKick,
   onMicToggle, onAmountChange, amount, onRecord, recording,
 }: ParticipantTileProps) {
   const [showVolume, setShowVolume] = useState(false)
@@ -63,17 +61,17 @@ export default function ParticipantTile({
 
   return (
     <div
-      className={`relative flex flex-col items-center gap-2 rounded-xl p-3 transition-all duration-150 ${
-        speaking && !locallyMuted
-          ? 'bg-emerald-500/10 ring-2 ring-emerald-400/60'
-          : 'bg-surface-2 ring-1 '
+      className={`relative flex flex-col items-center gap-2 rounded-2xl p-4 transition-all duration-200 ${
+        speaking
+          ? 'bg-white/10 backdrop-blur-lg shadow-lg shadow-emerald-500/10'
+          : 'bg-white/[0.06] backdrop-blur-md'
       }`}
     >
       {/* Avatar */}
       <div className="relative">
         <div
-          className={`w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold text-white select-none transition-shadow ${
-            speaking && !locallyMuted ? 'shadow-lg shadow-emerald-400/20' : ''
+          className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold text-white select-none transition-all duration-200 ${
+            speaking ? 'shadow-xl shadow-emerald-400/30 scale-105' : 'shadow-lg shadow-black/20'
           }`}
           style={{ backgroundColor: getNickColor(displayName) }}
           title={displayName}
@@ -81,9 +79,9 @@ export default function ParticipantTile({
           {initial}
         </div>
         {/* Speaking indicator */}
-        {!locallyMuted && (
-          <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 flex items-center gap-0.5">
-            {micOn && speaking && Array.from({ length: 4 }).map((_, i) => (
+        {micOn && speaking && (
+          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex items-center gap-0.5">
+            {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
                 className="w-1 bg-emerald-400 rounded-full animate-pulse"
@@ -95,12 +93,13 @@ export default function ParticipantTile({
             ))}
           </div>
         )}
-        {/* Mute badge */}
-        {locallyMuted && (
-          <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-rose-500 flex items-center justify-center">
-            <VolumeX className="w-3 h-3 text-white" />
-          </div>
-        )}
+      </div>
+
+      {/* Name */}
+      <div className="flex flex-col items-center min-w-0 max-w-full">
+        <span className="text-xs font-semibold text-slate-100 truncate max-w-[90px]">
+          {displayName}
+        </span>
       </div>
 
       {/* Spectrum analyzer */}
@@ -111,21 +110,14 @@ export default function ParticipantTile({
         className="w-full max-w-[80px]"
       />
 
-      {/* Name */}
-      <div className="flex flex-col items-center min-w-0 max-w-full">
-        <span className="text-xs font-medium text-slate-200 truncate max-w-[90px]">
-          {displayName}
-        </span>
-      </div>
-
       {/* Self controls */}
       {isSelf && (
-        <div className="flex flex-col items-center gap-1.5 w-full mt-1">
+        <div className="flex items-center justify-center gap-2 w-full mt-1">
           {onMicToggle && (
             <button
               onClick={onMicToggle}
               className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
-                micOn ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-2'
+                micOn ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400 hover:text-slate-200 hover:bg-white/10'
               }`}
               title={micOn ? 'Silenciar micrófono' : 'Activar micrófono'}
             >
@@ -150,7 +142,7 @@ export default function ParticipantTile({
               onMouseDown={onRecord}
               disabled={recording}
               className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
-                recording ? 'bg-red-500/20 text-red-300 animate-pulse' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-2'
+                recording ? 'bg-red-500/20 text-red-300 animate-pulse' : 'text-slate-400 hover:text-slate-200 hover:bg-white/10'
               }`}
               title={recording ? 'Grabando...' : 'Mantener para nota de voz'}
             >
@@ -165,60 +157,47 @@ export default function ParticipantTile({
 
       {/* Peer controls */}
       {!isSelf && (
-        <div className="flex items-center gap-1 mt-1">
+        <div className="flex items-center justify-center gap-2 w-full mt-1">
           {/* Volume control */}
-          <div
-            className="relative"
-            onMouseEnter={() => setShowVolume(true)}
-            onMouseLeave={() => setShowVolume(false)}
-          >
+          <div className="relative">
             <button
-              onClick={() => {
-                if (locallyMuted) onLocalMuteToggle()
-                else setShowVolume(!showVolume)
+              onClick={() => setShowVolume(true)}
+              onMouseEnter={() => setShowVolume(true)}
+              onMouseLeave={() => {
+                // Don't close here — the popup's onMouseLeave handles it
               }}
-              className={`flex items-center justify-center w-6 h-6 rounded-md transition-colors ${
-                locallyMuted ? 'text-rose-400 bg-rose-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-2'
-              }`}
-              title={locallyMuted ? 'Activar audio' : 'Ajustar volumen'}
+              className="flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/10 transition-colors"
+              title="Ajustar volumen"
             >
-              {locallyMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
+              <Volume2 className="w-3.5 h-3.5" />
             </button>
-            {showVolume && !locallyMuted && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-surface-2  rounded-lg p-2 shadow-xl z-50 flex flex-col items-center gap-1 animate-menu-tooltip">
-                <span className="text-[8px] text-slate-500">Vol.</span>
+            {showVolume && (
+              <div
+                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-slate-800/90 backdrop-blur-xl rounded-xl p-3 shadow-2xl z-50 flex flex-col items-center gap-1.5 animate-menu-tooltip border border-white/10"
+                onMouseEnter={() => setShowVolume(true)}
+                onMouseLeave={() => setShowVolume(false)}
+              >
+                <span className="text-[10px] font-medium text-slate-400">Volumen</span>
                 <input
                   type="range"
-                  min="0" max="100"
+                  min="0" max="200"
                   value={volume}
                   onChange={e => onVolumeChange(Number(e.target.value))}
-                  className="w-16 h-1 accent-accent rotate-0"
-                  style={{ writingMode: 'horizontal-tb' }}
+                  className="w-20 h-1 accent-accent"
                 />
-                <span className="text-[9px] text-slate-500 tabular-nums">{volume}</span>
+                <span className="text-[10px] font-medium text-slate-300 tabular-nums">{volume}%</span>
               </div>
             )}
           </div>
-
-          {/* Local mute toggle */}
-          <button
-            onClick={onLocalMuteToggle}
-            className={`flex items-center justify-center w-6 h-6 rounded-md transition-colors ${
-              locallyMuted ? 'text-rose-400 bg-rose-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-2'
-            }`}
-            title={locallyMuted ? 'Reactivar audio' : 'Silenciar localmente'}
-          >
-            {locallyMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
-          </button>
 
           {/* Kick (admin only) */}
           {isAdmin && onKick && (
             <button
               onClick={onKick}
-              className="flex items-center justify-center w-6 h-6 rounded-md text-slate-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
+              className="flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
               title="Expulsar del canal de voz"
             >
-              <ShieldX className="w-3 h-3" />
+              <ShieldX className="w-3.5 h-3.5" />
             </button>
           )}
         </div>

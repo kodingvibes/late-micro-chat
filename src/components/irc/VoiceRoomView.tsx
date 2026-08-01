@@ -55,16 +55,50 @@ export default function VoiceRoomView({
   const gateRef = useRef<GainNode | null>(null)
 
   const level = useAudioLevel(vadStream)
-  const vadOpen = vadOn && !pttActive && level >= vadThreshold
+  const vadHoldRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [vadOpen, setVadOpen] = useState(false)
   const micEnabled = pttActive || vadOpen
+
+  // ponytail: VAD with hold timer. When the level drops below threshold,
+  // we wait 400ms before closing. This prevents the mic from cutting off
+  // between syllables or brief pauses in speech.
+  useEffect(() => {
+    if (!vadOn || pttActive) return
+    if (level >= vadThreshold) {
+      // Speaking — open immediately, cancel any pending close
+      if (vadHoldRef.current) {
+        clearTimeout(vadHoldRef.current)
+        vadHoldRef.current = null
+      }
+      setVadOpen(true)
+    } else if (vadOpen) {
+      // Silence detected but we hold for 400ms before closing
+      if (!vadHoldRef.current) {
+        vadHoldRef.current = setTimeout(() => {
+          vadHoldRef.current = null
+          setVadOpen(false)
+        }, 400)
+      }
+    }
+    return () => {
+      if (vadHoldRef.current) clearTimeout(vadHoldRef.current)
+    }
+  }, [level, vadThreshold, vadOn, pttActive, vadOpen])
+
+  // Reset VAD when toggled off or PTT takes over
+  useEffect(() => {
+    if (!vadOn || pttActive) {
+      if (vadHoldRef.current) {
+        clearTimeout(vadHoldRef.current)
+        vadHoldRef.current = null
+      }
+      setVadOpen(false)
+    }
+  }, [vadOn, pttActive])
 
   const voiceRoom = useVoiceRoom(sendViaWs, localStream, onVoiceMessage)
 
-  // State, not refs: PeerAudio renders from these, so a change has to
-  // re-render. They were refs when only ParticipantTile read them
-  // imperatively.
-  const [peerVolumes, setPeerVolumes] = useState<Map<number, number>>(new Map())
-  const [peerMuted, setPeerMuted] = useState<Map<number, boolean>>(new Map())
+  const peerVolumes = useRef<Map<number, number>>(new Map())
 
   // ponytail: do not announce ourselves until the mic has resolved.
   //
@@ -225,8 +259,6 @@ export default function VoiceRoomView({
     if (!micReady || collapsed) return
     const down = (e: KeyboardEvent) => {
       if (e.code !== 'Space' || e.repeat) return
-      const t = e.target as HTMLElement | null
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
       e.preventDefault()
       pttPress()
     }
@@ -276,8 +308,8 @@ export default function VoiceRoomView({
     <PeerAudio
       key={p.id}
       stream={p.stream}
-      volume={peerVolumes.get(p.id) ?? 100}
-      muted={peerMuted.get(p.id) ?? false}
+      volume={peerVolumes.current.get(p.id) ?? 100}
+      muted={false}
     />
   ))
 
@@ -325,7 +357,7 @@ export default function VoiceRoomView({
         onExpand={() => onExpand?.()}
         onLeave={onLeave}
       />
-    <div className="flex flex-col h-full bg-surface-2">
+    <div className="flex flex-col h-full bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950">
       {peerAudio}
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5  ">
@@ -366,14 +398,11 @@ export default function VoiceRoomView({
               speaking={micEnabled && voiceRoom.peers.length > 0}
               isAdmin={false}
               volume={100}
-              locallyMuted={false}
               onVolumeChange={() => {}}
-              onLocalMuteToggle={() => {}}
             />
             {/* Peer tiles */}
             {peers.map(p => {
-              const vol = peerVolumes.get(p.id) ?? 100
-              const muted = peerMuted.get(p.id) ?? false
+              const vol = peerVolumes.current.get(p.id) ?? 100
               return (
                 <ParticipantTile
                   key={p.id}
@@ -384,15 +413,9 @@ export default function VoiceRoomView({
                   speaking={p.speaking}
                   isAdmin={isAdmin}
                   volume={vol}
-                  locallyMuted={muted}
                   onVolumeChange={(v) => {
-                    setPeerVolumes(prev => new Map(prev).set(p.id, v))
+                    peerVolumes.current.set(p.id, v)
                     sendViaWs({ type: 'voice.peer_volume', to: p.id, volume: v })
-                  }}
-                  onLocalMuteToggle={() => {
-                    const next = !peerMuted.get(p.id)
-                    setPeerMuted(prev => new Map(prev).set(p.id, next))
-                    sendViaWs({ type: 'voice.peer_local_mute', to: p.id, muted: next })
                   }}
                   onKick={isAdmin ? () => handleKick(p.id) : undefined}
                 />

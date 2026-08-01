@@ -9,24 +9,30 @@ export interface RadioAMPreset {
   peakingFreq: number
   peakingGain: number
   peakingQ: number
-  gateThreshold: number
+  gateThresholdOpen: number
+  gateThresholdClose: number
+  gateAttack: number
+  gateRelease: number
   waveShaperCurve: Float32Array | null
 }
 
 export type PresetName = 'radio-am'
 
 export const RADIO_AM_PRESET: RadioAMPreset = {
-  threshold: -30,
-  ratio: 12,
-  attack: 0.003,
-  release: 0.25,
-  knee: 0,
-  makeupGain: 6,
+  threshold: -40,
+  ratio: 4,
+  attack: 0.01,
+  release: 0.15,
+  knee: 10,
+  makeupGain: 12,
   highpassFreq: 100,
   peakingFreq: 2500,
   peakingGain: 4,
   peakingQ: 1,
-  gateThreshold: -45,
+  gateThresholdOpen: -40,
+  gateThresholdClose: -50,
+  gateAttack: 0.02,
+  gateRelease: 0.15,
   waveShaperCurve: makeAMCurve(0.5),
 }
 

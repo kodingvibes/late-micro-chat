@@ -670,7 +670,13 @@ export function Irc() {
     // the server has messages from a previous session.
     const ch = channels.get(channelId)
     if (ch && ch.messages.length === 0) {
-      clientRef.current?.loadHistory(channelId).catch(() => {})
+      clientRef.current?.loadHistory(channelId).then(() => {
+        // Sync React state with the updated client data so the
+        // voice room's MessageList re-renders with messages.
+        if (clientRef.current) {
+          setChannels(new Map(clientRef.current.channels))
+        }
+      }).catch(() => {})
     }
   }, [channels])
 
