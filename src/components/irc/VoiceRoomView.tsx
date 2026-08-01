@@ -55,8 +55,46 @@ export default function VoiceRoomView({
   const gateRef = useRef<GainNode | null>(null)
 
   const level = useAudioLevel(vadStream)
-  const vadOpen = vadOn && !pttActive && level >= vadThreshold
+  const vadHoldRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [vadOpen, setVadOpen] = useState(false)
   const micEnabled = pttActive || vadOpen
+
+  // ponytail: VAD with hold timer. When the level drops below threshold,
+  // we wait 400ms before closing. This prevents the mic from cutting off
+  // between syllables or brief pauses in speech.
+  useEffect(() => {
+    if (!vadOn || pttActive) return
+    if (level >= vadThreshold) {
+      // Speaking — open immediately, cancel any pending close
+      if (vadHoldRef.current) {
+        clearTimeout(vadHoldRef.current)
+        vadHoldRef.current = null
+      }
+      setVadOpen(true)
+    } else if (vadOpen) {
+      // Silence detected but we hold for 400ms before closing
+      if (!vadHoldRef.current) {
+        vadHoldRef.current = setTimeout(() => {
+          vadHoldRef.current = null
+          setVadOpen(false)
+        }, 400)
+      }
+    }
+    return () => {
+      if (vadHoldRef.current) clearTimeout(vadHoldRef.current)
+    }
+  }, [level, vadThreshold, vadOn, pttActive, vadOpen])
+
+  // Reset VAD when toggled off or PTT takes over
+  useEffect(() => {
+    if (!vadOn || pttActive) {
+      if (vadHoldRef.current) {
+        clearTimeout(vadHoldRef.current)
+        vadHoldRef.current = null
+      }
+      setVadOpen(false)
+    }
+  }, [vadOn, pttActive])
 
   const voiceRoom = useVoiceRoom(sendViaWs, localStream, onVoiceMessage)
 
