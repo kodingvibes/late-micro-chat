@@ -41,13 +41,15 @@ const VAD_THRESHOLD_DEFAULT = 0.025
 
 export default function VoiceRoomView({
   channel, wsConnected = true, collapsed = false, onExpand, myUserId, myRole, nick, nickMap,
-  sendViaWs, onVoiceMessage, onLeave, radioCurrent,
+  sendViaWs, onVoiceMessage, onSendMessage, onLeave, radioCurrent,
 }: VoiceRoomViewProps) {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
 
   const [pttActive, setPttActive] = useState(false)
   const [vadOn, setVadOn] = useState(false)
   const [vadThreshold, setVadThreshold] = useState(VAD_THRESHOLD_DEFAULT)
+  const [autoThreshold, setAutoThreshold] = useState(true)
+  const noiseFloorRef = useRef<number[]>([])
   const [micReady, setMicReady] = useState(false)
   const [micError, setMicError] = useState<string | null>(null)
   const [vadStream, setVadStream] = useState<MediaStream | null>(null)
@@ -98,6 +100,32 @@ export default function VoiceRoomView({
       }
     }
   }, [level, vadThreshold, vadOn, pttActive])
+
+  // Adaptive threshold: when autoThreshold is on, track the noise floor
+  // during silence and set the threshold slightly above it.
+  useEffect(() => {
+    if (!vadOn || !autoThreshold || pttActive) {
+      noiseFloorRef.current = []
+      return
+    }
+    // Collect samples when the gate is closed (not speaking)
+    if (!vadOpen && level > 0.001) {
+      noiseFloorRef.current.push(level)
+      if (noiseFloorRef.current.length > 150) {
+        noiseFloorRef.current = noiseFloorRef.current.slice(-150)
+      }
+      if (noiseFloorRef.current.length >= 30) {
+        const sorted = [...noiseFloorRef.current].sort((a, b) => a - b)
+        const noiseFloor = sorted[Math.floor(sorted.length * 0.15)]
+        const newThreshold = Math.max(noiseFloor * 2.8, 0.012)
+        setVadThreshold(prev => {
+          // Only update if the change is meaningful (avoid jitter)
+          if (Math.abs(prev - newThreshold) / prev > 0.1) return newThreshold
+          return prev
+        })
+      }
+    }
+  }, [level, vadOn, autoThreshold, pttActive, vadOpen])
 
   const voiceRoom = useVoiceRoom(sendViaWs, localStream, onVoiceMessage)
 
@@ -332,6 +360,8 @@ export default function VoiceRoomView({
         onPttUp={pttRelease}
         vadOn={vadOn}
         onVadChange={setVadOn}
+        autoThreshold={autoThreshold}
+        onAutoThresholdChange={setAutoThreshold}
         showingRoom={!collapsed}
         onExpand={() => onExpand?.()}
         onLeave={onLeave}
@@ -354,6 +384,8 @@ export default function VoiceRoomView({
         onPttUp={pttRelease}
         vadOn={vadOn}
         onVadChange={setVadOn}
+        autoThreshold={autoThreshold}
+        onAutoThresholdChange={setAutoThreshold}
         showingRoom={!collapsed}
         onExpand={() => onExpand?.()}
         onLeave={onLeave}

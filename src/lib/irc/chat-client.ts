@@ -343,19 +343,31 @@ export class ChatClient {
 
   /** Update the local `active` flag and per-channel activeCount for
    *  `userId` across every channel we already know about. If the user
-   *  is not in any loaded channel's member list, this is a no-op. */
+   *  is not in any loaded channel's member list, force-load members
+   *  for the current channel so the presence dot appears immediately. */
   private applyPresence(userId: number, online: boolean) {
+    let found = false
     for (const ch of this.channels.values()) {
       if (!ch.members) continue
       const idx = ch.members.findIndex(m => m.id === userId)
-      if (idx >= 0 && ch.members[idx].active !== online) {
-        this.updateChannelState(ch.id, 'members', (members) => {
-          const next = members!.slice()
-          next[idx] = { ...next[idx], active: online }
-          return next
-        })
-        this.updateChannelState(ch.id, 'activeCount', (cur) => Math.max(0, (cur ?? 0) + (online ? 1 : -1)))
+      if (idx >= 0) {
+        found = true
+        if (ch.members[idx].active !== online) {
+          this.updateChannelState(ch.id, 'members', (members) => {
+            const next = members!.slice()
+            next[idx] = { ...next[idx], active: online }
+            return next
+          })
+          this.updateChannelState(ch.id, 'activeCount', (cur) => Math.max(0, (cur ?? 0) + (online ? 1 : -1)))
+        }
       }
+    }
+    // If the user wasn't found in any loaded member list, force-load
+    // the current channel's members so the presence dot appears.
+    // Always reload when not found — the member list may be stale
+    // (e.g. a new user who just connected for the first time).
+    if (!found && this.currentChannelId !== null) {
+      this.loadMembers(this.currentChannelId).catch(() => {})
     }
   }
 

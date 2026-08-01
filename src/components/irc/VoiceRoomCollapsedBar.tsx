@@ -1,38 +1,52 @@
 import { createPortal } from 'react-dom'
 import { Mic, MicOff, PhoneOff, Activity } from '@/components/icons'
-import Avatar from './Avatar'
 
-/**
- * The voice call's controls, always docked at the bottom while a call is
- * up -- whether you are looking at the participant grid or reading a
- * text channel. Push-to-talk, voice activation and hang-up live here and
- * only here, so the main pane is free to be the grid or the channel and
- * the controls never move under you.
- *
- * Portaled onto <body> and fixed to the bottom. When the radio MiniPlayer
- * is also visible (radioActive=true), the voice bar sits 56px above the
- * bottom so both bars stack without overlapping. The chat layout reserves
- * 112px (`pb-28` in IrcPage) when both are visible, or 56px (`pb-14`)
- * for either one alone.
- *
- * Presentational on purpose: VoiceRoomView owns the call and stays
- * mounted regardless of what this renders, because unmounting it would
- * hang up.
- */
+function ToggleSwitch({
+  checked,
+  onChange,
+  disabled,
+  ariaLabel,
+  color = 'emerald',
+}: {
+  checked: boolean
+  onChange: (v: boolean) => void
+  disabled?: boolean
+  ariaLabel: string
+  color?: 'emerald' | 'accent'
+}) {
+  const colorClass = color === 'emerald' ? 'bg-emerald-500' : 'bg-indigo-500'
+  return (
+    <button
+      role="switch"
+      aria-checked={checked}
+      aria-label={ariaLabel}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ${
+        checked ? colorClass : 'bg-slate-600'
+      } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+    >
+      <span
+        className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+          checked ? 'translate-x-[18px]' : 'translate-x-[2px]'
+        }`}
+      />
+    </button>
+  )
+}
 export interface VoiceRoomCollapsedBarProps {
   roomName: string
-  /** Display names, self first. Rendered as an avatar stack. */
   names: string[]
   totalConnected: number
   micReady: boolean
   micEnabled: boolean
   micError: string | null
-  /** Push-to-talk, held down. */
   onPttDown: () => void
   onPttUp: () => void
   vadOn: boolean
   onVadChange: (on: boolean) => void
-  /** True when the grid is already on screen, so the name is not a link. */
+  autoThreshold: boolean
+  onAutoThresholdChange: (on: boolean) => void
   showingRoom: boolean
   onExpand: () => void
   onLeave: () => void
@@ -40,25 +54,27 @@ export interface VoiceRoomCollapsedBarProps {
   radioActive?: boolean
 }
 
-const MAX_AVATARS = 4
+const MAX_AVATARS = 3
 
 export default function VoiceRoomCollapsedBar({
   roomName, names, totalConnected,
   micReady, micEnabled, micError, onPttDown, onPttUp,
-  vadOn, onVadChange, showingRoom, onExpand, onLeave, radioActive,
+  vadOn, onVadChange, autoThreshold, onAutoThresholdChange,
+  showingRoom, onExpand, onLeave, radioActive,
 }: VoiceRoomCollapsedBarProps) {
   return createPortal(
     <div
-      className={`fixed left-0 right-0 z-50 h-14 bg-surface-3 backdrop-blur shadow-2xl flex items-center gap-2 sm:gap-3 px-2 sm:px-4 animate-slide-in-from-bottom ${
+      className={`fixed left-0 right-0 z-50 h-14 bg-surface-3 backdrop-blur shadow-2xl flex items-center gap-1 sm:gap-2 px-2 sm:px-3 animate-slide-in-from-bottom ${
         radioActive ? 'bottom-14' : 'bottom-0'
       }`}
       role="region"
       aria-label="Llamada de voz en curso"
     >
+      {/* Left: room info — compact */}
       <button
         onClick={onExpand}
         disabled={showingRoom}
-        className="flex items-center gap-2 min-w-0 flex-1 text-left transition-opacity enabled:hover:opacity-80 disabled:cursor-default"
+        className="flex items-center gap-1.5 min-w-0 max-w-[100px] sm:max-w-[160px] text-left transition-opacity enabled:hover:opacity-80 disabled:cursor-default flex-shrink"
         title={showingRoom ? undefined : 'Volver a la sala de voz'}
       >
         <span className="text-base flex-shrink-0">🔊</span>
@@ -68,18 +84,6 @@ export default function VoiceRoomCollapsedBar({
           </span>
           <span className="text-sm font-medium text-slate-100 truncate">{roomName}</span>
         </span>
-        {/* Same Avatar + overflow stack ChannelList uses on voice rows, so
-            a person is the same colour here as everywhere else. */}
-        <span className="flex items-center -space-x-2 flex-shrink-0 ml-1">
-          {names.slice(0, MAX_AVATARS).map((name, i) => (
-            <Avatar key={i} nick={name} size="sm" />
-          ))}
-          {totalConnected > MAX_AVATARS && (
-            <span className="w-7 h-7 rounded-lg bg-surface-2 flex items-center justify-center text-[10px] font-semibold text-slate-300 flex-shrink-0">
-              +{totalConnected - MAX_AVATARS}
-            </span>
-          )}
-        </span>
       </button>
 
       {micError ? (
@@ -88,53 +92,67 @@ export default function VoiceRoomCollapsedBar({
         </span>
       ) : (
         <>
-          {/* Hold to talk. Same gesture as the old in-pane button, just
-              somewhere that does not disappear when you open a channel. */}
-          <button
-            onMouseDown={onPttDown}
-            onMouseUp={onPttUp}
-            onMouseLeave={onPttUp}
-            onTouchStart={(e) => { e.preventDefault(); onPttDown() }}
-            onTouchEnd={(e) => { e.preventDefault(); onPttUp() }}
-            disabled={!micReady}
-            className={`flex items-center gap-1.5 px-3 h-9 rounded-full text-xs font-semibold flex-shrink-0 select-none transition-all disabled:opacity-40 ${
-              micEnabled
-                ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
-                : 'bg-surface-2 text-slate-200 hover:bg-surface-1 active:scale-95'
-            }`}
-            title={micReady ? 'Mantené presionado o Space para hablar' : 'Sin micrófono'}
-          >
-            {micEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-            <span className="hidden md:inline">{micEnabled ? 'Hablando…' : 'Hablar'}</span>
-          </button>
-
-          <label
-            className={`items-center gap-1.5 text-[11px] cursor-pointer select-none flex-shrink-0 hidden sm:flex ${
-              micReady ? 'text-slate-400' : 'text-slate-600 cursor-not-allowed'
-            }`}
-            title="Auto-detectar voz"
-          >
-            <input
-              type="checkbox"
-              checked={vadOn}
+          {/* Center: Big PTT button */}
+          <div className="flex-1 flex items-center justify-center min-w-0">
+            <button
+              onMouseDown={onPttDown}
+              onMouseUp={onPttUp}
+              onMouseLeave={onPttUp}
+              onTouchStart={(e) => { e.preventDefault(); onPttDown() }}
+              onTouchEnd={(e) => { e.preventDefault(); onPttUp() }}
               disabled={!micReady}
-              onChange={e => onVadChange(e.target.checked)}
-              className="accent-accent"
-            />
-            <Activity className="w-3 h-3" />
-            <span className="hidden lg:inline">Auto</span>
-          </label>
+              className={`flex items-center justify-center gap-1.5 px-5 h-10 sm:h-11 rounded-full text-xs sm:text-sm font-semibold flex-shrink-0 select-none transition-all disabled:opacity-40 min-w-[72px] sm:min-w-[100px] ${
+                micEnabled
+                  ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30 scale-105'
+                  : 'bg-surface-2 text-slate-200 hover:bg-surface-1 active:scale-95'
+              }`}
+              title={micReady ? 'Mantené presionado o Space para hablar' : 'Sin micrófono'}
+            >
+              {micEnabled ? <Mic className="w-4 h-4 sm:w-5 sm:h-5" /> : <MicOff className="w-4 h-4 sm:w-5 sm:h-5" />}
+              <span className="hidden sm:inline">{micEnabled ? 'Hablando…' : 'Hablar'}</span>
+            </button>
+          </div>
+
+          {/* Right: VAD toggles + Salir */}
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+            {/* VAD toggle switch */}
+            <div className="flex items-center gap-1" title="Auto-detectar voz">
+              <ToggleSwitch
+                checked={vadOn}
+                onChange={onVadChange}
+                disabled={!micReady}
+                ariaLabel="Auto-detectar voz"
+              />
+              <Activity className={`w-3 h-3 ${vadOn ? 'text-emerald-400' : 'text-slate-500'}`} />
+            </div>
+
+            {/* Auto-threshold toggle (solo cuando VAD está activo) */}
+            {vadOn && (
+              <div className="flex items-center gap-1" title="Umbral automático">
+                <ToggleSwitch
+                  checked={autoThreshold}
+                  onChange={onAutoThresholdChange}
+                  disabled={!micReady}
+                  ariaLabel="Umbral automático"
+                  color="accent"
+                />
+                <span className={`text-[10px] font-mono ${autoThreshold ? 'text-indigo-400' : 'text-slate-500'}`}>
+                  A
+                </span>
+              </div>
+            )}
+
+            <button
+              onClick={onLeave}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 transition-colors flex-shrink-0"
+              aria-label="Salir de la sala de voz"
+            >
+              <PhoneOff className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Salir</span>
+            </button>
+          </div>
         </>
       )}
-
-      <button
-        onClick={onLeave}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 transition-colors flex-shrink-0"
-        aria-label="Salir de la sala de voz"
-      >
-        <PhoneOff className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline">Salir</span>
-      </button>
     </div>,
     document.body,
   )
