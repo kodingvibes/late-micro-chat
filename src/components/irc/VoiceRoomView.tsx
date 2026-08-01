@@ -252,8 +252,14 @@ export default function VoiceRoomView({
   }, [micReady])
   const pttRelease = useCallback(() => setPttActive(false), [])
 
+  // Space-to-talk only while the room is on screen. The component now
+  // stays mounted for the whole call, so an unguarded global handler
+  // meant that reading a text channel and pressing Space to scroll
+  // opened your mic and swallowed the scroll. Typing was already safe
+  // (inputs are skipped); browsing was not. Use the hold button in the
+  // bar when you are somewhere else.
   useEffect(() => {
-    if (!micReady) return
+    if (!micReady || collapsed) return
     const down = (e: KeyboardEvent) => {
       if (e.code !== 'Space' || e.repeat) return
       // Don't capture Space when typing in an input, textarea, or
@@ -276,7 +282,7 @@ export default function VoiceRoomView({
       window.removeEventListener('keyup', up)
       window.removeEventListener('blur', blur)
     }
-  }, [micReady, pttPress, pttRelease])
+  }, [micReady, collapsed, pttPress, pttRelease])
 
   const peers: PeerState[] = voiceRoom.peers
   const totalConnected = peers.length + (micReady ? 1 : 0)
