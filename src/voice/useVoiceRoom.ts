@@ -160,7 +160,7 @@ export function useVoiceRoom(
 
     // Handle incoming signaling
     unsubscribes.push(
-      signaling.on('peers', (peers: Array<{ user_id: number; display_name: string }> | number[]) => {
+      signaling.on('peers', async (peers: Array<{ user_id: number; display_name: string }> | number[]) => {
         const list = Array.isArray(peers)
           ? peers.map(p => typeof p === 'number' ? { user_id: p, display_name: '' } : p)
           : []
@@ -174,7 +174,7 @@ export function useVoiceRoom(
     )
 
     unsubscribes.push(
-      signaling.on('peer_joined', (data: { user_id: number; display_name: string }) => {
+      signaling.on('peer_joined', async (data: { user_id: number; display_name: string }) => {
         vdRecord('signaling.peer_joined', data)
         addPeer(data.user_id, data.display_name || `User ${data.user_id}`, true)
       }),
