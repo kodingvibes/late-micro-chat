@@ -3,10 +3,33 @@ import { voiceError } from './log'
 const ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'stun:stun2.l.google.com:19302' },
-  { urls: 'stun:stun3.l.google.com:19302' },
-  { urls: 'stun:stun4.l.google.com:19302' },
 ]
+
+// Populated from the backend on first join. Cached for the page session.
+let _turnServers: RTCIceServer[] | null = null
+let _turnFetchPromise: Promise<RTCIceServer[]> | null = null
+
+async function fetchTurnServers(): Promise<RTCIceServer[]> {
+  if (_turnServers) return _turnServers
+  if (_turnFetchPromise) return _turnFetchPromise
+  _turnFetchPromise = (async () => {
+    try {
+      const res = await fetch('/api/chat/turn-config')
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      const servers: RTCIceServer[] = data.servers ?? []
+      _turnServers = servers
+      return servers
+    } catch {
+      return []
+    }
+  })()
+  return _turnFetchPromise
+}
+
+// Kick off the TURN config fetch at module load time so it's ready
+// by the time the first peer is created.
+const _turnReady: Promise<RTCIceServer[]> = fetchTurnServers()
 
 export interface VoicePeerCallbacks {
   onIceCandidate: (candidate: string) => void
@@ -19,14 +42,28 @@ export class VoicePeer {
   private callbacks: VoicePeerCallbacks
   private pendingIce: string[] = []
 
-  constructor(
+  static async create(
+    peerId: number,
+    isInitiator: boolean,
+    callbacks: VoicePeerCallbacks,
+    localStream?: MediaStream,
+  ): Promise<VoicePeer> {
+    const turnServers = await _turnReady
+    const iceServers = turnServers.length > 0
+      ? [...ICE_SERVERS, ...turnServers]
+      : ICE_SERVERS
+    return new VoicePeer(peerId, isInitiator, callbacks, localStream, iceServers)
+  }
+
+  private constructor(
     private peerId: number,
     _isInitiator: boolean,
     callbacks: VoicePeerCallbacks,
     localStream?: MediaStream,
+    iceServers?: RTCIceServer[],
   ) {
     this.callbacks = callbacks
-    this.pc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
+    this.pc = new RTCPeerConnection({ iceServers: iceServers ?? ICE_SERVERS })
 
     this.pc.onicecandidate = (e) => {
       if (e.candidate) {

@@ -86,7 +86,7 @@ export function useVoiceRoom(
       setPeers(prev => prev.filter(x => x.id !== id))
     }
 
-    const addPeer = (id: number, displayName: string, initiator: boolean) => {
+    const addPeer = async (id: number, displayName: string, initiator: boolean) => {
       const streamNow = localStreamRef.current
       vdRecord('addPeer', { id, displayName, initiator, hasLocalStream: !!streamNow })
       const existing = peersRef.current.get(id)
@@ -102,7 +102,7 @@ export function useVoiceRoom(
         }
       }
 
-      const peer = new VoicePeer(
+      const peer = await VoicePeer.create(
         id,
         initiator,
         {
@@ -119,20 +119,6 @@ export function useVoiceRoom(
           onConnectionState: (state) => {
             vdRecord('peer.connectionState', { id, state })
             if (state === 'disconnected' || state === 'failed') {
-              // Keep the peer in the map while we try to recover: the
-              // answer to our ICE-restart offer is routed by looking the
-              // id up in peersRef, so deleting first made the restart
-              // structurally unable to complete. Only tear down on
-              // 'failed', and only once the restart has been ruled out.
-              //
-              // Only the initiator restarts. Both ends see 'disconnected'
-              // on the same blip and both would be in `stable`, so
-              // dropping this gate means both createOffer and both send:
-              // each then gets an offer while in `have-local-offer`,
-              // setRemoteDescription throws with no rollback, and the
-              // peer never recovers. Exactly one side driving is the
-              // cheapest tie-break, and it is the side that offered
-              // originally. The answerer just waits for the new offer.
               if (initiator) {
                 peer.restartIce()
                   .then(sdp => {
@@ -144,7 +130,6 @@ export function useVoiceRoom(
                     if (state === 'failed') dropPeer(id)
                   })
               } else if (state === 'failed') {
-                // Nothing to wait for any more.
                 dropPeer(id)
               }
             }
