@@ -132,7 +132,12 @@ export default function ParticipantTile({
                   <span className="text-[10px] font-medium text-slate-400">Volumen</span>
                   <input
                     type="range"
-                    min="0" max="200"
+                    // 0-100, not 0-200. The boost half never worked:
+                    // it scaled a Web Audio copy while a second,
+                    // un-scaled copy of the same peer played alongside
+                    // it, so "200%" was neither 2x nor reproducible.
+                    // An <audio> element's volume tops out at 1.
+                    min="0" max="100"
                     value={volume}
                     onChange={e => onVolumeChange(Number(e.target.value))}
                     className="w-20 h-1 accent-accent"

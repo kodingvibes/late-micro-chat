@@ -100,6 +100,14 @@ export default function VoiceRoomCollapsedBar({
               onMouseLeave={onPttUp}
               onTouchStart={(e) => { e.preventDefault(); onPttDown() }}
               onTouchEnd={(e) => { e.preventDefault(); onPttUp() }}
+              // The phone takes the touch away without ever sending
+              // touchend: switching apps, pressing home, an incoming
+              // call, or rotating the device mid-hold all fire
+              // touchcancel instead. Without this the mic stayed open
+              // for the rest of the call. The window 'blur' fallback
+              // does not cover it -- that effect is disabled while the
+              // call is collapsed, which is exactly this bar.
+              onTouchCancel={() => onPttUp()}
               disabled={!micReady}
               className={`flex items-center justify-center gap-1.5 px-5 h-10 sm:h-11 rounded-full text-xs sm:text-sm font-semibold flex-shrink-0 select-none transition-all disabled:opacity-40 min-w-[72px] sm:min-w-[100px] ${
                 micEnabled

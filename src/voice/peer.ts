@@ -9,6 +9,27 @@ const ICE_SERVERS: RTCIceServer[] = [
 let _turnServers: RTCIceServer[] | null = null
 let _turnFetchPromise: Promise<RTCIceServer[]> | null = null
 
+/**
+ * Also offer the relay over TCP.
+ *
+ * The backend returns a single bare `turn:host:3478`, and libwebrtc
+ * reads a missing ?transport= as UDP-only. Mobile carriers and guest
+ * wifi commonly block outbound UDP 3478 while leaving TCP open, so
+ * those users had a TURN server they could never actually reach --
+ * which looks exactly like "the call connects to nobody".
+ *
+ * ponytail: derived on the client because the URL lives in a prod env
+ * var. Proper fix is for /api/chat/turn-config to return both entries
+ * (and a turns: one once 5349 is open). Only rewrites a plain `turn:`
+ * URL that carries no query of its own, so a server that starts
+ * sending its own transports is left alone.
+ */
+function withTcpFallback(s: RTCIceServer): RTCIceServer[] {
+  const url = typeof s.urls === 'string' ? s.urls : null
+  if (!url || !url.startsWith('turn:') || url.includes('?')) return [s]
+  return [s, { ...s, urls: `${url}?transport=tcp` }]
+}
+
 async function fetchTurnServers(): Promise<RTCIceServer[]> {
   if (_turnServers) return _turnServers
   if (_turnFetchPromise) return _turnFetchPromise
@@ -17,19 +38,28 @@ async function fetchTurnServers(): Promise<RTCIceServer[]> {
       const res = await fetch('/api/chat/turn-config')
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
-      const servers: RTCIceServer[] = data.servers ?? []
+      const servers: RTCIceServer[] = (data.servers ?? []).flatMap(withTcpFallback)
       _turnServers = servers
       return servers
-    } catch {
+    } catch (err) {
+      // Clear the cached promise so the next join retries. This used
+      // to return [] and keep the rejected promise forever, so a
+      // single blip during page load -- exactly when a phone is
+      // handing over between wifi and cell -- silently downgraded the
+      // whole page session to STUN-only. On a carrier NAT that means
+      // the call connects to nobody, with no error anywhere.
+      _turnFetchPromise = null
+      voiceError('TURN config fetch failed, falling back to STUN only', { err })
       return []
     }
   })()
   return _turnFetchPromise
 }
 
-// Kick off the TURN config fetch at module load time so it's ready
-// by the time the first peer is created.
-const _turnReady: Promise<RTCIceServer[]> = fetchTurnServers()
+// Warm the cache at module load so the first peer usually doesn't wait
+// on the round trip. Result deliberately discarded -- create() calls
+// the same function and gets the in-flight promise or the cached value.
+void fetchTurnServers()
 
 export interface VoicePeerCallbacks {
   onIceCandidate: (candidate: string) => void
@@ -48,7 +78,11 @@ export class VoicePeer {
     callbacks: VoicePeerCallbacks,
     localStream?: MediaStream,
   ): Promise<VoicePeer> {
-    const turnServers = await _turnReady
+    // Was `await _turnReady`, a module-load constant, which pinned
+    // every peer for the page session to the result of that one fetch.
+    // Calling the function reuses the cached success and retries a
+    // failure.
+    const turnServers = await fetchTurnServers()
     const iceServers = turnServers.length > 0
       ? [...ICE_SERVERS, ...turnServers]
       : ICE_SERVERS

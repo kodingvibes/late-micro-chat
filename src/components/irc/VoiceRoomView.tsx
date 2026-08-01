@@ -41,7 +41,7 @@ const VAD_THRESHOLD_DEFAULT = 0.025
 
 export default function VoiceRoomView({
   channel, wsConnected = true, collapsed = false, onExpand, myUserId, myRole, nick, nickMap,
-  sendViaWs, onVoiceMessage, onSendMessage, onLeave, radioCurrent,
+  sendViaWs, onVoiceMessage, onLeave, radioCurrent,
 }: VoiceRoomViewProps) {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
 
@@ -61,10 +61,12 @@ export default function VoiceRoomView({
   const vadOpenRef = useRef(false)
   const [vadOpen, setVadOpen] = useState(false)
   const micEnabled = pttActive || vadOpen
+  const micEnabledRef = useRef(false)
 
-  // Sync ref with state so the effect always reads the latest value
-  // without depending on `vadOpen` in deps (which would cause re-render loops).
+  // Sync refs with state so the effects always read the latest value
+  // without depending on them in deps (which would cause re-render loops).
   vadOpenRef.current = vadOpen
+  micEnabledRef.current = micEnabled
 
   // ponytail: VAD with hold timer. When the level drops below threshold,
   // we wait 400ms before closing. This prevents the mic from cutting off
@@ -129,7 +131,12 @@ export default function VoiceRoomView({
 
   const voiceRoom = useVoiceRoom(sendViaWs, localStream, onVoiceMessage)
 
-  const peerVolumes = useRef<Map<number, number>>(new Map())
+  // State, not a ref. As a ref the slider only reached PeerAudio when
+  // something else happened to re-render this component -- in practice
+  // the rAF level meter. Deny the mic and there is no meter, so the
+  // slider froze for exactly the listen-only users the code goes out of
+  // its way to support.
+  const [peerVolumes, setPeerVolumes] = useState<Map<number, number>>(new Map())
 
   // ponytail: do not announce ourselves until the mic has resolved.
   //
@@ -174,12 +181,19 @@ export default function VoiceRoomView({
           stream.getTracks().forEach(t => t.stop())
           return
         }
-        const liveTrack = stream.getAudioTracks()[0]
-        const vadTrack = liveTrack?.clone() ?? null
-        if (vadTrack) {
-          vadTrack.enabled = true
-          setVadStream(new MediaStream([vadTrack]))
-        }
+        // VAD listens to the raw capture, never to the gated output --
+        // the gate is 0 while the mic is closed, which is precisely when
+        // VAD has to hear you start talking.
+        //
+        // This used to be an independent clone() of the mic track, from
+        // back when PTT/VAD gated with `track.enabled`: the clone kept
+        // one copy enabled so metering survived. Gating is the GainNode
+        // now (see below), so the raw track is always live and the clone
+        // bought nothing -- except a second capture that micStreamRef's
+        // cleanup did not stop, so iOS kept the microphone reserved and
+        // its orange indicator lit after hanging up, and the next join
+        // hit NotReadableError.
+        setVadStream(stream)
 
         // ponytail: send the raw stream to the peer. The browser's
         // built-in echo cancellation / noise suppression / AGC (from
@@ -209,7 +223,18 @@ export default function VoiceRoomView({
         await resumeAudioContext()
         const source = audioCtx.createMediaStreamSource(stream)
         const gate = audioCtx.createGain()
-        gate.gain.value = 1
+        // Open the gate from the CURRENT mic state, not a hardcoded 1.
+        // The sync effect below is keyed on [micEnabled] and bails while
+        // gateRef is null, so it does not re-run once the gate finally
+        // exists -- getUserMedia resolves long after mount and does not
+        // change micEnabled. A hardcoded 1 therefore stuck the gate open
+        // for the whole session while the bar drew MicOff: everyone was
+        // transmitting from the moment they joined until their first PTT
+        // press, whose RELEASE was the first event to ever run the sync
+        // effect and finally close it. On a phone that press is also the
+        // only mic control there is (no space bar), so tapping it once
+        // looked like "the mic broke".
+        gate.gain.value = micEnabledRef.current ? 1 : 0
         const dest = audioCtx.createMediaStreamDestination()
         source.connect(gate)
         gate.connect(dest)
@@ -254,7 +279,6 @@ export default function VoiceRoomView({
         gateRef.current.disconnect()
         gateRef.current = null
       }
-      vadStream?.getTracks().forEach(t => t.stop())
       setVadStream(null)
     }
   }, [])
@@ -332,12 +356,20 @@ export default function VoiceRoomView({
   // handleVoiceJoin stops the radio so the two never fight over it.
   // Audio sinks for every peer. Rendered in both the expanded and the
   // collapsed branch, because playback must not depend on the tiles.
+  //
+  // Kept at the SAME position under the SAME parent in both branches.
+  // React matches children by position within one parent fiber and does
+  // not follow an element to a new parent, so while this lived inside
+  // the expanded branch's <div> it was torn down and rebuilt on every
+  // expand/collapse -- pause(), remove(), new <audio>, play() for every
+  // peer -- which is an audible dropout each time you glance at a text
+  // channel mid-call. Same reason the bar below is hoisted out of the
+  // branch: it was fragment child 0 in one and child 1 in the other.
   const peerAudio = peers.map(p => (
     <PeerAudio
       key={p.id}
       stream={p.stream}
-      volume={peerVolumes.current.get(p.id) ?? 100}
-      muted={false}
+      volume={peerVolumes.get(p.id) ?? 100}
     />
   ))
 
@@ -345,34 +377,9 @@ export default function VoiceRoomView({
   // pane is the only thing that swaps -- participant grid, or the text
   // channel you opened. Controls live only in the bar so they never move
   // under you when you change channel.
-  if (collapsed) {
-    return (
-      <>
-        {peerAudio}
-      <VoiceRoomCollapsedBar
-        roomName={channel.name.replace(/^🔊\s*/, '')}
-        names={[nick, ...peers.map(p => nickMap.get(p.id) ?? p.displayName)]}
-        totalConnected={totalConnected}
-        micReady={micReady}
-        micEnabled={micEnabled}
-        micError={micError}
-        onPttDown={pttPress}
-        onPttUp={pttRelease}
-        vadOn={vadOn}
-        onVadChange={setVadOn}
-        autoThreshold={autoThreshold}
-        onAutoThresholdChange={setAutoThreshold}
-        showingRoom={!collapsed}
-        onExpand={() => onExpand?.()}
-        onLeave={onLeave}
-        radioActive={!!radioCurrent}
-      />
-      </>
-    )
-  }
-
   return (
     <>
+      {peerAudio}
       <VoiceRoomCollapsedBar
         roomName={channel.name.replace(/^🔊\s*/, '')}
         names={[nick, ...peers.map(p => nickMap.get(p.id) ?? p.displayName)]}
@@ -391,8 +398,8 @@ export default function VoiceRoomView({
         onLeave={onLeave}
         radioActive={!!radioCurrent}
       />
+    {!collapsed && (
     <div className="flex flex-col h-full bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950">
-      {peerAudio}
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5  ">
         <div className="flex items-center gap-2">
@@ -424,7 +431,7 @@ export default function VoiceRoomView({
             />
             {/* Peer tiles */}
             {peers.map(p => {
-              const vol = peerVolumes.current.get(p.id) ?? 100
+              const vol = peerVolumes.get(p.id) ?? 100
               return (
                 <ParticipantTile
                   key={p.id}
@@ -435,10 +442,10 @@ export default function VoiceRoomView({
                   speaking={p.speaking}
                   isAdmin={isAdmin}
                   volume={vol}
-                  onVolumeChange={(v) => {
-                    peerVolumes.current.set(p.id, v)
-                    sendViaWs({ type: 'voice.peer_volume', to: p.id, volume: v })
-                  }}
+                  // No WS message: this is a local playback level, and
+                  // the server has no voice.peer_volume handler, so the
+                  // send it used to do went nowhere.
+                  onVolumeChange={(v) => setPeerVolumes(m => new Map(m).set(p.id, v))}
                   onKick={isAdmin ? () => handleKick(p.id) : undefined}
                 />
               )
@@ -458,6 +465,7 @@ export default function VoiceRoomView({
         </div>
       )}
     </div>
+    )}
     </>
   )
 }
