@@ -56,22 +56,39 @@ export default function VoiceRoomView({
 
   const level = useAudioLevel(vadStream)
   const vadHoldRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const vadOpenRef = useRef(false)
   const [vadOpen, setVadOpen] = useState(false)
   const micEnabled = pttActive || vadOpen
+
+  // Sync ref with state so the effect always reads the latest value
+  // without depending on `vadOpen` in deps (which would cause re-render loops).
+  vadOpenRef.current = vadOpen
 
   // ponytail: VAD with hold timer. When the level drops below threshold,
   // we wait 400ms before closing. This prevents the mic from cutting off
   // between syllables or brief pauses in speech.
+  //
+  // IMPORTANT: no cleanup function that clears the timeout — `level`
+  // changes every animation frame via rAF, so the effect re-runs
+  // constantly and the cleanup would cancel the hold timer before it
+  // fires. The timeout is managed entirely inside the effect body.
   useEffect(() => {
-    if (!vadOn || pttActive) return
+    if (!vadOn || pttActive) {
+      if (vadHoldRef.current) {
+        clearTimeout(vadHoldRef.current)
+        vadHoldRef.current = null
+      }
+      setVadOpen(false)
+      return
+    }
     if (level >= vadThreshold) {
       // Speaking — open immediately, cancel any pending close
       if (vadHoldRef.current) {
         clearTimeout(vadHoldRef.current)
         vadHoldRef.current = null
       }
-      setVadOpen(true)
-    } else if (vadOpen) {
+      if (!vadOpenRef.current) setVadOpen(true)
+    } else if (vadOpenRef.current) {
       // Silence detected but we hold for 400ms before closing
       if (!vadHoldRef.current) {
         vadHoldRef.current = setTimeout(() => {
@@ -80,21 +97,7 @@ export default function VoiceRoomView({
         }, 400)
       }
     }
-    return () => {
-      if (vadHoldRef.current) clearTimeout(vadHoldRef.current)
-    }
-  }, [level, vadThreshold, vadOn, pttActive, vadOpen])
-
-  // Reset VAD when toggled off or PTT takes over
-  useEffect(() => {
-    if (!vadOn || pttActive) {
-      if (vadHoldRef.current) {
-        clearTimeout(vadHoldRef.current)
-        vadHoldRef.current = null
-      }
-      setVadOpen(false)
-    }
-  }, [vadOn, pttActive])
+  }, [level, vadThreshold, vadOn, pttActive])
 
   const voiceRoom = useVoiceRoom(sendViaWs, localStream, onVoiceMessage)
 
