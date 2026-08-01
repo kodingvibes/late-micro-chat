@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { MessageSquare, Mic, MicOff, Activity, Plus, ImageIcon, Smile, Music, Video, FileText, ArrowUp, X, PhoneOff } from '@/components/icons'
 import ParticipantTile from './ParticipantTile'
+import Avatar from './Avatar'
 import MessageList from './MessageList'
 import TypingIndicator from './TypingIndicator'
 import { useVoiceRoom } from '../../voice/useVoiceRoom'
@@ -17,6 +19,12 @@ interface PeerState {
 
 interface VoiceRoomViewProps {
   channel: ChannelState
+  /** Chat websocket state. A reconnect drops us from the room server-side. */
+  wsConnected?: boolean
+  /** Reading another channel: render the compact bottom bar, stay mounted. */
+  collapsed?: boolean
+  /** Jump back to the voice channel from the collapsed bar. */
+  onExpand?: () => void
   myUserId: number | null
   myRole: string | null
   nick: string
@@ -30,7 +38,7 @@ interface VoiceRoomViewProps {
 const VAD_THRESHOLD_DEFAULT = 0.05
 
 export default function VoiceRoomView({
-  channel, myUserId, myRole, nick, nickMap,
+  channel, wsConnected = true, collapsed = false, onExpand, myUserId, myRole, nick, nickMap,
   sendViaWs, onVoiceMessage, onSendMessage, onLeave,
 }: VoiceRoomViewProps) {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
@@ -54,11 +62,32 @@ export default function VoiceRoomView({
   const peerVolumes = useRef<Map<number, number>>(new Map())
   const peerMuted = useRef<Map<number, boolean>>(new Map())
 
+  // ponytail: do not announce ourselves until the mic has resolved.
+  //
+  // joinRoom used to fire on mount, in the effect above getUserMedia's,
+  // so the roster came back first and every peer was built with zero
+  // tracks. When the mic finally landed, addLocalStream had to
+  // re-negotiate from `stable`, which cannot produce an answer, and the
+  // rejection was swallowed by a debug recorder that is a no-op without
+  // ?voiceDebug=1 — so everyone already in the room heard nothing from
+  // the joiner, silently, forever.
+  //
+  // micError still joins: no microphone is a valid way to sit in a call
+  // and listen.
+  //
+  // wsConnected is in the deps because the server drops us from the room
+  // whenever our socket closes (routers/ws.py runs voice_rooms.leave in
+  // its finally block, unconditionally). Without re-announcing on
+  // reconnect the client keeps showing a call the server thinks ended:
+  // the other side stops seeing you and never gets your peer_joined.
+  // voice_rooms.join is idempotent, so re-sending is free.
   useEffect(() => {
+    if (!micReady && !micError) return
+    if (!wsConnected) return
     voiceRoom.joinRoom(String(channel.id))
     return () => voiceRoom.leaveRoom(String(channel.id))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channel.id])
+  }, [channel.id, micReady, micError, wsConnected])
 
   useEffect(() => {
     let cancelled = false
@@ -129,9 +158,15 @@ export default function VoiceRoomView({
       cancelled = true
       micStreamRef.current?.getTracks().forEach(t => t.stop())
       micStreamRef.current = null
+      // Disconnect our nodes but do NOT close the context: it is the
+      // module-level singleton from audioContext.ts, shared with every
+      // later join and with the spectrum analysers. Closing it here
+      // made the second join of a page session throw InvalidStateError
+      // out of createMediaStreamSource, before micStreamRef was set,
+      // so that join's mic tracks leaked too. A closed AudioContext
+      // cannot be reopened.
       if (gateRef.current) {
-        const ctx = gateRef.current.context as AudioContext
-        ctx.close?.().catch(() => {})
+        gateRef.current.disconnect()
         gateRef.current = null
       }
       vadStream?.getTracks().forEach(t => t.stop())
@@ -203,6 +238,71 @@ export default function VoiceRoomView({
     onSendMessage(channel.id, payload)
     setReplyContext(null)
   }, [channel.id, onSendMessage])
+
+  // ponytail: collapsed = you are reading another channel while the call
+  // runs. We must NOT unmount — the effect cleanup above hangs up — so we
+  // render a compact bar into a portal on <body> instead. Fixed to the
+  // bottom, taking the surface the radio's MiniPlayer would occupy;
+  // handleVoiceJoin stops the radio so the two never fight over it.
+  if (collapsed) {
+    return createPortal(
+      <div
+        className="fixed bottom-0 left-0 right-0 z-50 h-14 bg-surface-3 backdrop-blur shadow-2xl flex items-center gap-2 sm:gap-3 px-2 sm:px-4 animate-slide-in-from-bottom"
+        role="region"
+        aria-label="Llamada de voz en curso"
+      >
+        <button
+          onClick={onExpand}
+          className="flex items-center gap-2 min-w-0 flex-1 text-left hover:opacity-80 transition-opacity"
+          title="Volver a la sala de voz"
+        >
+          <span className="text-base flex-shrink-0">🔊</span>
+          <span className="flex flex-col min-w-0 leading-tight">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
+              En llamada
+            </span>
+            <span className="text-sm font-medium text-slate-100 truncate">
+              {channel.name.replace(/^🔊\s*/, '')}
+            </span>
+          </span>
+          {/* Same Avatar + overflow stack ChannelList uses on voice rows, so
+              a person is the same colour here as everywhere else. */}
+          <span className="flex items-center -space-x-2 flex-shrink-0 ml-1">
+            {[nick, ...peers.map(p => nickMap.get(p.id) ?? p.displayName)]
+              .slice(0, 4)
+              .map((name, i) => <Avatar key={i} nick={name} size="sm" />)}
+            {totalConnected > 4 && (
+              <span className="w-7 h-7 rounded-lg bg-surface-2 flex items-center justify-center text-[10px] font-semibold text-slate-300 flex-shrink-0">
+                +{totalConnected - 4}
+              </span>
+            )}
+          </span>
+        </button>
+
+        <button
+          onClick={() => (micEnabled ? pttRelease() : pttPress())}
+          disabled={!micReady}
+          className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-colors disabled:opacity-40 ${
+            micEnabled ? 'bg-emerald-500/20 text-emerald-300' : 'bg-surface-2 text-slate-300 hover:bg-surface-1'
+          }`}
+          aria-label={micEnabled ? 'Silenciar micrófono' : 'Activar micrófono'}
+          title={micReady ? (micEnabled ? 'Silenciar' : 'Hablar') : 'Sin micrófono'}
+        >
+          {micEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
+        </button>
+
+        <button
+          onClick={onLeave}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 transition-colors flex-shrink-0"
+          aria-label="Salir de la sala de voz"
+        >
+          <PhoneOff className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Salir</span>
+        </button>
+      </div>,
+      document.body,
+    )
+  }
 
   return (
     <div className="flex flex-col h-full bg-surface-2">
