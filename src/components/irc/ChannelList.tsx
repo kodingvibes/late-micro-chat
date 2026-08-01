@@ -154,8 +154,7 @@ export default function ChannelList({
                       isActive={chan.channelType === 'voice' ? chan.id === activeVoiceChannelId : chan.name === currentChannel}
                       onSelect={() => {
                         if (chan.channelType === 'voice') {
-                          if (chan.id === activeVoiceChannelId) onVoiceLeave(chan.id)
-                          else onVoiceJoin(chan.id)
+                          onVoiceJoin(chan.id)
                         } else {
                           onSelect(chan.name)
                         }
