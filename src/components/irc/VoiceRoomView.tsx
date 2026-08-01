@@ -1,14 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { createPortal } from 'react-dom'
 import { MessageSquare, Mic, MicOff, Activity, Plus, ImageIcon, Smile, Music, Video, FileText, ArrowUp, X, PhoneOff } from '@/components/icons'
 import ParticipantTile from './ParticipantTile'
 import PeerAudio from './PeerAudio'
-import Avatar from './Avatar'
+import VoiceRoomCollapsedBar from './VoiceRoomCollapsedBar'
 import MessageList from './MessageList'
 import TypingIndicator from './TypingIndicator'
 import { useVoiceRoom } from '../../voice/useVoiceRoom'
 import { useAudioLevel } from '../../hooks/useAudioLevel'
 import { getOrCreateAudioContext, resumeAudioContext } from '../../voice/audioContext'
+import { voiceError } from '../../voice/log'
 import type { ChannelState, ChatMessage } from '../../lib/chat/domain/types'
 
 interface PeerState {
@@ -155,8 +155,24 @@ export default function VoiceRoomView({
         setLocalStream(processed)
         setMicReady(true)
       })
-      .catch(() => {
-        if (!cancelled) setMicError('No se pudo acceder al micrófono')
+      .catch((err: unknown) => {
+        if (cancelled) return
+        // The DOMException name is the only thing that distinguishes
+        // "you said no" from "there is no microphone" from "something
+        // else already has it", and they need different actions from
+        // the user. Swallowing it produced one useless message for all
+        // three.
+        const name = (err as DOMException)?.name
+        voiceError('getUserMedia failed', { name, err })
+        setMicError(
+          name === 'NotAllowedError' || name === 'SecurityError'
+            ? 'Bloqueaste el micrófono. Habilitalo en el candado de la barra de direcciones y recargá.'
+            : name === 'NotFoundError' || name === 'OverconstrainedError'
+            ? 'No encontramos ningún micrófono conectado.'
+            : name === 'NotReadableError'
+            ? 'Otra aplicación está usando el micrófono. Cerrala y volvé a entrar.'
+            : 'No se pudo acceder al micrófono.',
+        )
       })
     return () => {
       cancelled = true
@@ -262,64 +278,18 @@ export default function VoiceRoomView({
   if (collapsed) {
     return (
       <>
-      {peerAudio}
-      {createPortal(
-      <div
-        className="fixed bottom-0 left-0 right-0 z-50 h-14 bg-surface-3 backdrop-blur shadow-2xl flex items-center gap-2 sm:gap-3 px-2 sm:px-4 animate-slide-in-from-bottom"
-        role="region"
-        aria-label="Llamada de voz en curso"
-      >
-        <button
-          onClick={onExpand}
-          className="flex items-center gap-2 min-w-0 flex-1 text-left hover:opacity-80 transition-opacity"
-          title="Volver a la sala de voz"
-        >
-          <span className="text-base flex-shrink-0">🔊</span>
-          <span className="flex flex-col min-w-0 leading-tight">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
-              En llamada
-            </span>
-            <span className="text-sm font-medium text-slate-100 truncate">
-              {channel.name.replace(/^🔊\s*/, '')}
-            </span>
-          </span>
-          {/* Same Avatar + overflow stack ChannelList uses on voice rows, so
-              a person is the same colour here as everywhere else. */}
-          <span className="flex items-center -space-x-2 flex-shrink-0 ml-1">
-            {[nick, ...peers.map(p => nickMap.get(p.id) ?? p.displayName)]
-              .slice(0, 4)
-              .map((name, i) => <Avatar key={i} nick={name} size="sm" />)}
-            {totalConnected > 4 && (
-              <span className="w-7 h-7 rounded-lg bg-surface-2 flex items-center justify-center text-[10px] font-semibold text-slate-300 flex-shrink-0">
-                +{totalConnected - 4}
-              </span>
-            )}
-          </span>
-        </button>
-
-        <button
-          onClick={() => (micEnabled ? pttRelease() : pttPress())}
-          disabled={!micReady}
-          className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-colors disabled:opacity-40 ${
-            micEnabled ? 'bg-emerald-500/20 text-emerald-300' : 'bg-surface-2 text-slate-300 hover:bg-surface-1'
-          }`}
-          aria-label={micEnabled ? 'Silenciar micrófono' : 'Activar micrófono'}
-          title={micReady ? (micEnabled ? 'Silenciar' : 'Hablar') : 'Sin micrófono'}
-        >
-          {micEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-        </button>
-
-        <button
-          onClick={onLeave}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 transition-colors flex-shrink-0"
-          aria-label="Salir de la sala de voz"
-        >
-          <PhoneOff className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Salir</span>
-        </button>
-      </div>,
-      document.body,
-    )}
+        {/* Sinks first: playback must survive the view collapsing. */}
+        {peerAudio}
+        <VoiceRoomCollapsedBar
+          roomName={channel.name.replace(/^🔊\s*/, '')}
+          names={[nick, ...peers.map(p => nickMap.get(p.id) ?? p.displayName)]}
+          totalConnected={totalConnected}
+          micReady={micReady}
+          micEnabled={micEnabled}
+          onToggleMic={() => (micEnabled ? pttRelease() : pttPress())}
+          onExpand={() => onExpand?.()}
+          onLeave={onLeave}
+        />
       </>
     )
   }
