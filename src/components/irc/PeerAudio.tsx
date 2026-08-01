@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { getOrCreateAudioContext } from '../../voice/audioContext'
 
 /**
  * Plays one peer's remote audio.
@@ -13,7 +14,11 @@ import { useEffect, useRef } from 'react'
  *
  * The element is deliberately never attached to the document: it is a
  * sink, not UI, and appending it would let page CSS and layout touch
- * something that must keep playing while hidden.
+ * something that must keep playing while unmounted.
+ *
+ * Uses the shared AudioContext singleton so we don't create N contexts
+ * for N peers (which hits browser limits and causes "URI no válida"
+ * errors on some platforms).
  */
 export default function PeerAudio({
   stream, volume, muted,
@@ -26,7 +31,7 @@ export default function PeerAudio({
 }) {
   const ref = useRef<HTMLAudioElement | null>(null)
   const gainRef = useRef<GainNode | null>(null)
-  const ctxRef = useRef<AudioContext | null>(null)
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null)
 
   useEffect(() => {
     if (!stream) return
@@ -40,22 +45,22 @@ export default function PeerAudio({
       // joining a call is one, so this is rare and self-correcting.
     })
 
-    // Create a GainNode for 0-200% volume range
-    const ctx = new AudioContext()
-    ctxRef.current = ctx
+    // Use the shared AudioContext singleton
+    const ctx = getOrCreateAudioContext()
     const source = ctx.createMediaStreamSource(stream)
     const gain = ctx.createGain()
     gain.gain.value = muted ? 0 : volume / 100
     source.connect(gain)
     gain.connect(ctx.destination)
     gainRef.current = gain
+    sourceRef.current = source
 
     return () => {
       audio.pause()
       audio.srcObject = null
       source.disconnect()
       gain.disconnect()
-      ctx.close()
+      // Do NOT close the context — it is the shared singleton
     }
   }, [stream])
 
