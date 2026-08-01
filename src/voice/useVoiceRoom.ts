@@ -124,15 +124,29 @@ export function useVoiceRoom(
               // id up in peersRef, so deleting first made the restart
               // structurally unable to complete. Only tear down on
               // 'failed', and only once the restart has been ruled out.
-              peer.restartIce()
-                .then(sdp => {
-                  if (sdp) { signaling.sendOffer(id, sdp); return }
-                  if (state === 'failed') dropPeer(id)
-                })
-                .catch(err => {
-                  voiceError('ICE restart failed', { id, err })
-                  if (state === 'failed') dropPeer(id)
-                })
+              //
+              // Only the initiator restarts. Both ends see 'disconnected'
+              // on the same blip and both would be in `stable`, so
+              // dropping this gate means both createOffer and both send:
+              // each then gets an offer while in `have-local-offer`,
+              // setRemoteDescription throws with no rollback, and the
+              // peer never recovers. Exactly one side driving is the
+              // cheapest tie-break, and it is the side that offered
+              // originally. The answerer just waits for the new offer.
+              if (initiator) {
+                peer.restartIce()
+                  .then(sdp => {
+                    if (sdp) { signaling.sendOffer(id, sdp); return }
+                    if (state === 'failed') dropPeer(id)
+                  })
+                  .catch(err => {
+                    voiceError('ICE restart failed', { id, err })
+                    if (state === 'failed') dropPeer(id)
+                  })
+              } else if (state === 'failed') {
+                // Nothing to wait for any more.
+                dropPeer(id)
+              }
             }
           },
         },
