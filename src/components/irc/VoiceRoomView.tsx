@@ -256,6 +256,10 @@ export default function VoiceRoomView({
     if (!micReady) return
     const down = (e: KeyboardEvent) => {
       if (e.code !== 'Space' || e.repeat) return
+      // Don't capture Space when typing in an input, textarea, or
+      // contenteditable — the user is writing a message, not PTT.
+      const t = e.target as HTMLElement | null
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
       e.preventDefault()
       pttPress()
     }
