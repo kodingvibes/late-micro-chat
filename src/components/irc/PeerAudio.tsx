@@ -19,31 +19,50 @@ export default function PeerAudio({
   stream, volume, muted,
 }: {
   stream: MediaStream | null
-  /** 0-100, per-peer local volume. */
+  /** 0-200, per-peer local volume. 100 = normal, 200 = 2x. */
   volume: number
   /** Local mute -- does not affect what the peer is sending. */
   muted: boolean
 }) {
   const ref = useRef<HTMLAudioElement | null>(null)
+  const gainRef = useRef<GainNode | null>(null)
+  const ctxRef = useRef<AudioContext | null>(null)
 
   useEffect(() => {
     if (!stream) return
     const audio = ref.current ?? new Audio()
     ref.current = audio
     audio.autoplay = true
+    audio.volume = 1 // We control volume via GainNode
     audio.srcObject = stream
     audio.play().catch(() => {
       // Autoplay can be refused until the page has a user gesture;
       // joining a call is one, so this is rare and self-correcting.
     })
+
+    // Create a GainNode for 0-200% volume range
+    const ctx = new AudioContext()
+    ctxRef.current = ctx
+    const source = ctx.createMediaStreamSource(stream)
+    const gain = ctx.createGain()
+    gain.gain.value = muted ? 0 : volume / 100
+    source.connect(gain)
+    gain.connect(ctx.destination)
+    gainRef.current = gain
+
     return () => {
       audio.pause()
       audio.srcObject = null
+      source.disconnect()
+      gain.disconnect()
+      ctx.close()
     }
   }, [stream])
 
   useEffect(() => {
-    if (ref.current) ref.current.volume = muted ? 0 : volume / 100
+    if (gainRef.current) {
+      gainRef.current.gain.value = muted ? 0 : volume / 100
+    }
   }, [volume, muted])
 
   return null
