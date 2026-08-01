@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { MessageSquare, Mic, MicOff, Activity, Plus, ImageIcon, Smile, Music, Video, FileText, ArrowUp, X, PhoneOff } from '@/components/icons'
+import { MessageSquare, Plus, ImageIcon, Smile, Music, Video, FileText, ArrowUp, X } from '@/components/icons'
 import ParticipantTile from './ParticipantTile'
 import PeerAudio from './PeerAudio'
 import VoiceRoomCollapsedBar from './VoiceRoomCollapsedBar'
@@ -275,26 +275,50 @@ export default function VoiceRoomView({
     />
   ))
 
+  // ponytail: the bar is up for the whole call, in both states. The main
+  // pane is the only thing that swaps -- participant grid, or the text
+  // channel you opened. Controls live only in the bar so they never move
+  // under you when you change channel.
   if (collapsed) {
     return (
       <>
-        {/* Sinks first: playback must survive the view collapsing. */}
         {peerAudio}
-        <VoiceRoomCollapsedBar
-          roomName={channel.name.replace(/^🔊\s*/, '')}
-          names={[nick, ...peers.map(p => nickMap.get(p.id) ?? p.displayName)]}
-          totalConnected={totalConnected}
-          micReady={micReady}
-          micEnabled={micEnabled}
-          onToggleMic={() => (micEnabled ? pttRelease() : pttPress())}
-          onExpand={() => onExpand?.()}
-          onLeave={onLeave}
-        />
+      <VoiceRoomCollapsedBar
+        roomName={channel.name.replace(/^🔊\s*/, '')}
+        names={[nick, ...peers.map(p => nickMap.get(p.id) ?? p.displayName)]}
+        totalConnected={totalConnected}
+        micReady={micReady}
+        micEnabled={micEnabled}
+        micError={micError}
+        onPttDown={pttPress}
+        onPttUp={pttRelease}
+        vadOn={vadOn}
+        onVadChange={setVadOn}
+        showingRoom={!collapsed}
+        onExpand={() => onExpand?.()}
+        onLeave={onLeave}
+      />
       </>
     )
   }
 
   return (
+    <>
+      <VoiceRoomCollapsedBar
+        roomName={channel.name.replace(/^🔊\s*/, '')}
+        names={[nick, ...peers.map(p => nickMap.get(p.id) ?? p.displayName)]}
+        totalConnected={totalConnected}
+        micReady={micReady}
+        micEnabled={micEnabled}
+        micError={micError}
+        onPttDown={pttPress}
+        onPttUp={pttRelease}
+        vadOn={vadOn}
+        onVadChange={setVadOn}
+        showingRoom={!collapsed}
+        onExpand={() => onExpand?.()}
+        onLeave={onLeave}
+      />
     <div className="flex flex-col h-full bg-surface-2">
       {peerAudio}
       {/* Header */}
@@ -319,14 +343,6 @@ export default function VoiceRoomView({
           >
             <MessageSquare className="w-3.5 h-3.5" />
             {showInput ? 'Cerrar chat' : 'Mensaje'}
-          </button>
-          <button
-            onClick={onLeave}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 transition-colors"
-            aria-label="Salir de la sala de voz"
-          >
-            <PhoneOff className="w-3.5 h-3.5" />
-            Salir
           </button>
         </div>
       </div>
@@ -377,81 +393,7 @@ export default function VoiceRoomView({
               )
             })}
           </div>
-          {/* PTT control panel */}
-          <div className="mt-6 flex flex-col items-center gap-3">
-            {micError ? (
-              <div className="text-center">
-                <p className="text-sm text-rose-400">{micError}</p>
-                <p className="text-xs text-slate-500 mt-1">
-                  Revisá los permisos del navegador para este sitio.
-                </p>
-              </div>
-            ) : !micReady ? (
-              <p className="text-xs text-slate-500">Solicitando micrófono…</p>
-            ) : (
-              <>
-                <button
-                  onMouseDown={pttPress}
-                  onMouseUp={pttRelease}
-                  onMouseLeave={pttRelease}
-                  onTouchStart={(e) => { e.preventDefault(); pttPress() }}
-                  onTouchEnd={(e) => { e.preventDefault(); pttRelease() }}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all select-none ${
-                    pttActive
-                      ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 scale-105'
-                      : 'bg-surface-2 hover:bg-slate-600 text-slate-100 active:scale-95'
-                  }`}
-                  title="Mantené presionado o Space para hablar"
-                >
-                  {pttActive ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-                  {pttActive ? 'Hablando…' : 'Mantener para hablar'}
-                </button>
-                <div className="flex flex-col items-center gap-1.5">
-                  <label className="flex items-center gap-1.5 text-[11px] text-slate-400 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={vadOn}
-                      onChange={e => setVadOn(e.target.checked)}
-                      className="accent-accent"
-                    />
-                    <Activity className="w-3 h-3" />
-                    Auto-detectar voz
-                  </label>
-                  {vadOn && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-slate-500">Umbral</span>
-                      <input
-                        type="range"
-                        min="0" max="100"
-                        value={Math.round(vadThreshold * 200)}
-                        onChange={e => setVadThreshold(Number(e.target.value) / 200)}
-                        className="w-32 h-1 accent-accent"
-                      />
-                      <div className="w-16 h-1 bg-surface-2 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-accent transition-[width] duration-75"
-                          style={{ width: `${Math.min(100, level * 400)}%` }}
-                        />
-                      </div>
-                      <span className="text-[9px] text-slate-500 tabular-nums w-4 text-right">
-                        {vadOpen ? 'on' : '—'}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <p className="text-[10px] text-slate-500">
-                  Tip: mantené <kbd className="px-1 py-0.5 bg-surface-2 rounded text-slate-300">Space</kbd> para hablar sin click.
-                </p>
-              </>
-            )}
-          </div>
-          {peers.length === 0 && micReady && (
-            <div className="flex items-center justify-center pt-6">
-              <p className="text-xs text-slate-500">
-                Esperando a que alguien se conecte…
-              </p>
-            </div>
-          )}
+          {/* Controls live in the bottom bar, not here. */}
         </div>
 
         {/* Right column: text chat (only when toggled on).
@@ -494,6 +436,7 @@ export default function VoiceRoomView({
         )}
       </div>
     </div>
+    </>
   )
 }
 
