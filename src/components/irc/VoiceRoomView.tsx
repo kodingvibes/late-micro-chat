@@ -1,13 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { createPortal } from 'react-dom'
-import { MessageSquare, Mic, MicOff, Activity, Plus, ImageIcon, Smile, Music, Video, FileText, ArrowUp, X, PhoneOff } from '@/components/icons'
+import { MessageSquare, Plus, ImageIcon, Smile, Music, Video, FileText, ArrowUp, X } from '@/components/icons'
 import ParticipantTile from './ParticipantTile'
-import Avatar from './Avatar'
+import PeerAudio from './PeerAudio'
+import VoiceRoomCollapsedBar from './VoiceRoomCollapsedBar'
 import MessageList from './MessageList'
 import TypingIndicator from './TypingIndicator'
 import { useVoiceRoom } from '../../voice/useVoiceRoom'
 import { useAudioLevel } from '../../hooks/useAudioLevel'
 import { getOrCreateAudioContext, resumeAudioContext } from '../../voice/audioContext'
+import { voiceError } from '../../voice/log'
 import type { ChannelState, ChatMessage } from '../../lib/chat/domain/types'
 
 interface PeerState {
@@ -59,8 +60,11 @@ export default function VoiceRoomView({
 
   const voiceRoom = useVoiceRoom(sendViaWs, localStream, onVoiceMessage)
 
-  const peerVolumes = useRef<Map<number, number>>(new Map())
-  const peerMuted = useRef<Map<number, boolean>>(new Map())
+  // State, not refs: PeerAudio renders from these, so a change has to
+  // re-render. They were refs when only ParticipantTile read them
+  // imperatively.
+  const [peerVolumes, setPeerVolumes] = useState<Map<number, number>>(new Map())
+  const [peerMuted, setPeerMuted] = useState<Map<number, boolean>>(new Map())
 
   // ponytail: do not announce ourselves until the mic has resolved.
   //
@@ -151,8 +155,24 @@ export default function VoiceRoomView({
         setLocalStream(processed)
         setMicReady(true)
       })
-      .catch(() => {
-        if (!cancelled) setMicError('No se pudo acceder al micrófono')
+      .catch((err: unknown) => {
+        if (cancelled) return
+        // The DOMException name is the only thing that distinguishes
+        // "you said no" from "there is no microphone" from "something
+        // else already has it", and they need different actions from
+        // the user. Swallowing it produced one useless message for all
+        // three.
+        const name = (err as DOMException)?.name
+        voiceError('getUserMedia failed', { name, err })
+        setMicError(
+          name === 'NotAllowedError' || name === 'SecurityError'
+            ? 'Bloqueaste el micrófono. Habilitalo en el candado de la barra de direcciones y recargá.'
+            : name === 'NotFoundError' || name === 'OverconstrainedError'
+            ? 'No encontramos ningún micrófono conectado.'
+            : name === 'NotReadableError'
+            ? 'Otra aplicación está usando el micrófono. Cerrala y volvé a entrar.'
+            : 'No se pudo acceder al micrófono.',
+        )
       })
     return () => {
       cancelled = true
@@ -244,68 +264,63 @@ export default function VoiceRoomView({
   // render a compact bar into a portal on <body> instead. Fixed to the
   // bottom, taking the surface the radio's MiniPlayer would occupy;
   // handleVoiceJoin stops the radio so the two never fight over it.
+  // Audio sinks for every peer. Rendered in both the expanded and the
+  // collapsed branch, because playback must not depend on the tiles.
+  const peerAudio = peers.map(p => (
+    <PeerAudio
+      key={p.id}
+      stream={p.stream}
+      volume={peerVolumes.get(p.id) ?? 100}
+      muted={peerMuted.get(p.id) ?? false}
+    />
+  ))
+
+  // ponytail: the bar is up for the whole call, in both states. The main
+  // pane is the only thing that swaps -- participant grid, or the text
+  // channel you opened. Controls live only in the bar so they never move
+  // under you when you change channel.
   if (collapsed) {
-    return createPortal(
-      <div
-        className="fixed bottom-0 left-0 right-0 z-50 h-14 bg-surface-3 backdrop-blur shadow-2xl flex items-center gap-2 sm:gap-3 px-2 sm:px-4 animate-slide-in-from-bottom"
-        role="region"
-        aria-label="Llamada de voz en curso"
-      >
-        <button
-          onClick={onExpand}
-          className="flex items-center gap-2 min-w-0 flex-1 text-left hover:opacity-80 transition-opacity"
-          title="Volver a la sala de voz"
-        >
-          <span className="text-base flex-shrink-0">🔊</span>
-          <span className="flex flex-col min-w-0 leading-tight">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
-              En llamada
-            </span>
-            <span className="text-sm font-medium text-slate-100 truncate">
-              {channel.name.replace(/^🔊\s*/, '')}
-            </span>
-          </span>
-          {/* Same Avatar + overflow stack ChannelList uses on voice rows, so
-              a person is the same colour here as everywhere else. */}
-          <span className="flex items-center -space-x-2 flex-shrink-0 ml-1">
-            {[nick, ...peers.map(p => nickMap.get(p.id) ?? p.displayName)]
-              .slice(0, 4)
-              .map((name, i) => <Avatar key={i} nick={name} size="sm" />)}
-            {totalConnected > 4 && (
-              <span className="w-7 h-7 rounded-lg bg-surface-2 flex items-center justify-center text-[10px] font-semibold text-slate-300 flex-shrink-0">
-                +{totalConnected - 4}
-              </span>
-            )}
-          </span>
-        </button>
-
-        <button
-          onClick={() => (micEnabled ? pttRelease() : pttPress())}
-          disabled={!micReady}
-          className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-colors disabled:opacity-40 ${
-            micEnabled ? 'bg-emerald-500/20 text-emerald-300' : 'bg-surface-2 text-slate-300 hover:bg-surface-1'
-          }`}
-          aria-label={micEnabled ? 'Silenciar micrófono' : 'Activar micrófono'}
-          title={micReady ? (micEnabled ? 'Silenciar' : 'Hablar') : 'Sin micrófono'}
-        >
-          {micEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-        </button>
-
-        <button
-          onClick={onLeave}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 transition-colors flex-shrink-0"
-          aria-label="Salir de la sala de voz"
-        >
-          <PhoneOff className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Salir</span>
-        </button>
-      </div>,
-      document.body,
+    return (
+      <>
+        {peerAudio}
+      <VoiceRoomCollapsedBar
+        roomName={channel.name.replace(/^🔊\s*/, '')}
+        names={[nick, ...peers.map(p => nickMap.get(p.id) ?? p.displayName)]}
+        totalConnected={totalConnected}
+        micReady={micReady}
+        micEnabled={micEnabled}
+        micError={micError}
+        onPttDown={pttPress}
+        onPttUp={pttRelease}
+        vadOn={vadOn}
+        onVadChange={setVadOn}
+        showingRoom={!collapsed}
+        onExpand={() => onExpand?.()}
+        onLeave={onLeave}
+      />
+      </>
     )
   }
 
   return (
+    <>
+      <VoiceRoomCollapsedBar
+        roomName={channel.name.replace(/^🔊\s*/, '')}
+        names={[nick, ...peers.map(p => nickMap.get(p.id) ?? p.displayName)]}
+        totalConnected={totalConnected}
+        micReady={micReady}
+        micEnabled={micEnabled}
+        micError={micError}
+        onPttDown={pttPress}
+        onPttUp={pttRelease}
+        vadOn={vadOn}
+        onVadChange={setVadOn}
+        showingRoom={!collapsed}
+        onExpand={() => onExpand?.()}
+        onLeave={onLeave}
+      />
     <div className="flex flex-col h-full bg-surface-2">
+      {peerAudio}
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5  ">
         <div className="flex items-center gap-2">
@@ -329,14 +344,6 @@ export default function VoiceRoomView({
             <MessageSquare className="w-3.5 h-3.5" />
             {showInput ? 'Cerrar chat' : 'Mensaje'}
           </button>
-          <button
-            onClick={onLeave}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 transition-colors"
-            aria-label="Salir de la sala de voz"
-          >
-            <PhoneOff className="w-3.5 h-3.5" />
-            Salir
-          </button>
         </div>
       </div>
 
@@ -359,8 +366,8 @@ export default function VoiceRoomView({
             />
             {/* Peer tiles */}
             {peers.map(p => {
-              const vol = peerVolumes.current.get(p.id) ?? 100
-              const muted = peerMuted.current.get(p.id) ?? false
+              const vol = peerVolumes.get(p.id) ?? 100
+              const muted = peerMuted.get(p.id) ?? false
               return (
                 <ParticipantTile
                   key={p.id}
@@ -373,12 +380,12 @@ export default function VoiceRoomView({
                   volume={vol}
                   locallyMuted={muted}
                   onVolumeChange={(v) => {
-                    peerVolumes.current.set(p.id, v)
+                    setPeerVolumes(prev => new Map(prev).set(p.id, v))
                     sendViaWs({ type: 'voice.peer_volume', to: p.id, volume: v })
                   }}
                   onLocalMuteToggle={() => {
-                    const next = !peerMuted.current.get(p.id)
-                    peerMuted.current.set(p.id, next)
+                    const next = !peerMuted.get(p.id)
+                    setPeerMuted(prev => new Map(prev).set(p.id, next))
                     sendViaWs({ type: 'voice.peer_local_mute', to: p.id, muted: next })
                   }}
                   onKick={isAdmin ? () => handleKick(p.id) : undefined}
@@ -386,81 +393,7 @@ export default function VoiceRoomView({
               )
             })}
           </div>
-          {/* PTT control panel */}
-          <div className="mt-6 flex flex-col items-center gap-3">
-            {micError ? (
-              <div className="text-center">
-                <p className="text-sm text-rose-400">{micError}</p>
-                <p className="text-xs text-slate-500 mt-1">
-                  Revisá los permisos del navegador para este sitio.
-                </p>
-              </div>
-            ) : !micReady ? (
-              <p className="text-xs text-slate-500">Solicitando micrófono…</p>
-            ) : (
-              <>
-                <button
-                  onMouseDown={pttPress}
-                  onMouseUp={pttRelease}
-                  onMouseLeave={pttRelease}
-                  onTouchStart={(e) => { e.preventDefault(); pttPress() }}
-                  onTouchEnd={(e) => { e.preventDefault(); pttRelease() }}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all select-none ${
-                    pttActive
-                      ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 scale-105'
-                      : 'bg-surface-2 hover:bg-slate-600 text-slate-100 active:scale-95'
-                  }`}
-                  title="Mantené presionado o Space para hablar"
-                >
-                  {pttActive ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-                  {pttActive ? 'Hablando…' : 'Mantener para hablar'}
-                </button>
-                <div className="flex flex-col items-center gap-1.5">
-                  <label className="flex items-center gap-1.5 text-[11px] text-slate-400 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={vadOn}
-                      onChange={e => setVadOn(e.target.checked)}
-                      className="accent-accent"
-                    />
-                    <Activity className="w-3 h-3" />
-                    Auto-detectar voz
-                  </label>
-                  {vadOn && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-slate-500">Umbral</span>
-                      <input
-                        type="range"
-                        min="0" max="100"
-                        value={Math.round(vadThreshold * 200)}
-                        onChange={e => setVadThreshold(Number(e.target.value) / 200)}
-                        className="w-32 h-1 accent-accent"
-                      />
-                      <div className="w-16 h-1 bg-surface-2 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-accent transition-[width] duration-75"
-                          style={{ width: `${Math.min(100, level * 400)}%` }}
-                        />
-                      </div>
-                      <span className="text-[9px] text-slate-500 tabular-nums w-4 text-right">
-                        {vadOpen ? 'on' : '—'}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <p className="text-[10px] text-slate-500">
-                  Tip: mantené <kbd className="px-1 py-0.5 bg-surface-2 rounded text-slate-300">Space</kbd> para hablar sin click.
-                </p>
-              </>
-            )}
-          </div>
-          {peers.length === 0 && micReady && (
-            <div className="flex items-center justify-center pt-6">
-              <p className="text-xs text-slate-500">
-                Esperando a que alguien se conecte…
-              </p>
-            </div>
-          )}
+          {/* Controls live in the bottom bar, not here. */}
         </div>
 
         {/* Right column: text chat (only when toggled on).
@@ -503,6 +436,7 @@ export default function VoiceRoomView({
         )}
       </div>
     </div>
+    </>
   )
 }
 

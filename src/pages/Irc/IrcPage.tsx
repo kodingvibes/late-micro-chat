@@ -657,6 +657,12 @@ export function Irc() {
     // bar. Optional chained: the radio micro may not be loaded.
     try { window.RadioEngine?.stop() } catch { /* radio not loaded */ }
     setActiveVoiceChannelId(channelId)
+    // Show the room you just joined. Without this the view is collapsed
+    // from the first frame -- voiceDocked compares against
+    // currentChannel, which is still whatever text channel you were
+    // reading -- so clicking a voice channel dropped you straight to the
+    // bottom bar and the tiles, PTT and mic errors were unreachable.
+    setCurrentChannel(channelId)
     setShowChannelsDrawer(false)
     // ponytail: load the text-chat history for this voice channel.
     // The /channels list call returns metadata only, never per-channel
@@ -780,10 +786,13 @@ export function Irc() {
   // radioCurrent goes null exactly as our bar appears - without this the
   // padding vanished with it and the bar covered the message input.
   const voiceDocked = activeVoiceChannelId !== null && currentChannel !== activeVoiceChannelId
+  // The bar is up for the whole call now, not only while docked, so the
+  // 56px reservation follows the call rather than the collapsed state.
+  const inCall = activeVoiceChannelId !== null
 
   return (
     <div
-      className={`flex flex-col overflow-hidden bg-accent/5 ${radioCurrent || voiceDocked ? 'pb-14' : 'pb-0'} ${buzzShake ? 'shake-buzz' : ''}`}
+      className={`flex flex-col overflow-hidden bg-accent/5 ${radioCurrent || inCall ? 'pb-14' : 'pb-0'} ${buzzShake ? 'shake-buzz' : ''}`}
       style={{ height: `calc(${vh}px * 100 - ${headerHeight}px)` }}
     >
       {showJoinModal && (
