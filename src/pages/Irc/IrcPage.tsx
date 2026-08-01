@@ -650,12 +650,10 @@ export function Irc() {
       getOrCreateAudioContext()
       resumeAudioContext().catch(() => {})
     } catch { /* unsupported, getUserMedia will fail next */ }
-    // ponytail: a voice call takes the bottom bar over from the radio,
-    // so stop the stream rather than letting music play under people
-    // talking. stop() nulls RadioState.current, which is what makes the
-    // shell's MiniPlayer unmount itself, freeing the surface for our own
-    // bar. Optional chained: the radio micro may not be loaded.
-    try { window.RadioEngine?.stop() } catch { /* radio not loaded */ }
+    // ponytail: keep the radio playing if it's on — the voice bar
+    // positions itself above the MiniPlayer so both coexist. The old
+    // stop() call was removed because the user wants to keep listening
+    // to music while on a call.
     setActiveVoiceChannelId(channelId)
     // Show the room you just joined. Without this the view is collapsed
     // from the first frame -- voiceDocked compares against
@@ -795,10 +793,14 @@ export function Irc() {
   // The bar is up for the whole call now, not only while docked, so the
   // 56px reservation follows the call rather than the collapsed state.
   const inCall = activeVoiceChannelId !== null
+  // When both the radio MiniPlayer and the voice bar are visible, we
+  // need 112px (2 × 56px) of bottom padding so content isn't hidden
+  // behind the stacked bars.
+  const bottomPadding = radioCurrent && inCall ? 'pb-28' : (radioCurrent || inCall ? 'pb-14' : 'pb-0')
 
   return (
     <div
-      className={`flex flex-col overflow-hidden bg-accent/5 ${radioCurrent || inCall ? 'pb-14' : 'pb-0'} ${buzzShake ? 'shake-buzz' : ''}`}
+      className={`flex flex-col overflow-hidden bg-accent/5 ${bottomPadding} ${buzzShake ? 'shake-buzz' : ''}`}
       style={{ height: `calc(${vh}px * 100 - ${headerHeight}px)` }}
     >
       {showJoinModal && (
@@ -955,8 +957,8 @@ export function Irc() {
                 nickMap={nickMap}
                 sendViaWs={(msg) => clientRef.current?.sendRaw(msg)}
                 onVoiceMessage={onVoiceMessage}
-                onSendMessage={(chId, content) => clientRef.current?.sendMessage(chId, content).catch(() => {})}
                 onLeave={() => handleVoiceLeave(activeVoiceChannelId!)}
+                radioCurrent={radioCurrent}
               />
             )
           })()}

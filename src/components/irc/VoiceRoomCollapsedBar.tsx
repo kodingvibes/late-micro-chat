@@ -9,11 +9,11 @@ import Avatar from './Avatar'
  * only here, so the main pane is free to be the grid or the channel and
  * the controls never move under you.
  *
- * Portaled onto <body> and fixed to the bottom, on the same surface the
- * radio's MiniPlayer uses -- joining a voice channel stops the radio, so
- * only one of the two is ever up. The chat layout reserves the matching
- * 56px (`pb-14` in IrcPage), so this must stay h-14 or it covers the
- * message composer.
+ * Portaled onto <body> and fixed to the bottom. When the radio MiniPlayer
+ * is also visible (radioActive=true), the voice bar sits 56px above the
+ * bottom so both bars stack without overlapping. The chat layout reserves
+ * 112px (`pb-28` in IrcPage) when both are visible, or 56px (`pb-14`)
+ * for either one alone.
  *
  * Presentational on purpose: VoiceRoomView owns the call and stays
  * mounted regardless of what this renders, because unmounting it would
@@ -36,6 +36,8 @@ export interface VoiceRoomCollapsedBarProps {
   showingRoom: boolean
   onExpand: () => void
   onLeave: () => void
+  /** When true, the radio MiniPlayer is visible below — voice bar sits above it. */
+  radioActive?: boolean
 }
 
 const MAX_AVATARS = 4
@@ -43,11 +45,13 @@ const MAX_AVATARS = 4
 export default function VoiceRoomCollapsedBar({
   roomName, names, totalConnected,
   micReady, micEnabled, micError, onPttDown, onPttUp,
-  vadOn, onVadChange, showingRoom, onExpand, onLeave,
+  vadOn, onVadChange, showingRoom, onExpand, onLeave, radioActive,
 }: VoiceRoomCollapsedBarProps) {
   return createPortal(
     <div
-      className="fixed bottom-0 left-0 right-0 z-50 h-14 bg-surface-3 backdrop-blur shadow-2xl flex items-center gap-2 sm:gap-3 px-2 sm:px-4 animate-slide-in-from-bottom"
+      className={`fixed left-0 right-0 z-50 h-14 bg-surface-3 backdrop-blur shadow-2xl flex items-center gap-2 sm:gap-3 px-2 sm:px-4 animate-slide-in-from-bottom ${
+        radioActive ? 'bottom-14' : 'bottom-0'
+      }`}
       role="region"
       aria-label="Llamada de voz en curso"
     >

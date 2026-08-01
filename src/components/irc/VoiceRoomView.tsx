@@ -1,15 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { MessageSquare, Plus, ImageIcon, Smile, Music, Video, FileText, ArrowUp, X } from '@/components/icons'
+import { } from '@/components/icons'
 import ParticipantTile from './ParticipantTile'
 import PeerAudio from './PeerAudio'
 import VoiceRoomCollapsedBar from './VoiceRoomCollapsedBar'
-import MessageList from './MessageList'
-import TypingIndicator from './TypingIndicator'
+
 import { useVoiceRoom } from '../../voice/useVoiceRoom'
 import { useAudioLevel } from '../../hooks/useAudioLevel'
 import { getOrCreateAudioContext, resumeAudioContext } from '../../voice/audioContext'
 import { voiceError } from '../../voice/log'
-import type { ChannelState, ChatMessage } from '../../lib/chat/domain/types'
+import type { ChannelState } from '../../lib/chat/domain/types'
 
 interface PeerState {
   id: number
@@ -32,19 +31,20 @@ interface VoiceRoomViewProps {
   nickMap: Map<number, string>
   sendViaWs: (msg: object) => void
   onVoiceMessage: (handler: (type: string, data: any) => void) => () => void
-  onSendMessage: (channelId: number, content: string) => void
   onLeave: () => void
+  /** Non-null when the radio MiniPlayer is visible. The voice bar
+   *  should sit above it instead of covering it. */
+  radioCurrent?: unknown
 }
 
 const VAD_THRESHOLD_DEFAULT = 0.025
 
 export default function VoiceRoomView({
   channel, wsConnected = true, collapsed = false, onExpand, myUserId, myRole, nick, nickMap,
-  sendViaWs, onVoiceMessage, onSendMessage, onLeave,
+  sendViaWs, onVoiceMessage, onLeave, radioCurrent,
 }: VoiceRoomViewProps) {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
-  const [showInput, setShowInput] = useState(false)
-  const [replyContext, setReplyContext] = useState<ChatMessage | null>(null)
+
   const [pttActive, setPttActive] = useState(false)
   const [vadOn, setVadOn] = useState(false)
   const [vadThreshold, setVadThreshold] = useState(VAD_THRESHOLD_DEFAULT)
@@ -297,13 +297,6 @@ export default function VoiceRoomView({
 
   const isAdmin = myRole === 'admin'
 
-  const handleSend = useCallback((text: string) => {
-    const isAction = text.startsWith('/me ')
-    const payload = isAction ? text.slice(4).trim() : text
-    onSendMessage(channel.id, payload)
-    setReplyContext(null)
-  }, [channel.id, onSendMessage])
-
   // ponytail: collapsed = you are reading another channel while the call
   // runs. We must NOT unmount — the effect cleanup above hangs up — so we
   // render a compact bar into a portal on <body> instead. Fixed to the
@@ -342,6 +335,7 @@ export default function VoiceRoomView({
         showingRoom={!collapsed}
         onExpand={() => onExpand?.()}
         onLeave={onLeave}
+        radioActive={!!radioCurrent}
       />
       </>
     )
@@ -363,6 +357,7 @@ export default function VoiceRoomView({
         showingRoom={!collapsed}
         onExpand={() => onExpand?.()}
         onLeave={onLeave}
+        radioActive={!!radioCurrent}
       />
     <div className="flex flex-col h-full bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950">
       {peerAudio}
@@ -377,19 +372,7 @@ export default function VoiceRoomView({
             {totalConnected} conectado{totalConnected !== 1 ? 's' : ''}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowInput(!showInput)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              showInput
-                ? 'bg-accent/15 text-accent'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-surface-2'
-            }`}
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-            {showInput ? 'Cerrar chat' : 'Mensaje'}
-          </button>
-        </div>
+
       </div>
 
       <div className="flex flex-1 min-h-0">
@@ -432,44 +415,7 @@ export default function VoiceRoomView({
           {/* Controls live in the bottom bar, not here. */}
         </div>
 
-        {/* Right column: text chat (only when toggled on).
-            Forced "compact" mode so the icon row collapses into a
-            single + menu and the textarea gets the smaller
-            min-height the mobile layout uses. Without this the
-            3 × w-10 attach buttons + 44px textarea crowd out the
-            320px panel. */}
-        {showInput && (
-          <div className="w-72 flex-shrink-0 flex flex-col bg-surface-1">
-            <div className="flex-1 overflow-y-auto min-h-0">
-              <MessageList
-                messages={channel.messages}
-                currentNick={nick}
-                channelName={channel.name}
-                channelMembers={channel.members || []}
-                nickByUserId={nickMap}
-                myUserId={myUserId}
-                myRole={myRole}
-                onToggleReaction={() => {}}
-                onLoadMore={() => {}}
-                loadingMore={false}
-                hasMore={false}
-                onReply={(msg) => setReplyContext(msg)}
-                onForward={() => {}}
-                onBuzz={() => {}}
-                onCopyText={() => {}}
-                onHide={async () => {}}
-                onDelete={async () => {}}
-              />
-            </div>
-            <TypingIndicator names={[]} />
-            <VoiceChatInput
-              onSend={handleSend}
-              placeholder={`Mensaje en ${channel.name}`}
-              replyContext={replyContext}
-              onClearReply={() => setReplyContext(null)}
-            />
-          </div>
-        )}
+
       </div>
       {/* PTT hint at the bottom of the voice room */}
       {!micError && micReady && (
@@ -484,133 +430,3 @@ export default function VoiceRoomView({
   )
 }
 
-// Compact chat input for the voice room side panel. Always renders
-// in mobile layout (single + menu instead of 3 attach buttons, smaller
-// textarea) so the 288px panel isn't crowded out by oversized icons.
-// ponytail: text-only. File/emoji pickers open the OS file dialog or
-// just append a smiley — full attachment flow lives in the regular
-// MessageInput used outside the voice room.
-function VoiceChatInput({
-  onSend, placeholder, replyContext, onClearReply,
-}: {
-  onSend: (text: string) => void
-  placeholder: string
-  replyContext: ChatMessage | null
-  onClearReply: () => void
-}) {
-  const [text, setText] = useState('')
-  const [showMenu, setShowMenu] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [pendingKind, setPendingKind] = useState<string | null>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!showMenu) return
-    const onDoc = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setShowMenu(false)
-      }
-    }
-    document.addEventListener('mousedown', onDoc)
-    return () => document.removeEventListener('mousedown', onDoc)
-  }, [showMenu])
-
-  const submit = () => {
-    const t = text.trim()
-    if (!t) return
-    onSend(t)
-    setText('')
-  }
-
-  return (
-    <form
-      onSubmit={(e) => { e.preventDefault(); submit() }}
-      className="px-2 py-1.5 bg-surface-1"
-    >
-      {replyContext && (
-        <div className="flex items-center gap-1.5 mb-1 text-[11px] text-slate-400">
-          <span className="truncate">Respondiendo a <span className="text-accent">{replyContext.display_name}</span></span>
-          <button type="button" onClick={onClearReply} className="ml-auto text-slate-500 hover:text-slate-200">
-            <X className="w-3 h-3" />
-          </button>
-        </div>
-      )}
-      <div className="flex items-end gap-1.5 min-w-0">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={pendingKind === 'image' ? 'image/*' : pendingKind === 'video' ? 'video/*' : pendingKind === 'audio' ? 'audio/*' : '*/*'}
-          className="hidden"
-          onChange={(e) => {
-            // ponytail: no upload wired here — drop the selection so
-            // the menu doesn't show a broken state. Full flow lives
-            // in the regular MessageInput outside the voice room.
-            e.target.value = ''
-            setPendingKind(null)
-          }}
-        />
-        <div ref={menuRef} className="relative">
-          <button
-            type="button"
-            onClick={() => setShowMenu(v => !v)}
-            className="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-surface-2 flex items-center justify-center flex-shrink-0 transition-colors"
-            aria-label="Más opciones"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-          {showMenu && (
-            <div className="absolute bottom-full mb-1 left-0 z-40 bg-surface-2  rounded-xl shadow-2xl p-1 w-36 animate-menu-up">
-              {[
-                { kind: 'image', icon: ImageIcon, label: 'Imagen' },
-                { kind: 'audio', icon: Music, label: 'Audio' },
-                { kind: 'video', icon: Video, label: 'Video' },
-                { kind: 'document', icon: FileText, label: 'Documento' },
-                { kind: 'emoji', icon: Smile, label: 'Emoji' },
-              ].map(item => (
-                <button
-                  key={item.kind}
-                  type="button"
-                  onClick={() => {
-                    if (item.kind === 'emoji') {
-                      setText(t => t + '🙂')
-                    } else {
-                      setPendingKind(item.kind)
-                      fileInputRef.current?.click()
-                    }
-                    setShowMenu(false)
-                  }}
-                  className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-surface-2 rounded-lg transition-colors"
-                >
-                  <item.icon className="w-3.5 h-3.5 text-slate-400" />
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              submit()
-            }
-          }}
-          placeholder={placeholder || 'Escribe un mensaje...'}
-          rows={1}
-          className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-surface-2  text-slate-100 placeholder-slate-500 focus:outline-none focus: focus:ring-1 focus:ring-accent/30 resize-none text-sm leading-snug"
-          style={{ minHeight: '32px', maxHeight: '120px' }}
-        />
-        <button
-          type="submit"
-          disabled={text.trim().length === 0}
-          className="w-7 h-7 rounded-full bg-accent hover:bg-accent-soft disabled:bg-surface-2 disabled:text-slate-500 text-white flex items-center justify-center flex-shrink-0 transition-colors self-end flex-none"
-          aria-label="Enviar"
-        >
-          <ArrowUp className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </form>
-  )
-}
