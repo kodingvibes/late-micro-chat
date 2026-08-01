@@ -13,7 +13,8 @@ const SIZE_CLASSES = {
 }
 
 export default function Avatar({ nick, size = 'md', className = '' }: AvatarProps) {
-  const initials = nick
+  const safeNick = nick || '?'
+  const initials = safeNick
     .replace(/[^a-zA-Z0-9]/g, '')
     .slice(0, 2)
     .toUpperCase() || '?'
